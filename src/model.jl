@@ -1,4 +1,3 @@
-
 abstract type AbstractDFTModel end
 
 ```
@@ -11,6 +10,6 @@ struct KohnShamExtended{TZ,TN,TEXCH} <: AbstractDFTModel
 end
 
 Base.size(km::KohnShamExtended) = (km.z,km.N)
-exchcorr(km::KohnShamExtended) = km.exc
-charge(km::KohnShamExtended) = km.z
-nbelec(km::KohnShamExtended) = km.N
+@inline exchcorr(km::KohnShamExtended) = km.exc
+@inline charge(km::KohnShamExtended) = km.z
+@inline nbelec(km::KohnShamExtended) = km.N
