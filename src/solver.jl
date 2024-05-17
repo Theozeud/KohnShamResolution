@@ -8,7 +8,7 @@ struct SolverOptions{T,Tr,Teps}
 end
 
 
-struct Solver{}
+struct KhonShamSolver{}
     mesh::AbstractMesh
     sol
     opts::SolverOptions

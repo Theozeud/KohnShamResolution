@@ -8,6 +8,7 @@ end
 function init(model::AbstractDFTModel; kwargs...)
     # Init mesh
     # Init matrix
+    # Init Cache
     # Init Initial condition
 end
 
