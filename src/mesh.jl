@@ -24,7 +24,8 @@ end
 @inline Base.size(m::1DMesh) = size(m.points)
 @inline points(m::1DMesh) = m.points
 @inline steps(m::1DMesh) = m.steps
-@inline left(m::1DMesh) = m.points[1]
-@inline right(m::1DMesh) = m.points[end]
 @inline Base.getindex(m::1DMesh, n::Int) = m.points[n]
 @inline Base.iterate(m::1DMesh, state = 1) = state > size(m) ? nothing : (m[state],state+1)
+@inline left(m::1DMesh) = m[1]
+@inline right(m::1DMesh) = m[end]
+@inline edges(m::1DMesh) = (m[1],m[end])
