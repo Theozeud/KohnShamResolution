@@ -1,10 +1,17 @@
+```
+    __groundstate()
+    
+```
 function groundstate(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod; kwargs...)
     solver = __init(model, method; kwargs...)
-    __solve!(solver, method; kwargs...)
+    __solve!(solver, method)
     __makesolution(solver)
 end
 
-
+```
+    __init()
+    
+```
 function __init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod; 
     mesh::AbstractMesh, ci = 0.0)
 
@@ -19,16 +26,22 @@ function __init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMetho
     solver(mesh, cache, ci)
 end
 
-
-function __solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod; kwargs...)
+```
+    __solve!()
+    
+```
+function __solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
     while stopping_criteria(method, solver)
-        loopheader()
-        performstep!()
-        loopfooter()
+        #loopheader(solver)
+        performstep!(method, solver)
+        #loopfooter(solver)
     end
 end
 
-
+```
+    __makesolution()
+    
+```
 function __makesolution(solver::KhonShamSolver)
 
 end

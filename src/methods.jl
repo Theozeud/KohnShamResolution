@@ -9,16 +9,16 @@ struct CacheMethod1 <: AbstractKohnShamCache
     M₀
     M₋₁
     M₋₂
-    
 end
 
 function init_cache(::Method1)
 
+    # Init matrix
 
 end
 
 
-function performstep!()
+function performstep!(method, solver)
     # step 1 : find potential 
     
     # step 2 : compute an approximation of the exchange correlation term
@@ -29,10 +29,9 @@ function performstep!()
 
     # step 5 : update this matrix with a convex approach
 
-    # step 6 : stopping criteria
 end
 
-function stopping_criteria()
+function stopping_criteria(method, solver)
 
 
 end

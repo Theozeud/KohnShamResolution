@@ -8,10 +8,10 @@ struct SolverOptions{T,Tr,Teps}
 end
 
 
-struct KhonShamSolver{}
+struct KhonShamSolver{TS}
     mesh::AbstractMesh
     cache::AbstractKohnShamCache
-    sol
+    sol::TS
     opts::SolverOptions
 
 end
