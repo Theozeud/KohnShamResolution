@@ -11,11 +11,21 @@ function mesh(points::AbstractArray{T} where T<: Real)
     OneDmesh(_points , steps)
 end
 
-function mesh(point::Real, fun::Base.Callable, N::Int)
-    points = zeros(N)
+function mesh(point::Real; funMesh::Base.Callable, Nmesh::Int)
+    points = zeros(Nmesh)
     points[1] = point
-    for i in 2:N
-        @inbounds points[i] = fun(points[i-1])
+    for i in 2:Nmesh
+        @inbounds points[i] = funMesh(points[i-1])
+    end
+    mesh(points)
+end
+
+function mesh(point::Real; funMesh::Base.Callable, Rmax)
+    points = [point]
+    nextpoint = funMesh(point)
+    while nextpoint ≤ Rmax
+        push!(points, nextpoint)
+        nextpoint = funMesh(nexpoint)
     end
     mesh(points)
 end

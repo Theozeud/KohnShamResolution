@@ -10,6 +10,7 @@ end
 
 struct KhonShamSolver{}
     mesh::AbstractMesh
+    cache::AbstractKohnShamCache
     sol
     opts::SolverOptions
 

@@ -4,7 +4,7 @@ for_sphericalsymmetry(::Method1) = true
 for_cylindricalsymmetry(::Method1) = false
 
 
-struct CacheMethod1
+struct CacheMethod1 <: AbstractKohnShamCache
     A
     M₀
     M₋₁
@@ -12,7 +12,7 @@ struct CacheMethod1
     
 end
 
-function init_cache()
+function init_cache(::Method1)
 
 
 end
@@ -30,4 +30,9 @@ function performstep!()
     # step 5 : update this matrix with a convex approach
 
     # step 6 : stopping criteria
+end
+
+function stopping_criteria()
+
+
 end
