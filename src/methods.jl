@@ -27,10 +27,10 @@ function init_cache(::ODA)
     #M₋₂
 
     # Creation of the Hamiltonian for each section Hₗ    
-    H = zeros(lₕ, Nₕ, Nₕ) 
+    H = zeros(lₕ+1, Nₕ, Nₕ) 
     for l ∈ 0:lₕ
-        H[l+1,:,:] .= - A .- l*(l+1)*M₋₂ .- 2*z*(2*l+1).*M₋₁
-    end
+        H[l+1,:,:] .= - A .- l*(l+1)*M₋₂ .- 2*z*(2*l+1) .* M₋₁
+    end 
 
     cacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_U, temp_Rstar, temp_R)
 
@@ -50,10 +50,12 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
         # Assembly the matrices
         cache.temp_H .= cache.H[l+1] #+ Exch + Potential
         # Solve generalized eigenvalue problem on the section Hₗ
-        cache.temp_U, cache.temp_ϵ .= solve_generalized_eigenvalue_problem(temp_H, cache.M₀)
+        cache.temp_ϵ, cache.temp_U = solve_generalized_eigenvalue_problem(temp_H, cache.M₀)
     end
 
-    # STEP 4 : Building the n matrix using the Aufbau principle
+    # STEP 4 : Determine the Fermi Level
+    
+    # STEP 5 : Build the n matrix using the Aufbau principle
     for l ∈ 0:lₕ   
         for k ∈ 1:(2*l+1)*Nₕ
             if cache.temp_ϵ[l,k] != ϵf
@@ -64,7 +66,7 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
         end
     end
 
-    # STEP 5 : Build the density related matrix 
+    # STEP 6 : Build the density related matrix 
     cache.temp_Rstar = zeros(lₕ+1,Nₕ,Nₕ)
     for l ∈ 0:lₕ
         for k ∈ 1:(2*l+1)*Nₕ
@@ -72,7 +74,7 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
         end
     end
 
-    # STEP 6 : update this matrix with a convex approach
+    # STEP 7 : update this matrix with a convex approach
 
 
 

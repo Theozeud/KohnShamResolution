@@ -1,5 +1,7 @@
 # Quadrature
+function gaussian_quadrature()
 
+end
 
 # Solving linear problem
 ```
@@ -12,13 +14,14 @@ end
 
 
 # Solve Generalized Eigenvalue problem
-
+function solve_generalized_eigenvalue_problem(A,B)
+    eigen(A,B)
+end
 
 # Optimisation
 
 
 # Tensor product
-
 function tensorproduct(X::AbstractVector, Y::AbstractVector)
     XY = zeros(size(X)[1],size(Y)[1])
     for i ∈ eachindex(X)
