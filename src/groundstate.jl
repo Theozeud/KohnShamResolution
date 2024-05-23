@@ -64,7 +64,7 @@ end
     
 =#
 function loopfooter!(solver::KhonShamSolver)
-    solver.Rprev = solver.R
+    solver.Rprev .= solver.R
 end
 
 
