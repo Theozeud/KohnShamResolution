@@ -16,6 +16,7 @@ struct CacheODA <: AbstractKohnShamCache
     temp_U
     temp_Rstar
     temp_R
+    temp_tn
 end
 
 function init_cache(::ODA)
@@ -75,8 +76,8 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
     end
 
     # STEP 7 : update this matrix with a convex approach
-
-
+    # some optimisation to find a good tₙ
+    cache.temp_R .= cache.temp_tₙ .* cache.temp_Rstar + (1 - cache.temp_tₙ) .* solver.Rprev
 
     # Registering into solver
     solver.U .= cache.temp_U
