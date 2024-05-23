@@ -1,21 +1,7 @@
-#=
-
-## Solver options
-struct SolverOptions
-    lh      # Cut-off sections of the decomposition in eigenspace
-    Rmax    # Cut-off of the radial domain
-    Nr
-    Ngr
-    Ngθ
-    ϵ      
-end
-
-
-
-
 ### Rapel
 utilisation de 
 @base.kwargs
 Base.show
+@cache
 
 =#

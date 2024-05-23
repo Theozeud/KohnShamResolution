@@ -1,6 +1,7 @@
 struct SolverOptions{T,Tr,Teps}
-    lh::T      # Cut-off sections of the decomposition in eigenspace
-    Rmax::Tr    # Cut-off of the radial domain
+    lₕ::T   
+    Nₕ::T    
+    Rmax::Tr    
     Nr::T
     Ngr::T
     Ngθ::T
@@ -9,9 +10,12 @@ end
 
 
 struct KhonShamSolver{TS}
-    mesh::AbstractMesh
+    mesh::AbstractMesh          
     cache::AbstractKohnShamCache
-    sol::TS
     opts::SolverOptions
-
+    ϵ::AbstractMatrix
+    U::AbstractMatrix
+    n::AbstractMatrix
+    R::AbstractMatrix
+    Rprev::AbstractMatrix
 end

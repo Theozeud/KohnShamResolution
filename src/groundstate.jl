@@ -8,12 +8,13 @@ function groundstate(model::AbstractDFTModel, method::AbstractKohnShamResolution
     __makesolution(solver)
 end
 
+
 ```
     __init()
     
 ```
 function __init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod; 
-    mesh::AbstractMesh, ci = 0.0)
+    mesh::AbstractMesh, ci = 0.0, lₕ, Nₕ)
 
     # All Checks
     if !ismethod_for_model(method, model)
@@ -23,7 +24,15 @@ function __init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMetho
     # Init Cache
     cache = init_cache(method)
 
-    solver(mesh, cache, ci)
+    # Registering SolverOptions
+    opts = SolverOptions(lₕ,Nₕ)
+
+    # Init storage array
+    ϵ = spzeros(lₕ,(2lₕ+1)Nₕ)
+    U = spzeros(lₕ, (2lₕ+1)Nₕ, Nₕ)
+    n = spzeros(lₕ, (2lₕ+1)Nₕ)
+
+    solver(mesh, cache, opts, ϵ, U, n)
 end
 
 ```
@@ -33,7 +42,7 @@ end
 function __solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
     while stopping_criteria(method, solver)
         #loopheader(solver)
-        performstep!(method, solver)
+        performstep!(method, solver.cache, solver)
         #loopfooter(solver)
     end
 end

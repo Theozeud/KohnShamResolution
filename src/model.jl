@@ -8,6 +8,9 @@ struct KohnShamExtended{TZ,TN,TEXCH,TPOT} <: AbstractDFTModel
     N::TN
     exc::TEXCH
     potential::TPOT
+    function KohnShamExtended(z::Real,N::Int, exc::Base.Callable = NothingFunction(), potential::Base.Callable = NothingFunction())
+        new{typeof(z), typeof(N), typeof(exc), typeof(potential)}(z,N,exc,potential)
+    end
 end
 
 Base.size(km::KohnShamExtended) = (km.z,km.N)
