@@ -15,6 +15,7 @@ struct CacheODA <: AbstractKohnShamCache
     temp_n
     temp_U
     temp_Rstar
+    temp_R
 end
 
 function init_cache(::ODA)
@@ -31,13 +32,12 @@ function init_cache(::ODA)
         H[l+1,:,:] .= - A .- l*(l+1)*M₋₂ .- 2*z*(2*l+1).*M₋₁
     end
 
-
-
+    cacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_U, temp_Rstar, temp_R)
 
 end
 
 
-function performstep!(method::ODA, cache::CacheODA , solver::KhonShamSolver)
+function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
 
     # STEP 1 : find potential 
     #Potential = 
@@ -59,7 +59,7 @@ function performstep!(method::ODA, cache::CacheODA , solver::KhonShamSolver)
             if cache.temp_ϵ[l,k] != ϵf
                 temp_n[l,k] = cache.temp_ϵ[l,k] < ϵf ? 2 : 0
             else
-
+                ######### ????????????
             end
         end
     end
@@ -77,13 +77,12 @@ function performstep!(method::ODA, cache::CacheODA , solver::KhonShamSolver)
 
 
     # Registering into solver
-    solver.U .= U
-    solver.n .= n
-    solver.ϵ .= ϵ
-    solver.R .= R
+    solver.U .= cache.temp_U
+    solver.n .= cache.temp_n
+    solver.ϵ .= cache.temp_ϵ
+    solver.R .= cache.temp_R
 end
 
-function stopping_criteria(method, solver)
-
-
+function stopping_criteria(::ODA, solver::KhonShamSolver, ϵ)
+    abs(solver.R .- solver.Rprev) > ϵ
 end

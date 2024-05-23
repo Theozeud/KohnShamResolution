@@ -3,6 +3,11 @@ uuid = "2d6a71d3-f4fe-4c59-9782-ebc44d5ef3e9"
 authors = ["Théo Duez <42682941+Theozeud@users.noreply.github.com> and contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
+
 [compat]
 julia = "1.6.7"
 

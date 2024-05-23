@@ -6,7 +6,7 @@
     Solve Linear Problem of the form AX = b
     where X is the unknown
 ```
-function solve_linear_problem(A::AsbtractMatrix, b::AsbtractVector)
+function solve_linear_problem(A::AbstractMatrix, b::AbstractVector)
     A\b
 end
 
@@ -19,7 +19,7 @@ end
 
 # Tensor product
 
-function tensorproduct(X::AsbtractVector, Y::AbstractVector)
+function tensorproduct(X::AbstractVector, Y::AbstractVector)
     XY = zeros(size(X)[1],size(Y)[1])
     for i ∈ eachindex(X)
         for j ∈ eachindex(Y)

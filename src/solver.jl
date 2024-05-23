@@ -1,10 +1,10 @@
 struct SolverOptions{T,Tr,Teps}
     lₕ::T   
     Nₕ::T    
-    Rmax::Tr    
-    Nr::T
-    Ngr::T
-    Ngθ::T
+    #Rmax::Tr    
+    #Nr::T
+    #Ngr::T
+    #Ngθ::T
     ϵ::Teps      
 end
 

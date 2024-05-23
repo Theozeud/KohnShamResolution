@@ -8,10 +8,10 @@ end
 function mesh(points::AbstractArray{T} where T<: Real)
     _points = union(sort(points))
     steps = [_points[i+1] - _points[i] for i in eachindex(_points)[1:end-1]]
-    OneDmesh(_points , steps)
+    OneDMesh(_points , steps)
 end
 
-function mesh(point::Real; funMesh::Base.Callable, Nmesh::Int)
+function mesh(point::Real, funMesh::Base.Callable, Nmesh::Int)
     points = zeros(Nmesh)
     points[1] = point
     for i in 2:Nmesh
@@ -20,7 +20,8 @@ function mesh(point::Real; funMesh::Base.Callable, Nmesh::Int)
     mesh(points)
 end
 
-function mesh(point::Real; funMesh::Base.Callable, Rmax)
+#=
+function mesh(point::Real; funMesh::Base.Callable, Rmax::Real)
     points = [point]
     nextpoint = funMesh(point)
     while nextpoint ≤ Rmax
@@ -29,6 +30,7 @@ function mesh(point::Real; funMesh::Base.Callable, Rmax)
     end
     mesh(points)
 end
+=#
 
 @inline Base.length(m::OneDMesh) = length(m.points)
 @inline Base.size(m::OneDMesh) = size(m.points)

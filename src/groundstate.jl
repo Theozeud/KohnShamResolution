@@ -1,7 +1,7 @@
-```
+#=
     __groundstate()
     
-```
+=#
 function groundstate(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod; kwargs...)
     solver = __init(model, method; kwargs...)
     __solve!(solver, method)
@@ -9,12 +9,12 @@ function groundstate(model::AbstractDFTModel, method::AbstractKohnShamResolution
 end
 
 
-```
+#=
     __init()
     
-```
+=#
 function __init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod; 
-    mesh::AbstractMesh, ci = 0.0, lₕ, Nₕ)
+    mesh::AbstractMesh, ci = 0.0, lₕ, Nₕ, _ϵ)
 
     # All Checks
     if !ismethod_for_model(method, model)
@@ -25,32 +25,54 @@ function __init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMetho
     cache = init_cache(method)
 
     # Registering SolverOptions
-    opts = SolverOptions(lₕ,Nₕ)
+    opts = SolverOptions(lₕ,Nₕ,_ϵ)
 
     # Init storage array
-    ϵ = spzeros(lₕ,(2lₕ+1)Nₕ)
-    U = spzeros(lₕ, (2lₕ+1)Nₕ, Nₕ)
-    n = spzeros(lₕ, (2lₕ+1)Nₕ)
+    ϵ = spzeros(lₕ+1,(2lₕ+1)Nₕ)
+    U = spzeros(lₕ+1, (2lₕ+1)Nₕ, Nₕ)
+    n = spzeros(lₕ+1, (2lₕ+1)Nₕ)
+    R = spzeros(lₕ+1, Nₕ, Nₕ)
+    Rprev = spzeros(lₕ+1, Nₕ, Nₕ)
 
-    solver(mesh, cache, opts, ϵ, U, n)
+    solver(mesh, cache, opts, ϵ, U, n, R, Rprev)
 end
 
-```
+#=
     __solve!()
     
-```
+=#
 function __solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
-    while stopping_criteria(method, solver)
-        #loopheader(solver)
+    while stopping_criteria(method, solver, solver.opts.ϵ)
+        loopheader!(solver)
         performstep!(method, solver.cache, solver)
-        #loopfooter(solver)
+        loopfooter!(solver)
     end
 end
 
-```
+
+#=
+    loopheader!()
+    
+=#
+function loopheader!(::KhonShamSolver)
+    
+end
+
+
+#=
+    loopfooter!()
+    
+=#
+function loopfooter!(solver::KhonShamSolver)
+    solver.Rprev = solver.R
+end
+
+
+
+#=
     __makesolution()
     
-```
+=#
 function __makesolution(solver::KhonShamSolver)
 
 end
