@@ -5,7 +5,7 @@ struct SolverOptions{T,Tr,Teps}
     #Nr::T
     #Ngr::T
     #Ngθ::T
-    ϵ::Teps      
+    ε::Teps      
 end
 
 

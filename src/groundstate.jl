@@ -14,7 +14,7 @@ end
     
 =#
 function init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod; 
-    mesh::AbstractMesh, ci = 0.0, lₕ, Nₕ, _ϵ)
+    mesh::AbstractMesh, ci = 0.0, lₕ, Nₕ, ε)
 
     # All Checks
     if !ismethod_for_model(method, model)
@@ -25,14 +25,14 @@ function init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod;
     cache = init_cache(method)
 
     # Registering SolverOptions
-    opts = SolverOptions(lₕ,Nₕ,_ϵ)
+    opts = SolverOptions(lₕ,Nₕ,ε)
 
     # Init storage array
-    ϵ = spzeros(lₕ+1,(2lₕ+1)Nₕ)
-    U = spzeros(lₕ+1, (2lₕ+1)Nₕ, Nₕ)
-    n = spzeros(lₕ+1, (2lₕ+1)Nₕ)
-    R = spzeros(lₕ+1, Nₕ, Nₕ)
-    Rprev = spzeros(lₕ+1, Nₕ, Nₕ)
+    ϵ       = spzeros(lₕ+1,(2lₕ+1)Nₕ)
+    U       = spzeros(lₕ+1, (2lₕ+1)Nₕ, Nₕ)
+    n       = spzeros(lₕ+1, (2lₕ+1)Nₕ)
+    R       = spzeros(lₕ+1, Nₕ, Nₕ)
+    Rprev   = spzeros(lₕ+1, Nₕ, Nₕ)
 
     solver(mesh, cache, opts, ϵ, U, n, R, Rprev)
 end
