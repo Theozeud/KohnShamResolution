@@ -1,29 +1,28 @@
+"""
+    Polynomial
+
+"""
 mutable struct Polynomial 
     coeffs
 end
 
 @inline deg(p::Polynomial) = length(p.coeffs)-1
-
-@inline Base.getindex(p::Polynomial, n::Int) =  try p.coeffs[n] 
-                                                catch 
-                                                    0 end
-
-@inline Base.eachindex(p::Polynomial) = eachindex(p.coeffs)
-
-@inline Base.lastindex(p::Polynomial) = lastindex(p.coeffs)
+@inline Base.getindex(p::Polynomial, n::Int) =  n>deg(p) ? 0 : p.coeffs[n+1] 
+@inline Base.eachindex(p::Polynomial) = 0:deg(p)
+@inline Base.lastindex(p::Polynomial) = lastindex(p.coeffs)-1
 
 function Base.show(io::IO, p::Polynomial)
     elag!(p)
     str = ""
     if deg(p) == 0
-        str *= string(p[1])
-    elseif p[1] != 0
-        str *= string(p[1]) * " + "
+        str *= string(p[0])
+    elseif p[0] != 0
+        str *= string(p[0]) * " + "
     end
     if deg(p) >= 1
-        if p[2] ≠ 0
-            if p[2] ≠ 1
-                str *= string(p[2])*string(" X")
+        if p[1] ≠ 0
+            if p[1] ≠ 1
+                str *= string(p[1])*string(" X")
             else
                 str *= string(" X")
             end
@@ -33,21 +32,21 @@ function Base.show(io::IO, p::Polynomial)
         end
     end
     for i in 2:deg(p)-1
-        if p[i+1] ≠ 0
-            if p[i+1] ≠ 1
-                str *= string(p[i+1])*string(" X^")*string(i)*" + "
+        if p[i] ≠ 0
+            if p[i] ≠ 1
+                str *= string(p[i])*string(" X^")*string(i)*" + "
             else
                 str *= string(" X^")*string(i)*" + "
             end
         end
     end
-    deg(p) > 1 ? str *= string(p[end])*string(" X^")*string(deg(p)) : nothing
+    deg(p) > 1 ? str *= string(p[deg(p)])*string(" X^")*string(deg(p)) : nothing
     println(io, str)
 end
 
 function (p::Polynomial)(x)
     y = p[end]
-    for i ∈ deg(p)-1:-1:1
+    for i ∈ deg(p)-1:-1:0
         y = y*x + p[i]
     end
     y
@@ -62,14 +61,14 @@ function pop_deg!(p::Polynomial, n::Int)
 end
 
 function elag!(p::Polynomial)
-    m = deg(p)+1
+    m = deg(p)
     while p[m] == 0
-        if m == 0
+        if m == -1
             break
         end
         m -= 1
     end
-    p.coeffs = p.coeffs[1:m]
+    p.coeffs = p.coeffs[1:m+1]
 end
 
 function Base.:*(r::Real, p::Polynomial)
@@ -80,7 +79,7 @@ function Base.:+(p::Polynomial, q::Polynomial)
     if deg(p) >= deg(q)
         new_coeffs = zero(q.coeffs)
         for i ∈ eachindex(q)
-            new_coeffs[i] = p[i] .+ q[i]
+            new_coeffs[i+1] = p[i] .+ q[i]
         end
         Polynomial(reduce(vcat, (new_coeffs, p.coeffs[deg(q)+2:end])))
     else
