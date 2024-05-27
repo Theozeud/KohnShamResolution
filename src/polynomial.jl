@@ -88,7 +88,15 @@ function Base.:+(p::Polynomial, q::Polynomial)
 end
 
 function Base.:*(p::Polynomial, q::Polynomial)
-    Polynomial(p.coeffs .* v)
+    elag!(p)
+    elag!(q)
+    new_coeffs = zeros(deg(p)+deg(q)+1)
+    for i ∈ eachindex(new_coeffs)
+        for j ∈ 0:i-1
+            new_coeffs[i] += p[j]*q[i-j-1]
+        end
+    end
+    Polynomial(new_coeffs)
 end
 
 function integrate!(p::Polynomial)
