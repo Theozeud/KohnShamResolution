@@ -13,12 +13,8 @@ method = ODA()
 lₕ = 10
 Nₕ = 10
 
-# Create a mesh
-m = mesh(0.0, x->exp(0.4*x), 10)
-
-
 # Solve
-
+groundstate(KM, method; ci = 0.0, lₕ = 2, Nₕ = 2, ε = 0.1)
 
 # Plot Results
 

@@ -19,22 +19,29 @@ struct CacheODA <: AbstractKohnShamCache
     temp_tn
 end
 
-function init_cache(::ODA)
+function init_cache(model::AbstractDFTModel,::ODA; lₕ, Nₕ)
 
     # Init base matrices
-    #A
-    #M₀
-    #M₋₁
-    #M₋₂
+    A   = zeros(Nₕ,Nₕ)
+    M₀  = zeros(Nₕ,Nₕ)
+    M₋₁ = zeros(Nₕ,Nₕ)
+    M₋₂ = zeros(Nₕ,Nₕ)
 
-    # Creation of the Hamiltonian for each section Hₗ    
-    H = zeros(lₕ+1, Nₕ, Nₕ) 
+    # Creation of the fix part of the hamiltonian for each section Hₗ    
+    Hfix = zeros(lₕ+1, Nₕ, Nₕ) 
     for l ∈ 0:lₕ
-        H[l+1,:,:] .= - A .- l*(l+1)*M₋₂ .- 2*z*(2*l+1) .* M₋₁
+        Hfix[l+1,:,:] .= - A .- l*(l+1)*M₋₂ .- 2*charge(model)*(2*l+1) .* M₋₁
     end 
 
-    cacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_U, temp_Rstar, temp_R)
+    # Initialization of array for temporary stockage of computations
+    temp_H       = zeros(lₕ+1, Nₕ, Nₕ)
+    temp_U       = zeros(lₕ+1, (2lₕ+1)Nₕ, Nₕ)
+    temp_n       = zeros(lₕ+1, (2lₕ+1)Nₕ)
+    temp_R       = zeros(lₕ+1, Nₕ, Nₕ)
+    temp_Rstar   = zeros(lₕ+1, Nₕ, Nₕ)
+    temp_tn      = 0.0     
 
+    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_U, temp_Rstar, temp_R, temp_tn)
 end
 
 
@@ -62,7 +69,7 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
             if cache.temp_ϵ[l,k] != ϵf
                 temp_n[l,k] = cache.temp_ϵ[l,k] < ϵf ? 2 : 0
             else
-                ######### ????????????
+                
             end
         end
     end
@@ -86,6 +93,10 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
     solver.R .= cache.temp_R
 end
 
-function stopping_criteria(::ODA, solver::KhonShamSolver, ϵ)
-    abs(solver.R .- solver.Rprev) > ϵ
+function stopping_criteria(::ODA, R, Rprev)
+    val = abs(R .- Rprev)
+    solver.current_crit = val
+    val
 end
+
+stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.R, solver.Rprev)

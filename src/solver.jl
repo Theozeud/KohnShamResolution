@@ -1,4 +1,4 @@
-struct SolverOptions{T,Tr,Teps}
+struct SolverOptions{T,Teps}
     lₕ::T   
     Nₕ::T    
     #Rmax::Tr    
@@ -9,8 +9,7 @@ struct SolverOptions{T,Tr,Teps}
 end
 
 
-struct KhonShamSolver{TS}
-    mesh::AbstractMesh          
+struct KhonShamSolver{Tn,TVC}     
     cache::AbstractKohnShamCache
     opts::SolverOptions
     ϵ::AbstractMatrix
@@ -18,4 +17,7 @@ struct KhonShamSolver{TS}
     n::AbstractMatrix
     R::AbstractMatrix
     Rprev::AbstractMatrix
+    niter::Tn
+    val_crit::TVC
+    current_crit
 end

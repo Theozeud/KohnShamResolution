@@ -3,7 +3,7 @@ module KohnShamResolution
     using LinearAlgebra
     using SparseArrays
     using TimerOutputs
-    
+    using ProgressMeter
     
     include("utils.jl")
 
@@ -11,7 +11,7 @@ module KohnShamResolution
 
     export OneDMesh
     export mesh
-    
+
     include("mesh.jl")
 
     export KohnShamExtended
@@ -21,12 +21,15 @@ module KohnShamResolution
 
     include("abstractmethods.jl")
 
+    export DFTProblem
+
+    include("problem.jl")
+
     include("solver.jl")
 
     export ODA
 
     include("methods.jl")
-
 
     include("solution.jl")
 
