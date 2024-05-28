@@ -4,4 +4,8 @@
 Base.show
 @cache
 
-=#
+# Idea for Laurent serie
+--> deux tableaux
+--> une variable qui dit si y a un log
+--> le coeff devant le log
+

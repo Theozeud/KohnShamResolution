@@ -1,19 +1,14 @@
 """
-    Polynomial
+    Laurent
 
 """
-mutable struct Polynomial 
-    coeffs
+mutable struct Laurent 
+    coeffs_plus
+    coeffs_minus
+    haslog::Bool
+    coeff_log
 end
 
-Polynomial(coeffs) = Polynomial(coeffs)
-
-function Polynomial(s::String)
-    
-    
-end
-
-@inline zero(p::Polynomial) = Polynomial([0])
 @inline deg(p::Polynomial) = length(p.coeffs)-1
 @inline Base.getindex(p::Polynomial, n::Int) =  n>deg(p) ? 0 : p.coeffs[n+1] 
 @inline Base.eachindex(p::Polynomial) = 0:deg(p)
