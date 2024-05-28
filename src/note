@@ -5,7 +5,8 @@ Base.show
 @cache
 
 # Idea for Laurent serie
---> deux tableaux
+--> un tableaux
+--> deg_min : degré du plus petit monome présent dans la série
 --> une variable qui dit si y a un log
 --> le coeff devant le log
 
