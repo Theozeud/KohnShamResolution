@@ -13,77 +13,13 @@ end
 @inline degpos(p::LaurentPolynomial) = p.degmin+length(p.coeffs)-1
 @inline degneg(p::LaurentPolynomial) = p.degmin
 @inline degnull(p::LaurentPolynomial) = p.degmin≤0 ? -p.degmin+1 : nothing
-@inline ismonomial(p::LaurentPolynomial) = length(p.coeffs) == 1 && !haslog
+@inline haslog(p::LaurentPolynomial) = p.haslog
+@inline ismonomial(p::LaurentPolynomial) = length(p.coeffs) == 1 && !haslog(p)
 @inline Base.eachindex(p::LaurentPolynomial) = degneg(p):degpos(p)
 @inline Base.getindex(p::LaurentPolynomial, n::Int) =  n ∈ eachindex(p) ? p.coeffs[n-degneg(p)+1] : 0  
+@inline Base.firstindex(p::LaurentPolynomial) = degneg(p)
 @inline Base.lastindex(p::LaurentPolynomial) = degpos(p)
-
-function Base.show(io::IO, p::LaurentPolynomial)
-    #elag!(p)
-    str = ""
-
-    if degneg(p) ≤ -1
-        for i in degneg(p):-1
-            if p[i] ≠ 0
-                if p[i] ≠ 1
-                    str *= string(p[i])*string(" X^")*string(i)*" + "
-                else
-                    str *= string(" X^(")*string(i)*") + "
-                end
-            end
-        end
-    end
-
-    if degpos(p)≥0
-        if p[0] != 0 || ismonomial(p)
-            str *= string(p[0])*" + "
-        end
-    end
-    if degpos(p)≥1
-        if p[1] ≠ 0
-            if p[1] ≠ 1
-                str *= string(p[1])*string(" X")*" + "
-            else
-                str *= string(" X")*" + "
-            end
-        end
-    end
-
-    if degpos(p)≥2
-        for i in 2:degpos(p)
-            if p[i] ≠ 0
-                if p[i] ≠ 1
-                    str *= string(p[i])*string(" X^")*string(i)*" + "
-                else
-                    str *= string(" X^")*string(i)*" + "
-                end
-            end
-        end
-    end
-
-    str = str[1:length(str)-3]
-    println(io, str)
-end
-
-#=
-function (p::LaurentPolynomial)(x)
-    y = p[end]
-    for i ∈ reverse(eachindex(p))[]
-        y = y*x + p[i]
-    end
-    y
-end
-=#
-
-#=
-function push_deg!(p::Polynomial, n::Int)
-    prepend!(p.coeffs, zeros(n)...)
-end
-
-function pop_deg!(p::Polynomial, n::Int)
-    p.coeffs = p.coeffs[1+n:deg(p)+1]
-end
-=#
+@inline Base.zeros(degmin, degmax) = LaurentPolynomial([],degmin,false,nothing)
 
 function elag!(p::LaurentPolynomial)
     (dn,dp) = deg(p)
@@ -99,31 +35,105 @@ function elag!(p::LaurentPolynomial)
         end
         dn += 1
     end
-    p.coeffs = p.coeffs[dn:dp]
+    p.coeffs = p.coeffs[dn-degneg(p)+1:dp-degneg(p)+1]
     p.degmin = dn
     if p.haslog && p.coeff_log == 0
         p.haslog = false
     end
+    p
 end
+
+function Base.show(io::IO, p::LaurentPolynomial)
+    elag!(p)
+    str = ""
+    if degneg(p) ≤ -1
+        for i in degneg(p):-1
+            if p[i] ≠ 0
+                if p[i] ≠ 1
+                    str *= string(p[i])*string(" X^")*string(i)*" + "
+                else
+                    str *= string(" X^(")*string(i)*") + "
+                end
+            end
+        end
+    end
+    if degpos(p)≥0
+        if p[0] != 0 || ismonomial(p)
+            str *= string(p[0])*" + "
+        end
+    end
+    if degpos(p)≥1
+        if p[1] ≠ 0
+            if p[1] ≠ 1
+                str *= string(p[1])*string(" X")*" + "
+            else
+                str *= string(" X")*" + "
+            end
+        end
+    end
+    if degpos(p)≥2
+        for i in 2:degpos(p)
+            if p[i] ≠ 0
+                if p[i] ≠ 1
+                    str *= string(p[i])*string(" X^")*string(i)*" + "
+                else
+                    str *= string(" X^")*string(i)*" + "
+                end
+            end
+        end
+    end
+    str = str[1:length(str)-3]
+    if str == "" 
+        str *= "0"
+    end
+    println(io, str)
+end
+
+
+function (p::LaurentPolynomial)(x)
+    y = p[end]
+    for i ∈ degpos(p)-1:-1:0
+        y = y*x + p[i]
+    end
+    z = p[begin]/x
+    for i ∈ degneg(p)+1:-1
+        z = (z + p[i])/x
+    end
+    z+y
+end
+
 
 #=
-
-function Base.:*(r::Real, p::Polynomial)
-    Polynomial(p.coeffs .* r)
+function push_deg!(p::Polynomial, n::Int)
+    prepend!(p.coeffs, zeros(n)...)
 end
 
-function Base.:+(p::Polynomial, q::Polynomial)
+function pop_deg!(p::Polynomial, n::Int)
+    p.coeffs = p.coeffs[1+n:deg(p)+1]
+end
+=#
+
+
+
+function Base.:*(r::Real, p::LaurentPolynomial)
+    elag!(LaurentPolynomial(p.coeffs .* r, p.degmin,haslog(p), p.coeff_log))
+end
+
+
+function Base.:+(p::LaurentPolynomial, q::LaurentPolynomial)
+    new_coeffs = zero(max(degpos(p),degpos(q))-min(degneg(p),degneg(q))+1)
+    for i in Set(eachindex(q))∩Set(eachindex(p))
     if deg(p) >= deg(q)
-        new_coeffs = zero(q.coeffs)
         for i ∈ eachindex(q)
             new_coeffs[i+1] = p[i] .+ q[i]
         end
-        Polynomial(reduce(vcat, (new_coeffs, p.coeffs[deg(q)+2:end])))
+        LaurentPolynomial(reduce(vcat, (new_coeffs, p.coeffs[deg(q)+2:end])))
     else
         q+p
     end
 end
 
+#=
 function Base.:*(p::Polynomial, q::Polynomial)
     elag!(p)
     elag!(q)
