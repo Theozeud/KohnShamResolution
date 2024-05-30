@@ -19,7 +19,6 @@ end
 @inline Base.getindex(p::LaurentPolynomial, n::Int) =  n ∈ eachindex(p) ? p.coeffs[n-degneg(p)+1] : 0  
 @inline Base.firstindex(p::LaurentPolynomial) = degneg(p)
 @inline Base.lastindex(p::LaurentPolynomial) = degpos(p)
-@inline Base.zeros(degmin, degmax) = LaurentPolynomial([],degmin,false,nothing)
 
 function elag!(p::LaurentPolynomial)
     (dn,dp) = deg(p)
@@ -112,7 +111,6 @@ function pop_deg!(p::Polynomial, n::Int)
     p.coeffs = p.coeffs[1+n:deg(p)+1]
 end
 =#
-
 
 
 function Base.:*(r::Real, p::LaurentPolynomial)
