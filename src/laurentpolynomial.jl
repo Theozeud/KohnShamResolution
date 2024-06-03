@@ -49,9 +49,9 @@ function Base.show(io::IO, p::LaurentPolynomial)
         for i in degneg(p):-1
             if p[i] ≠ 0
                 if p[i] ≠ 1
-                    str *= string(p[i])*string(" X^")*string(i)*" + "
+                    str *= string(p[i])*" X^"*string(i)*" + "
                 else
-                    str *= string(" X^(")*string(i)*") + "
+                    str *= " X^("*string(i)*") + "
                 end
             end
         end
@@ -64,9 +64,9 @@ function Base.show(io::IO, p::LaurentPolynomial)
     if degpos(p)≥1
         if p[1] ≠ 0
             if p[1] ≠ 1
-                str *= string(p[1])*string(" X")*" + "
+                str *= string(p[1])*" X + "
             else
-                str *= string(" X")*" + "
+                str *= " X + "
             end
         end
     end
@@ -74,20 +74,25 @@ function Base.show(io::IO, p::LaurentPolynomial)
         for i in 2:degpos(p)
             if p[i] ≠ 0
                 if p[i] ≠ 1
-                    str *= string(p[i])*string(" X^")*string(i)*" + "
+                    str *= string(p[i])*" X^"*string(i)*" + "
                 else
-                    str *= string(" X^")*string(i)*" + "
+                    str *= " X^"*string(i)*" + "
                 end
             end
         end
     end
-    str = str[1:length(str)-3]
+
+    if haslog(p)
+        str *= string(p.coeff_log)*" log(X)"
+    else
+        str = str[1:length(str)-3]
+    end
+
     if str == "" 
         str *= "0"
     end
     println(io, str)
 end
-
 
 function (p::LaurentPolynomial)(x)
     y = p[end]
@@ -102,13 +107,12 @@ function (p::LaurentPolynomial)(x)
 end
 
 
-
 function shift!(p::LaurentPolynomial, n::Int)
     p.degmin += n
 end
 
 function Base.:*(r::Real, p::LaurentPolynomial)
-    elag!(LaurentPolynomial(p.coeffs .* r, p.degmin,haslog(p), p.coeff_log))
+    elag!(LaurentPolynomial(p.coeffs .* r, p.degmin, haslog(p), p.coeff_log * r))
 end
 
 
@@ -152,8 +156,6 @@ function Base.:*(p::Polynomial, q::Polynomial)
 end
 =#
 
-
-
 function integrate!(p::LaurentPolynomial)
     if haslog(p)
         @error "We can't integrate a laurent polynomial with already a log term."
@@ -162,7 +164,7 @@ function integrate!(p::LaurentPolynomial)
         p.haslog = true
         p.coeff_log = p[-1]
     end
-    p.coeffs = p.coeffs .* [i == -1 ? 0 : 1/1+i for i in eachindex(p)]
+    p.coeffs = p.coeffs .* [i == -1 ? 0 : 1/(1+i) for i in eachindex(p)]
     shift!(p,1)
 end
 
@@ -173,7 +175,7 @@ function integrate(p::LaurentPolynomial)
     end
     _haslog = p[-1] != 0 ? true : false
     coeff_log = p[-1]
-    new_coeffs = p.coeffs .* [i == -1 ? 0 : 1/1+i for i in eachindex(p)]
+    new_coeffs = p.coeffs .* [i == -1 ? 0 : 1//(1+i) for i in eachindex(p)]
     LaurentPolynomial(new_coeffs, p.degmin+1, _haslog, coeff_log)
 end
 
@@ -182,21 +184,28 @@ function integrate(p::LaurentPolynomial, a::Real, b::Real)
     int_p(b) - int_p(a)
 end
 
-#=
-function deriv!(p::Polynomial)
-    p.coeffs = p.coeffs .* [i for i in 1:deg(p)]
-    pop_deg!(p,1)    
+
+function deriv!(p::LaurentPolynomial)
+    p.coeffs = p.coeffs .* [i for i in eachindex(p)]
+    shift!(p,-1)
+    if haslog(p)
+        p.coeffs[-degneg(p)] = p.coeff_log
+        p.haslog = false
+    end
+    p
 end
 
-function deriv(p::Polynomial)
-    new_coeffs = p.coeffs[2:end] .* [i for i in 1:deg(p)]
-    Polynomial(new_coeffs)
+function deriv(p::LaurentPolynomial)
+    new_coeffs = p.coeffs .* [i for i in eachindex(p)]
+    if haslog(p)
+        new_coeffs[-degneg(p)+1] = p.coeff_log
+    end
+    LaurentPolynomial(new_coeffs, p.degmin-1, false, 0.0)
 end
-=#
+
 
 
 # Test
-
 p = LaurentPolynomial([4,5,0,1,2],-3,false,0)
 q = integrate(p)
 r = integrate(q)
