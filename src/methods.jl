@@ -12,6 +12,7 @@ struct CacheODA <: AbstractKohnShamCache
     Hfix
     temp_H
     temp_n
+    temp_ϵ
     temp_U
     temp_Rstar
     temp_R
@@ -33,14 +34,15 @@ function init_cache(model::AbstractDFTModel,::ODA; lₕ, Nₕ)
     end 
 
     # Initialization of array for temporary stockage of computations
-    temp_H       = zeros(lₕ+1, Nₕ, Nₕ)
+    temp_H       = zeros(Nₕ, Nₕ)
     temp_U       = zeros(lₕ+1, (2lₕ+1)Nₕ, Nₕ)
     temp_n       = zeros(lₕ+1, (2lₕ+1)Nₕ)
+    temp_ϵ       = zeros(lₕ+1,(2lₕ+1)Nₕ)
     temp_R       = zeros(lₕ+1, Nₕ, Nₕ)
     temp_Rstar   = zeros(lₕ+1, Nₕ, Nₕ)
     temp_tn      = 0.0     
 
-    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_U, temp_Rstar, temp_R, temp_tn)
+    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_ϵ, temp_U, temp_Rstar, temp_R, temp_tn)
 end
 
 
@@ -55,14 +57,12 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
     # STEP 3 : résolution du problème aux valeurs propres blocs par blocs
     for l ∈ 0:lₕ
         # Assembly the matrices
-        cache.temp_H .= cache.H[l+1] #+ Exch + Potential
+        cache.temp_H .= cache.Hix[l+1] #+ Exch + Potential
         # Solve generalized eigenvalue problem on the section Hₗ
-        cache.temp_ϵ, cache.temp_U = solve_generalized_eigenvalue_problem(temp_H, cache.M₀)
+        cache.temp_ϵ[l+1], cache.temp_U[l] = solve_generalized_eigenvalue_problem(cache.temp_H, cache.M₀)
     end
 
-    # STEP 4 : Determine the Fermi Level
-    
-    # STEP 5 : Build the n matrix using the Aufbau principle
+    # STEP 4 : Build the n matrix using the Aufbau principle
     for l ∈ 0:lₕ   
         for k ∈ 1:(2*l+1)*Nₕ
             if cache.temp_ϵ[l,k] != ϵf

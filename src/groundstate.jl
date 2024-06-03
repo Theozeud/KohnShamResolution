@@ -1,7 +1,3 @@
-#=
-    groundstate()
-    
-=#
 function groundstate(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod; show_progress = false, kwargs...)
     solver = init(model, method; kwargs...)
     solve!(solver, method; show_progress = show_progress)
@@ -11,10 +7,6 @@ end
 groundstate(problem::DFTProblem; kwargs...) =  groundstate(model(problem), method(problem); kwargs...)
 
 
-#=
-    init()
-    
-=#
 function init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod; lₕ, Nₕ, ε)
 
     # Check if the method is appropriate
@@ -42,10 +34,6 @@ function init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod;
     solver(cache, opts, ϵ, U, n, R, Rprev, niter, val_crit, current_crit)
 end
 
-#=
-    solve!()
-    
-=#
 function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod; show_progress = false)
     p = ProgressThresh(solver.opts.ϵ; enabled = show_progress, desc = "Itération Principale")
     while solver.current_crit > solver.opts.ϵ
@@ -55,10 +43,6 @@ function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod
     end
 end
 
-#=
-    loopfooter!()
-    
-=#
 function loopfooter!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
     solver.Rprev .= solver.R
     solver.niter += 1
@@ -66,10 +50,7 @@ function loopfooter!(solver::KhonShamSolver, method::AbstractKohnShamResolutionM
     push!(solver.val_crit, solver.current_crit)
 end
 
-#=
-    __makesolution()
-    
-=#
+
 function makesolution(solver::KhonShamSolver)
     KohnShamSolution()
 end
