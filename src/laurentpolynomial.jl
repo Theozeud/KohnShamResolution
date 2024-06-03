@@ -9,6 +9,9 @@ mutable struct LaurentPolynomial{T}
     coeff_log::T
 end
 
+Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,0))
+
+
 @inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin+length(p.coeffs)-1)
 @inline degmax(p::LaurentPolynomial) = p.degmin+length(p.coeffs)-1
 @inline degmin(p::LaurentPolynomial) = p.degmin
@@ -58,13 +61,13 @@ function Base.show(io::IO, p::LaurentPolynomial)
                 if p[i] ≠ 1
                     str *= string(p[i])*" X^"*string(i)*" + "
                 else
-                    str *= " X^("*string(i)*") + "
+                    str *= "X^("*string(i)*") + "
                 end
             end
         end
     end
     if degmax(p)≥0
-        if p[0] != 0 || ismonomial(p)
+        if p[0] != 0
             str *= string(p[0])*" + "
         end
     end
@@ -73,7 +76,7 @@ function Base.show(io::IO, p::LaurentPolynomial)
             if p[1] ≠ 1
                 str *= string(p[1])*" X + "
             else
-                str *= " X + "
+                str *= "X + "
             end
         end
     end
@@ -83,7 +86,7 @@ function Base.show(io::IO, p::LaurentPolynomial)
                 if p[i] ≠ 1
                     str *= string(p[i])*" X^"*string(i)*" + "
                 else
-                    str *= " X^"*string(i)*" + "
+                    str *= "X^"*string(i)*" + "
                 end
             end
         end
@@ -98,19 +101,29 @@ function Base.show(io::IO, p::LaurentPolynomial)
     if str == "" 
         str *= "0"
     end
-    println(io, str)
+    print(io, str)
 end
 
 function (p::LaurentPolynomial)(x)
-    y = p[end]
-    for i ∈ degmax(p)-1:-1:0
-        y = y*x + p[i]
+    y = 0
+    if degmax(p) ≥ 0
+        y = p[end]
+        for i ∈ degmax(p)-1:-1:0
+            y = y*x + p[i]
+        end
     end
-    z = p[begin]/x
-    for i ∈ degmin(p)+1:-1
-        z = (z + p[i])/x
+    z= 0
+    if degmin(p) < 0
+        z = p[begin]/x
+        for i ∈ degmin(p)+1:-1
+            z = (z + p[i])/x
+        end
     end
-    z+y+p.coeff_log * log(x)
+    if haslog(p)
+        z+y+p.coeff_log * log(x)
+    else
+        z+y
+    end
 end
 
 function shift!(p::LaurentPolynomial, n::Int)
@@ -139,7 +152,7 @@ function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
     NewT = promote_type(TP,TQ)
     r = Laurent_zero(NewT, degmin(p) + degmin(q), degmax(p)+ degmax(q))
     for i ∈ eachindex(r)
-        for j ∈ (i-degmax(p)):(i-degmin(p))
+        for j ∈ eachindex(p)
             r[i] += p[j]*q[i-j]
         end
     end
@@ -174,7 +187,6 @@ function integrate(p::LaurentPolynomial, a::Real, b::Real)
     int_p(b) - int_p(a)
 end
 
-
 function deriv!(p::LaurentPolynomial)
     p.coeffs = p.coeffs .* [i for i in eachindex(p)]
     shift!(p,-1)
@@ -194,8 +206,25 @@ function deriv(p::LaurentPolynomial)
 end
 
 
+scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
+scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
+
 
 # Test
+px = Monomial(1)
 p = LaurentPolynomial([4,5,0,1,2],-3,false,0)
 q = integrate(p)
 r = integrate(q)
+
+
+
+#=
+lpb = LaurentPolynomialBasis([px,px2,p,p,p,p,p])
+
+using PrettyTables
+showpt(A) = pretty_table(A, show_header = false; alignment = :c)
+
+@time M = mass_matrix(lpb,1,2)
+
+showpt(M)
+=#
