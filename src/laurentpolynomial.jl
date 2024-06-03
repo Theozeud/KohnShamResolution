@@ -209,7 +209,6 @@ end
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
 
-
 # Test
 px = Monomial(1)
 p = LaurentPolynomial([4,5,0,1,2],-3,false,0)

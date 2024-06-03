@@ -1,6 +1,4 @@
-using KohnShamResolution
-using Test
+using SafeTestsets
 
-@testset "KohnShamResolution.jl" begin
-    # Write your tests here.
-end
+@safetestset "LaurentPolynomiam tests                                                                       " begin include("laurentpolynomial.jl") end
+

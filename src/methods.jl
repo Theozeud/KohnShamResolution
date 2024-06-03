@@ -4,7 +4,6 @@ for_sphericalsymmetry(::ODA) = true
 for_cylindricalsymmetry(::ODA) = false
 ismethod_for_model(::ODA,::KohnShamExtended) = true
 
-
 struct CacheODA <: AbstractKohnShamCache
     A
     M₀
