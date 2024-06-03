@@ -13,6 +13,7 @@ struct CacheODA <: AbstractKohnShamCache
     temp_H
     temp_n
     temp_ϵ
+    temp_ϵ_sort
     temp_U
     temp_Rstar
     temp_R
@@ -35,14 +36,15 @@ function init_cache(model::AbstractDFTModel,::ODA; lₕ, Nₕ)
 
     # Initialization of array for temporary stockage of computations
     temp_H       = zeros(Nₕ, Nₕ)
-    temp_U       = zeros(lₕ+1, (2lₕ+1)Nₕ, Nₕ)
-    temp_n       = zeros(lₕ+1, (2lₕ+1)Nₕ)
-    temp_ϵ       = zeros(lₕ+1,(2lₕ+1)Nₕ)
+    temp_U       = zeros(lₕ+1, (2lₕ+1)*Nₕ, Nₕ)
+    temp_n       = zeros(lₕ+1, (2lₕ+1)*Nₕ)
+    temp_ϵ       = zeros(lₕ+1,(2lₕ+1)*Nₕ)
+    temp_ϵ_sort  = zeros((lₕ+1)*(2lₕ+1)*Nₕ)
     temp_R       = zeros(lₕ+1, Nₕ, Nₕ)
     temp_Rstar   = zeros(lₕ+1, Nₕ, Nₕ)
     temp_tn      = 0.0     
 
-    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_ϵ, temp_U, temp_Rstar, temp_R, temp_tn)
+    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_ϵ, temp_ϵ_sort, temp_U, temp_Rstar, temp_R, temp_tn)
 end
 
 
@@ -63,15 +65,7 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
     end
 
     # STEP 4 : Build the n matrix using the Aufbau principle
-    for l ∈ 0:lₕ   
-        for k ∈ 1:(2*l+1)*Nₕ
-            if cache.temp_ϵ[l,k] != ϵf
-                temp_n[l,k] = cache.temp_ϵ[l,k] < ϵf ? 2 : 0
-            else
-                
-            end
-        end
-    end
+    aufbau!(cache.temp_n, cache.temp_ϵ, z)
 
     # STEP 6 : Build the density related matrix 
     cache.temp_Rstar = zeros(lₕ+1,Nₕ,Nₕ)
@@ -83,6 +77,7 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
 
     # STEP 7 : update this matrix with a convex approach
     # some optimisation to find a good tₙ
+    cache.temp_tₙ = 0.5
     cache.temp_R .= cache.temp_tₙ .* cache.temp_Rstar + (1 - cache.temp_tₙ) .* solver.Rprev
 
     # Registering into solver
@@ -93,9 +88,32 @@ function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
 end
 
 function stopping_criteria(::ODA, R, Rprev)
-    val = abs(R .- Rprev)
-    solver.current_crit = val
-    val
+    norm(R .- Rprev)
 end
 
 stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.R, solver.Rprev)
+
+
+function aufbau!(n::AbstractArray, ϵ::AbstractArray, z::Real)
+    index_ϵ_sort = sortperm(ϵ)
+    count = z
+    i = firstindex(index_ϵ_sort)
+    while count > 0
+        l = div(index_ϵ_sort[i], Nₕ)
+        if count - (2*l + 1) ≥ 0
+            for k in -l:l
+                n[l,k] = 2
+            end
+            count = count - (2*l + 1)
+        else
+            for k in -l:l
+                n[l,k] = 2/(2*l+1)
+            end
+            count = 0
+            break
+        end
+        i+=1
+    end
+end
+
+

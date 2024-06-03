@@ -12,11 +12,11 @@ end
 struct KhonShamSolver{Tn,TVC}     
     cache::AbstractKohnShamCache
     opts::SolverOptions
-    ϵ::AbstractMatrix
-    U::AbstractMatrix
-    n::AbstractMatrix
-    R::AbstractMatrix
-    Rprev::AbstractMatrix
+    ϵ
+    U
+    n
+    R
+    Rprev
     niter::Tn
     val_crit::TVC
     current_crit

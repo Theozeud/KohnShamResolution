@@ -28,15 +28,16 @@ function init(model::AbstractDFTModel, method::AbstractKohnShamResolutionMethod;
     Rprev   = zeros(lₕ+1, Nₕ, Nₕ)
 
     niter = 0
-    current_crit =  stopping_criteria(method, R, Rprev)
-    val_crit = [current_crit]
+    current_crit =  2*ε
+    val_crit = [current_crit]    
 
-    solver(cache, opts, ϵ, U, n, R, Rprev, niter, val_crit, current_crit)
+    KhonShamSolver(cache, opts, ϵ, U, n, R, Rprev, niter, val_crit, current_crit)
 end
 
 function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod; show_progress = false)
-    p = ProgressThresh(solver.opts.ϵ; enabled = show_progress, desc = "Itération Principale")
-    while solver.current_crit > solver.opts.ϵ
+    p = ProgressThresh(solver.opts.ε; enabled = show_progress, desc = "Itération Principale") 
+    while solver.current_crit > solver.opts.ε
+        println("itérations")
         update!(p, solver.current_crit)
         performstep!(method, solver.cache, solver)
         loopfooter!(solver, method)
