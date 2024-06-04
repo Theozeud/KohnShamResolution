@@ -56,7 +56,7 @@ end
 function performstep!(::ODA, solver::KhonShamSolver)
 
     @unpack lₕ, Nₕ, basis = solver.discretization
-    @unpack z, N, exch, potential = solver.model
+    @unpack z, N, exc, potential = solver.model
     @unpack A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_Dstar, temp_D, temp_U, temp_ϵ, temp_ϵ_sort, temp_n, temp_tn = solver.cache
 
     # STEP 1 : find potential 
@@ -69,16 +69,16 @@ function performstep!(::ODA, solver::KhonShamSolver)
     # STEP 3 : résolution du problème aux valeurs propres blocs par blocs
     for l ∈ 0:lₕ
         # Assembly the matrices
-        temp_H .= Hix[l+1] #+ Exch + Potential
+        temp_H .= Hfix[l+1] #+ Exch + Potential
         # Solve generalized eigenvalue problem on the section Hₗ
-        temp_ϵ[l+1], temp_U[l] = solve_generalized_eigenvalue_problem(temp_H, M₀)
+        #temp_ϵ[l+1], temp_U[l] = zeros((2*lₕ+1)*Nₕ), zeros((2*lₕ+1)*Nₕ) #solve_generalized_eigenvalue_problem(temp_H, M₀)
     end
 
     # STEP 4 : Build the n matrix using the Aufbau principle
     aufbau!(temp_n, temp_ϵ, N)
 
     # STEP 6 : Build the density related matrix
-    build_density_star!(discretization, temp_Dstar, temp_U, temp_n)
+    build_density_star!(solver.discretization, temp_Dstar, temp_U, temp_n)
 
     # STEP 7 : update this matrix with a convex approach
     # some optimisation to find a good tₙ
@@ -98,19 +98,20 @@ stopping_criteria(::ODA, D, Dprev) = norm(D .- Dprev)
 
 
 function aufbau!(n::AbstractArray, ϵ::AbstractArray, N::Real)
-    index_ϵ_sort = sortperm(ϵ)
+    (d1,d2) = size(ϵ)
+    index_ϵ_sort = sortperm(ϵ, dims = 2)
     count = N
     i = firstindex(index_ϵ_sort)
     while count > 0
-        l = div(index_ϵ_sort[i], Nₕ)
+        l = div(index_ϵ_sort[i], d1)
         if count - (2*l + 1) ≥ 0
             for k in -l:l
-                n[l,k] = 2
+                n[l+1,k+l+1] = 2
             end
             count = count - (2*l + 1)
         else
             for k in -l:l
-                n[l,k] = 2/(2*l+1)
+                n[l+1,k+l+1] = 2/(2*l+1)
             end
             count = 0
             break

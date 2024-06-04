@@ -10,11 +10,12 @@ KM = KohnShamExtended(z = _z,N = _N)
 method = ODA()
 
 # Choice of the Solver Options
-lₕ = 10
-Nₕ = 10
+lₕ = 2
+Nₕ = 2
+basis = LaurentPolynomialBasis([Monomial(1)])
 
 # Solve
-groundstate(KM, method; ε = 0.1)
+groundstate(KM, KohnShamSphericalDiscretization(lₕ,Nₕ,basis), method; tol = 0.1)
 
 # Plot Results
 

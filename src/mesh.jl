@@ -21,7 +21,7 @@ function mesh(point::Real, funMesh::Base.Callable, Nmesh::Int)
 end
 
 #=
-function mesh(point::Real; funMesh::Base.Callable, Rmax::Real)
+function mesh(point::Real, funMesh::Base.Callable, Rmax::Real)
     points = [point]
     nextpoint = funMesh(point)
     while nextpoint ≤ Rmax

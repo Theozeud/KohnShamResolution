@@ -1,4 +1,4 @@
-struct SolverOptions{T,Teps}
+struct SolverOptions{Teps}
     ε::Teps      
 end
 
