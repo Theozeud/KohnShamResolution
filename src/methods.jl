@@ -94,9 +94,9 @@ end
 stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.R, solver.Rprev)
 
 
-function aufbau!(n::AbstractArray, ϵ::AbstractArray, z::Real)
+function aufbau!(n::AbstractArray, ϵ::AbstractArray, N::Real)
     index_ϵ_sort = sortperm(ϵ)
-    count = z
+    count = N
     i = firstindex(index_ϵ_sort)
     while count > 0
         l = div(index_ϵ_sort[i], Nₕ)
