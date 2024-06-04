@@ -21,7 +21,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     n           = init_occupation(discretization)
     
     # Init Cache
-    cache = init_cache(method, model, discretization; lₕ = lₕ, Nₕ = Nₕ)
+    cache = init_cache(method, model, discretization)
 
     # Registering SolverOptions
     opts = SolverOptions(tol)
@@ -35,10 +35,10 @@ end
 
 function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod; show_progress = false)
     p = ProgressThresh(solver.opts.ε; enabled = show_progress, desc = "Itération Principale") 
-    while solver.current_crit > solver.opts.ε
+    while solver.current_stop_crit > solver.opts.ε
         println("Itérations")
-        update!(p, solver.current_crit)
-        performstep!(method, solver.cache, solver)
+        update!(p, solver.current_stop_crit)
+        performstep!(method, solver)
         loopfooter!(solver, method)
     end
 end
@@ -52,5 +52,5 @@ end
 
 
 function makesolution(solver::KhonShamSolver)
-    KohnShamSolution()
+    KohnShamSolution(solver)
 end

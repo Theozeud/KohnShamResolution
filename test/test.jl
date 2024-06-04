@@ -14,7 +14,7 @@ lₕ = 10
 Nₕ = 10
 
 # Solve
-groundstate(KM, method; lₕ = 2, Nₕ = 2, ε = 0.1)
+groundstate(KM, method; ε = 0.1)
 
 # Plot Results
 

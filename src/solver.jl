@@ -4,6 +4,8 @@ end
 
 
 struct KhonShamSolver{TSC}
+    discretization
+    model
     D
     Dprev
     U  

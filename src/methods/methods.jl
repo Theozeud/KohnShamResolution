@@ -20,7 +20,7 @@ struct CacheODA <: AbstractKohnShamCache
     temp_tn
 end
 
-function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDiscretization, ; lₕ, Nₕ)
+function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDiscretization)
 
     @unpack lₕ, Nₕ, basis = discretization
 
@@ -52,50 +52,49 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
 end
 
 
-function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
+function performstep!(::ODA, solver::KhonShamSolver)
+
+    @unpack lₕ, Nₕ, basis = solver.discretization
+    @unpack z, N, exch, potential = solver.model
+    @unpack A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_Dstar, temp_D, temp_U, temp_ϵ, temp_ϵ_sort, temp_n, temp_tn = solver.cache
 
     # STEP 1 : find potential 
-    #Potential = depend d'une sous methode, du modèle et de la discretization
+    #Potential = approximate_potential()
 
     # STEP 2 : compute an approximation of the exchange correlation term
-    #Exch = 
+    #Exch =  depend d'une sous methode, du modèle et de la discretization
 
     # STEP 3 : résolution du problème aux valeurs propres blocs par blocs
     for l ∈ 0:lₕ
         # Assembly the matrices
-        cache.temp_H .= cache.Hix[l+1] #+ Exch + Potential
+        temp_H .= Hix[l+1] #+ Exch + Potential
         # Solve generalized eigenvalue problem on the section Hₗ
-        cache.temp_ϵ[l+1], cache.temp_U[l] = solve_generalized_eigenvalue_problem(cache.temp_H, cache.M₀)
+        temp_ϵ[l+1], temp_U[l] = solve_generalized_eigenvalue_problem(temp_H, M₀)
     end
 
     # STEP 4 : Build the n matrix using the Aufbau principle
-    aufbau!(cache.temp_n, cache.temp_ϵ, z)
+    aufbau!(temp_n, temp_ϵ, N)
 
-    # STEP 6 : Build the density related matrix 
-    cache.temp_Rstar = zeros(lₕ+1,Nₕ,Nₕ)
-    for l ∈ 0:lₕ
-        for k ∈ 1:(2*l+1)*Nₕ
-            cache.temp_Rstar[l] .+= cache.temp_n[l,k]*tensorproduct(cache.temp_U[l,k], cache.temp_U[l,k])
-        end
-    end
+    # STEP 6 : Build the density related matrix
+    build_density_star!(discretization, temp_Dstar, temp_U, temp_n)
 
     # STEP 7 : update this matrix with a convex approach
     # some optimisation to find a good tₙ
-    cache.temp_tₙ = 0.5
-    cache.temp_R .= cache.temp_tₙ .* cache.temp_Rstar + (1 - cache.temp_tₙ) .* solver.Rprev
+    temp_tₙ = 0.5
+    temp_D .= temp_tₙ .* temp_Dstar + (1 - temp_tₙ) .* solver.Dprev
 
     # Registering into solver
-    solver.U .= cache.temp_U
-    solver.n .= cache.temp_n
-    solver.ϵ .= cache.temp_ϵ
-    solver.R .= cache.temp_R
+    solver.U .= temp_U
+    solver.n .= temp_n
+    solver.ϵ .= temp_ϵ
+    solver.D .= temp_D
 end
 
-function stopping_criteria(::ODA, R, Rprev)
-    norm(R .- Rprev)
+function stopping_criteria(::ODA, D, Dprev)
+    norm(D .- Dprev)
 end
 
-stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.R, solver.Rprev)
+stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev)
 
 
 function aufbau!(n::AbstractArray, ϵ::AbstractArray, N::Real)

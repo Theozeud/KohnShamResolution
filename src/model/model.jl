@@ -3,7 +3,7 @@ abstract type AbstractDFTModel end
 ```
     KohnSham Model
 ```
-Base.@kwdef struct KohnShamExtended{TZ,TN,TEXCH,TPOT} <: AbstractDFTModel
+struct KohnShamExtended{TZ,TN,TEXCH,TPOT} <: AbstractDFTModel
     z::TZ
     N::TN
     exc::TEXCH = NothingFunction()
