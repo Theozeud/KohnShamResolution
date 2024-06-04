@@ -30,11 +30,12 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     M₋₁ = zeros(Nₕ,Nₕ) # mass_matrix
     M₋₂ = zeros(Nₕ,Nₕ) # mass_matrix
 
-    # Creation of the fix part of the hamiltonian for each section Hₗ    
-    Hfix = zeros(lₕ+1, Nₕ, Nₕ) 
-    for l ∈ 0:lₕ
-        Hfix[l+1,:,:] .= - A .- l*(l+1)*M₋₂ .- 2*charge(model)*(2*l+1) .* M₋₁
-    end 
+    # Creation of the fix part of the hamiltonian   
+    Kin =  zeros(lₕ+1, Nₕ, Nₕ)
+    Coulomb =  zeros(lₕ+1, Nₕ, Nₕ)
+    build_kinetic!(discretization, Kin, A, M₋₂)
+    build_coulomb!(discretization, Coulomb, model, M₋₁)
+    Hfix = Kin + Coulomb
 
     # Initialization of array for temporary stockage of computations
     temp_H       = zeros(Nₕ, Nₕ)
@@ -59,10 +60,11 @@ function performstep!(::ODA, solver::KhonShamSolver)
     @unpack A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_Dstar, temp_D, temp_U, temp_ϵ, temp_ϵ_sort, temp_n, temp_tn = solver.cache
 
     # STEP 1 : find potential 
-    #Potential = approximate_potential()
+    #Potential = build_potential!(discretization, ) approximate_potential()
 
     # STEP 2 : compute an approximation of the exchange correlation term
     #Exch =  depend d'une sous methode, du modèle et de la discretization
+    #build_exchange_corr!(discretization, exchange_method, )
 
     # STEP 3 : résolution du problème aux valeurs propres blocs par blocs
     for l ∈ 0:lₕ

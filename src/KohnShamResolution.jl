@@ -4,7 +4,7 @@ module KohnShamResolution
     using SparseArrays
     using TimerOutputs
     using ProgressMeter
-    using Unpack
+    using UnPack
     
     include("utils.jl")
 

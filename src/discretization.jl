@@ -20,3 +20,25 @@ function build_density_star!(::KohnShamSphericalDiscretization, temp_Dstar, temp
         end
     end
 end
+
+function build_kinetic!(::KohnShamSphericalDiscretization, Kin, A, M₋₂)
+    for l ∈ 0:lₕ
+        Kin[l+1,:,:] .= - A .- l*(l+1)*M₋₂
+    end 
+end
+
+function build_coulomb!(::KohnShamSphericalDiscretization, Coul, model, M₋₁)
+    for l ∈ 0:lₕ
+        Coul[l+1,:,:] .= - 2*charge(model)*(2*l+1) .* M₋₁
+    end 
+end
+
+function build_exchange_corr()
+
+
+end
+
+function build_potential()
+
+
+end
