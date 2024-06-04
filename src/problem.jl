@@ -1,5 +1,5 @@
 
-struct DFTProblem{TMo <: AbstractDFTModel,TD,TMe}
+struct DFTProblem{TMo <: AbstractDFTModel,TD <: KohnShamDiscretization, TMe <: AbstractKohnShamResolutionMethod}
     model::TMo
     discretization::TD
     method::TMe

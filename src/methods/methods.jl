@@ -11,22 +11,24 @@ struct CacheODA <: AbstractKohnShamCache
     M₋₂
     Hfix
     temp_H
-    temp_n
+    temp_Dstar
+    temp_D
+    temp_U
     temp_ϵ
     temp_ϵ_sort
-    temp_U
-    temp_Rstar
-    temp_R
+    temp_n    
     temp_tn
 end
 
-function init_cache(model::AbstractDFTModel,::ODA; lₕ, Nₕ)
+function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDiscretization, ; lₕ, Nₕ)
+
+    @unpack lₕ, Nₕ, basis = discretization
 
     # Init base matrices
-    A   = zeros(Nₕ,Nₕ)
-    M₀  = zeros(Nₕ,Nₕ)
-    M₋₁ = zeros(Nₕ,Nₕ)
-    M₋₂ = zeros(Nₕ,Nₕ)
+    A   = zeros(Nₕ,Nₕ) # mass_matrix
+    M₀  = zeros(Nₕ,Nₕ) # mass_matrix
+    M₋₁ = zeros(Nₕ,Nₕ) # mass_matrix
+    M₋₂ = zeros(Nₕ,Nₕ) # mass_matrix
 
     # Creation of the fix part of the hamiltonian for each section Hₗ    
     Hfix = zeros(lₕ+1, Nₕ, Nₕ) 
@@ -36,15 +38,17 @@ function init_cache(model::AbstractDFTModel,::ODA; lₕ, Nₕ)
 
     # Initialization of array for temporary stockage of computations
     temp_H       = zeros(Nₕ, Nₕ)
+
+    temp_D       = zeros(lₕ+1, Nₕ, Nₕ)
+    temp_Dstar   = zeros(lₕ+1, Nₕ, Nₕ)
     temp_U       = zeros(lₕ+1, (2lₕ+1)*Nₕ, Nₕ)
-    temp_n       = zeros(lₕ+1, (2lₕ+1)*Nₕ)
     temp_ϵ       = zeros(lₕ+1,(2lₕ+1)*Nₕ)
     temp_ϵ_sort  = zeros((lₕ+1)*(2lₕ+1)*Nₕ)
-    temp_R       = zeros(lₕ+1, Nₕ, Nₕ)
-    temp_Rstar   = zeros(lₕ+1, Nₕ, Nₕ)
+    temp_n       = zeros(lₕ+1, (2lₕ+1)*Nₕ)
+    
     temp_tn      = 0.0     
 
-    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_n, temp_ϵ, temp_ϵ_sort, temp_U, temp_Rstar, temp_R, temp_tn)
+    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_Dstar, temp_D, temp_U, temp_ϵ, temp_ϵ_sort, temp_n, temp_tn)
 end
 
 

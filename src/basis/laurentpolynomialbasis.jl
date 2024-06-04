@@ -1,4 +1,6 @@
-struct LaurentPolynomialBasis{T}
+abstract type Basis end
+
+struct LaurentPolynomialBasis{T} <: Basis
     elements::Vector{LaurentPolynomial{T}}
 end
 

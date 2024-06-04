@@ -9,15 +9,15 @@ struct SolverOptions{T,Teps}
 end
 
 
-struct KhonShamSolver{Tn,TVC}     
+struct KhonShamSolver{TSC}
+    D
+    Dprev
+    U  
+    ϵ
+    n
+    niter::Int
+    values_stop_crit::Vector{TSC}
+    current_stop_crit::TSC
     cache::AbstractKohnShamCache
     opts::SolverOptions
-    ϵ
-    U
-    n
-    R
-    Rprev
-    niter::Tn
-    val_crit::TVC
-    current_crit
 end
