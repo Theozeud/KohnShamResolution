@@ -55,7 +55,7 @@ end
 function performstep!(::ODA, cache::CacheODA , solver::KhonShamSolver)
 
     # STEP 1 : find potential 
-    #Potential = 
+    #Potential = depend d'une sous methode, du modèle et de la discretization
 
     # STEP 2 : compute an approximation of the exchange correlation term
     #Exch = 
