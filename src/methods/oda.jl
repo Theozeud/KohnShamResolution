@@ -92,11 +92,9 @@ function performstep!(::ODA, solver::KhonShamSolver)
     solver.D .= temp_D
 end
 
-function stopping_criteria(::ODA, D, Dprev)
-    norm(D .- Dprev)
-end
 
 stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev)
+stopping_criteria(::ODA, D, Dprev) = norm(D .- Dprev)
 
 
 function aufbau!(n::AbstractArray, ϵ::AbstractArray, N::Real)
