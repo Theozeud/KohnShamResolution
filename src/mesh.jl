@@ -36,10 +36,12 @@ end
 @inline Base.size(m::OneDMesh) = size(m.points)
 @inline points(m::OneDMesh) = m.points
 @inline steps(m::OneDMesh) = m.steps
+@inline Base.eachindex(m::OneDMesh) = eachindex(m.points)
 @inline Base.getindex(m::OneDMesh, n::Int) = m.points[n]
-@inline Base.lastindex(m::OneDMesh) =length(m)
+@inline Base.firstindex(m::OneDMesh) = firstindex(m.points)
+@inline Base.lastindex(m::OneDMesh) = lastindex(m.points)
 @inline function findindex(m::OneDMesh{T}, x::T) where T
-   for i in m
+   for i in eachindex(m)
         if m[i] > x
             return i-1
         end
@@ -51,7 +53,7 @@ end
    end
 end
    
-@inline Base.iterate(m::OneDMesh, state = 1) = state > size(m) ? nothing : (m[state],state+1)
+@inline Base.iterate(m::OneDMesh, state = 1) = state > length(m) ? nothing : (m[state],state+1)
 @inline left(m::OneDMesh) = m[1]
 @inline right(m::OneDMesh) = m[end]
 @inline edges(m::OneDMesh) = (m[1],m[end])
