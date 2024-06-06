@@ -41,8 +41,8 @@ end
 function loopfooter!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
     solver.Dprev .= solver.D
     solver.niter += 1
-    solver.current_crit = stopping_criteria(method, solver)
-    push!(solver.val_crit, solver.current_crit)
+    solver.current_stop_crit = stopping_criteria(method, solver)
+    push!(solver.values_stop_crit, solver.current_stop_crit)
 end
 
 

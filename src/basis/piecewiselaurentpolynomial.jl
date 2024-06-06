@@ -18,14 +18,24 @@ end
 ## Functions
 
 function Base.:+(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where {TP,TQ}
-    NewT = promote_type(TP,TQ)
-    r = Laurent_zero(NewT, min(degmin(p), degmin(q)), max(degmax(p), degmax(q)))
-    for i in eachindex(r)
-        r[i] = NewT(p[i]) + NewT(q[i])
+    if p.mesh.points != q.mesh.points
+        @error "We can't add for the moment piecewise laurent polynomial on different meshes." 
     end
-    r.coeff_log = p.coeff_log + q.coeff_log
-    r.haslog = p.haslog || q.haslog
-    r
+    NewT = promote_type(TP,TQ)
+    index_p = Set(p.index)
+    index_q = Set(q.index)
+    laurent_poly
+    for i ∈ index_p
+        if i ∈ index_q
+            
+        else
+
+        end
+    end
+    for i ∈ setdiff(index_q,index_p)
+
+    end
+    PiecewiseLaurentPolynomial(p.mesh,rr ,[∪...], NewT(p.default_value) + NewT(q.default_value))
 end
 
 function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
