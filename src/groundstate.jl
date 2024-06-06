@@ -9,11 +9,6 @@ groundstate(problem::DFTProblem; kwargs...) =  groundstate(model(problem), discr
 
 function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::AbstractKohnShamResolutionMethod; tol::Real)
 
-    # Check if the method is appropriate
-    if !ismethod_for_model(method, model)
-        error("This method can't be used for this model.")
-    end
-
     # Init storage array
     D, Dprev    = init_density_matrix(discretization)
     U           = init_coeffs_discretization(discretization)
