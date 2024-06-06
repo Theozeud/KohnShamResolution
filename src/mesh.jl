@@ -1,11 +1,11 @@
 abstract type AbstractMesh end
 
-struct OneDMesh{TP,TS} <: AbstractMesh
-    points::TP
-    steps::TS
+struct OneDMesh{T} <: AbstractMesh
+    points::Vector{T}
+    steps::Vector{T}
 end
 
-function mesh(points::AbstractArray{T} where T<: Real)
+function mesh(points::AbstractArray{T})  where T<: Real
     _points = union(sort(points))
     steps = [_points[i+1] - _points[i] for i in eachindex(_points)[1:end-1]]
     OneDMesh(_points , steps)
@@ -37,6 +37,20 @@ end
 @inline points(m::OneDMesh) = m.points
 @inline steps(m::OneDMesh) = m.steps
 @inline Base.getindex(m::OneDMesh, n::Int) = m.points[n]
+@inline Base.lastindex(m::OneDMesh) =length(m)
+@inline function findindex(m::OneDMesh{T}, x::T)
+   for i in m
+        if m[i] > x
+            return i-1
+        end
+   end
+   if x == m[end]
+        return lastindex(m)
+   else
+        return lastindex(m)+1
+   end
+end
+   
 @inline Base.iterate(m::OneDMesh, state = 1) = state > size(m) ? nothing : (m[state],state+1)
 @inline left(m::OneDMesh) = m[1]
 @inline right(m::OneDMesh) = m[end]

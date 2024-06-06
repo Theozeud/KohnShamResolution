@@ -26,7 +26,8 @@ module KohnShamResolution
     include("model/model.jl")
 
     export KohnShamDiscretization, KohnShamSphericalDiscretization
-    include("discretization.jl")
+    include("discretization/abstract_discretization.jl")
+    include("discretization/spherical_discretization.jl")
 
     include("methods/abstractmethods.jl")
 
