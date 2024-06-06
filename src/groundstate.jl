@@ -7,7 +7,7 @@ end
 groundstate(problem::DFTProblem; kwargs...) =  groundstate(model(problem), discretization(problem), method(problem); kwargs...)
 
 
-function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::AbstractKohnShamResolutionMethod; tol::Real)
+function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::AbstractKohnShamResolutionMethod; tol::Real, maxiter::Int = 5)
 
     # Init storage array
     D, Dprev    = init_density_matrix(discretization)
@@ -19,7 +19,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     cache = init_cache(method, model, discretization)
 
     # Registering SolverOptions
-    opts = SolverOptions(tol)
+    opts = SolverOptions(tol, maxiter)
     niter = 0
     current_stop_crit =  2*tol
     values_stop_crit = [current_stop_crit]    
@@ -30,7 +30,7 @@ end
 
 function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod; show_progress = false)
     p = ProgressThresh(solver.opts.ε; enabled = show_progress, desc = "Itération Principale") 
-    while solver.current_stop_crit > solver.opts.ε
+    while solver.current_stop_crit > solver.opts.ε && solver.niter < solver.opts.maxiter
         println("Itérations")
         update!(p, solver.current_stop_crit)
         performstep!(method, solver)
@@ -39,7 +39,7 @@ function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod
 end
 
 function loopfooter!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
-    solver.Rprev .= solver.R
+    solver.Dprev .= solver.D
     solver.niter += 1
     solver.current_crit = stopping_criteria(method, solver)
     push!(solver.val_crit, solver.current_crit)

@@ -1,9 +1,10 @@
 struct SolverOptions{Teps}
-    ε::Teps      
+    ε::Teps 
+    maxiter::Int     
 end
 
 
-struct KhonShamSolver{TSC}
+mutable struct KhonShamSolver{TSC}
     discretization
     model
     D
