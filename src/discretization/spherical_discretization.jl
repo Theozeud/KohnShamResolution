@@ -4,17 +4,17 @@ struct KohnShamSphericalDiscretization <: KohnShamDiscretization
     basis::Basis
 end
 
-init_density_matrix(kd::KohnShamSphericalDiscretization) = zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ), zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ)  
-init_coeffs_discretization(kd::KohnShamSphericalDiscretization) = zeros(kd.lₕ+1, (2*kd.lₕ+1)*kd.Nₕ, kd.Nₕ)
-init_energy(kd::KohnShamSphericalDiscretization) = zeros(kd.lₕ+1,(2*kd.lₕ+1)*kd.Nₕ)
-init_occupation(kd::KohnShamSphericalDiscretization) = zeros(kd.lₕ+1,(2*kd.lₕ+1)*kd.Nₕ)
+init_density_matrix(kd::KohnShamSphericalDiscretization)        = zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ), zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ)  
+init_coeffs_discretization(kd::KohnShamSphericalDiscretization) = zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ)
+init_energy(kd::KohnShamSphericalDiscretization)                = zeros(kd.lₕ+1, kd.Nₕ)
+init_occupation(kd::KohnShamSphericalDiscretization)            = zeros(kd.lₕ+1, kd.Nₕ)
 
 
 function build_density_star!(kd::KohnShamSphericalDiscretization, temp_Dstar, temp_U, temp_n)
     @unpack lₕ, Nₕ = kd
     for l ∈ 1:lₕ+1
-        for k ∈ 1:(2*(l-1)+1)*Nₕ
-            temp_Dstar[l] .+= temp_n[l,k]*tensorproduct(temp_U[l,k], temp_U[l,k])
+        for k ∈ 1:Nₕ
+            temp_Dstar[l,:,:] .+= temp_n[l,k]*tensorproduct(temp_U[l,k,:], temp_U[l,k,:])
         end
     end
 end
@@ -38,7 +38,7 @@ function build_exchange_corr()
 
 end
 
-function build_potential()
+function build_hartree(kd::KohnShamSphericalDiscretization, Hartree)
 
 
 end

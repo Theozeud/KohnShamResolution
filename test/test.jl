@@ -11,7 +11,7 @@ method = ODA()
 
 # Choice of the Solver Options
 lₕ = 2
-Nₕ = 2
+Nₕ = 2 
 basis = LaurentPolynomialBasis([Monomial(1)])
 
 # Solve

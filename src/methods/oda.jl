@@ -1,9 +1,5 @@
 struct ODA <: AbstractKohnShamResolutionMethod end
 
-for_sphericalsymmetry(::ODA) = true
-for_cylindricalsymmetry(::ODA) = false
-ismethod_for_model(::ODA,::KohnShamExtended) = true
-
 struct CacheODA <: AbstractKohnShamCache
     A
     M₀
@@ -42,10 +38,10 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
 
     temp_D       = zeros(lₕ+1, Nₕ, Nₕ)
     temp_Dstar   = zeros(lₕ+1, Nₕ, Nₕ)
-    temp_U       = zeros(lₕ+1, (2lₕ+1)*Nₕ, Nₕ)
-    temp_ϵ       = zeros(lₕ+1,(2lₕ+1)*Nₕ)
-    temp_ϵ_sort  = zeros((lₕ+1)*(2lₕ+1)*Nₕ)
-    temp_n       = zeros(lₕ+1, (2lₕ+1)*Nₕ)
+    temp_U       = zeros(lₕ+1, Nₕ, Nₕ)
+    temp_ϵ       = zeros(lₕ+1,Nₕ)
+    temp_ϵ_sort  = zeros((lₕ+1)*Nₕ)
+    temp_n       = zeros(lₕ+1, Nₕ)
     
     temp_tn      = 0.0     
 
@@ -60,18 +56,17 @@ function performstep!(::ODA, solver::KhonShamSolver)
     @unpack A, M₀, M₋₁, M₋₂, Hfix, temp_H, temp_Dstar, temp_D, temp_U, temp_ϵ, temp_ϵ_sort, temp_n, temp_tn = solver.cache
 
     # STEP 1 : find potential 
-    #Potential = build_potential!(discretization, ) approximate_potential()
+    #hartree = build_hartree!(discretization, matrix) 
 
     # STEP 2 : compute an approximation of the exchange correlation term
-    #Exch =  depend d'une sous methode, du modèle et de la discretization
-    #build_exchange_corr!(discretization, exchange_method, )
+    #Exch = build_exchange_corr!(discretization, exchange_method, solver, matrix...)
 
     # STEP 3 : résolution du problème aux valeurs propres blocs par blocs
     for l ∈ 0:lₕ
         # Assembly the matrices
         temp_H .= Hfix[l+1] #+ Exch + Potential
         # Solve generalized eigenvalue problem on the section Hₗ
-        #temp_ϵ[l+1], temp_U[l] = zeros((2*lₕ+1)*Nₕ), zeros((2*lₕ+1)*Nₕ) #solve_generalized_eigenvalue_problem(temp_H, M₀)
+        temp_ϵ[l+1,:], temp_U[l+1,:,:] = solve_generalized_eigenvalue_problem(temp_H, M₀)
     end
 
     # STEP 4 : Build the n matrix using the Aufbau principle
@@ -83,7 +78,7 @@ function performstep!(::ODA, solver::KhonShamSolver)
     # STEP 7 : update this matrix with a convex approach
     # some optimisation to find a good tₙ
     temp_tₙ = 0.5
-    temp_D .= temp_tₙ .* temp_Dstar + (1 - temp_tₙ) .* solver.Dprev
+    @. temp_D = temp_tₙ * temp_Dstar + (1 - temp_tₙ) * solver.Dprev
 
     # Registering into solver
     solver.U .= temp_U
@@ -92,13 +87,12 @@ function performstep!(::ODA, solver::KhonShamSolver)
     solver.D .= temp_D
 end
 
-
 stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev)
 stopping_criteria(::ODA, D, Dprev) = norm(D .- Dprev)
 
 
 function aufbau!(n::AbstractArray, ϵ::AbstractArray, N::Real)
-    (d1,d2) = size(ϵ)
+    (d1,_) = size(ϵ)
     index_ϵ_sort = sortperm(ϵ, dims = 2)
     count = N
     i = firstindex(index_ϵ_sort)
@@ -120,4 +114,9 @@ function aufbau!(n::AbstractArray, ϵ::AbstractArray, N::Real)
     end
 end
 
+
+function update_density()
+
+
+end
 

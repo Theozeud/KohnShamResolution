@@ -38,7 +38,7 @@ end
 @inline steps(m::OneDMesh) = m.steps
 @inline Base.getindex(m::OneDMesh, n::Int) = m.points[n]
 @inline Base.lastindex(m::OneDMesh) =length(m)
-@inline function findindex(m::OneDMesh{T}, x::T)
+@inline function findindex(m::OneDMesh{T}, x::T) where T
    for i in m
         if m[i] > x
             return i-1
