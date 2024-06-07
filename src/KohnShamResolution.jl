@@ -10,7 +10,8 @@ module KohnShamResolution
     include("tools/computation_tools.jl")
 
     export LaurentPolynomial
-    export Monomial, deg, degmax, degmin, haslog, ismonomial, integrate!, integrate, deriv!, deriv, scalar_product
+    export Monomial, deg, degmax, degmin, haslog, ismonomial, iszero
+    export integrate!, integrate, deriv!, deriv, scalar_product, elag!
     include("basis/laurentpolynomial.jl")
 
     export LaurentPolynomialBasis
@@ -18,8 +19,12 @@ module KohnShamResolution
     include("basis/laurentpolynomialbasis.jl")
 
     export OneDMesh
-    export mesh
+    export mesh, find_index
     include("mesh.jl")
+
+    export PiecewiseLaurentPolynomial
+    export get_support
+    include("basis/piecewiselaurentpolynomial.jl")
 
     export KohnShamExtended
     export exchcorr, charge, nbelec, potential

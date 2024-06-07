@@ -31,7 +31,7 @@ function Laurent_zero(T::Type, degmin::Int, degmax::Int)
     LaurentPolynomial(zeros(T, degmax-degmin+1), degmin, false, T(0))
 end
 
-function iszero(p::LaurentPolynomial)
+function Base.iszero(p::LaurentPolynomial)
     elag!(p)
     p.coeffs == [0] && p.degmin == 0 && !haslog(p)
 end

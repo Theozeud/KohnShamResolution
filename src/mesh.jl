@@ -32,14 +32,18 @@ function mesh(point::Real, funMesh::Base.Callable, Rmax::Real)
 end
 =#
 
-@inline Base.length(m::OneDMesh) = length(m.points)
-@inline Base.size(m::OneDMesh) = size(m.points)
-@inline points(m::OneDMesh) = m.points
-@inline steps(m::OneDMesh) = m.steps
 @inline Base.eachindex(m::OneDMesh) = eachindex(m.points)
-@inline Base.getindex(m::OneDMesh, n::Int) = m.points[n]
 @inline Base.firstindex(m::OneDMesh) = firstindex(m.points)
 @inline Base.lastindex(m::OneDMesh) = lastindex(m.points)
+@inline Base.getindex(m::OneDMesh, n::Int) = m.points[n]
+
+@inline Base.length(m::OneDMesh) = length(m.points)
+@inline Base.size(m::OneDMesh) = size(m.points)
+
+@inline points(m::OneDMesh) = m.points
+@inline steps(m::OneDMesh) = m.steps
+
+
 @inline function findindex(m::OneDMesh{T}, x::T) where T
    for i in eachindex(m)
         if m[i] > x
