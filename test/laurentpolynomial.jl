@@ -18,3 +18,6 @@ hf3 = HatFunctionP1(m, 3, Float16)
 
 lpb = LaurentPolynomialBasis([hf1,hf2,hf3])
 mass_matrix(lpb, m[begin], m[end])
+
+hfbasis = HatBasis(m, Float16)
+mass_matrix(hfbasis, m[begin], m[end])

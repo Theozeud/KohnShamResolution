@@ -5,8 +5,10 @@ struct LaurentPolynomialBasis <: Basis
 end
 
 @inline Base.size(lpb::LaurentPolynomialBasis) = size(lpb.elements)
+@inline Base.length(lpb::LaurentPolynomialBasis) = length(lpb.elements)
 @inline Base.getindex(lpb::LaurentPolynomialBasis, n::Int) =  lpb.elements[n] 
 @inline Base.eachindex(lpb::LaurentPolynomialBasis) = eachindex(lpb.elements)
+@inline Base.iterate(lpb::LaurentPolynomialBasis, state = 1) = state > length(lpb) ? nothing : (lpb[state],state+1)
 
 
 # Mass matrix
@@ -32,4 +34,12 @@ end
 
 function weight_mass_matrix(lpb::LaurentPolynomialBasis, n::Int, a::Real, b::Real)
     weight_mass_matrix(lpb::LaurentPolynomialBasis, Monomial(n), a::Real, b::Real)
+end
+
+# Integration
+function deriv!(lpb::LaurentPolynomialBasis)
+    for i in eachindex(lpb)
+        deriv!(lpb[i])
+    end
+    lbp
 end

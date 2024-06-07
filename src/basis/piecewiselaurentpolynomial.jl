@@ -115,8 +115,10 @@ function get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where 
                 index_a += 1
             end
             if index_a == index_b
-                push!(support, (index_a, p.mesh[index_a], b))
-                return support
+                if index_a ∈ p.index
+                    push!(support, (index_a, p.mesh[index_a], b))
+                end
+                    return support
             else
                 push!(support, (index_a, p.mesh[index_a], p.mesh[index_a+1]))
             end
@@ -148,7 +150,7 @@ function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     val = T(0)
     for (i,ai,bi) ∈ support
         pi = getfunction(p, i)
-        val += KohnShamResolution.integrate(pi, ai, bi)
+        val += integrate(pi, ai, bi)
     end
     val
 end
@@ -156,7 +158,7 @@ end
 function deriv!(p::PiecewiseLaurentPolynomial)
     for i ∈ eachindex(p)
         if i ∈ p.index
-            KohnShamResolution.deriv!(p.functions[findfirst(item->item == i, p.index)])
+            deriv!(p.functions[findfirst(item->item == i, p.index)])
         end
     end
     p
