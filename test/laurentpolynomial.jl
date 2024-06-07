@@ -5,7 +5,7 @@ using Plots
 
 # Test "Piecewise LaurentPolynomial"
 T = Float16
-m = mesh(1:1000)
+m = mesh(1:5)
 
 hf1 = HatFunctionP1(m, 1, Float16)
 hf2 = HatFunctionP1(m, 2, Float16)
