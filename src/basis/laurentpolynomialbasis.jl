@@ -1,7 +1,7 @@
 abstract type Basis end
 
-struct LaurentPolynomialBasis{T} <: Basis
-    elements::Vector{LaurentPolynomial{T}}
+struct LaurentPolynomialBasis <: Basis
+    elements::Vector{AbstractLaurentPolynomial}
 end
 
 @inline Base.size(lpb::LaurentPolynomialBasis) = size(lpb.elements)

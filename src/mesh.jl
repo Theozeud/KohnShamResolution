@@ -44,8 +44,8 @@ end
 @inline steps(m::OneDMesh) = m.steps
 
 
-@inline function findindex(m::OneDMesh{T}, x::T) where T
-   for i in eachindex(m)
+@inline function findindex(m::OneDMesh, x)
+    for i in eachindex(m)
         if m[i] > x
             return i-1
         end

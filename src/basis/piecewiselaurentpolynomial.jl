@@ -1,4 +1,4 @@
-mutable struct PiecewiseLaurentPolynomial{T,TM}
+mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractLaurentPolynomial{T}
     mesh::OneDMesh{TM}
     functions::Vector{LaurentPolynomial{T}}
     index::Vector{Int}
@@ -144,7 +144,7 @@ end
 
 function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     @assert a ≤ b
-    @show support = get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real)
+    support = get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real)
     val = T(0)
     for (i,ai,bi) ∈ support
         pi = getfunction(p, i)
@@ -171,3 +171,4 @@ function deriv(p::PiecewiseLaurentPolynomial{T}) where T
 end
 
 scalar_product(p::PiecewiseLaurentPolynomial, q::PiecewiseLaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
+scalar_product(p::PiecewiseLaurentPolynomial, q::PiecewiseLaurentPolynomial, m::OneDMesh) = integrate(p*q, left(m), right(m))

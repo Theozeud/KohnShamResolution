@@ -26,6 +26,9 @@ module KohnShamResolution
     export get_support
     include("basis/piecewiselaurentpolynomial.jl")
 
+    export HatFunctionP1
+    include("basis/hat_functions.jl")
+
     export KohnShamExtended
     export exchcorr, charge, nbelec, potential
     include("model/model.jl")

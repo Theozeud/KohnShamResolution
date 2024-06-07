@@ -1,8 +1,7 @@
-"""
-LaurentPolynomial
+abstract type AbstractLaurentPolynomial{T} end
 
-"""
-mutable struct LaurentPolynomial{T}
+
+mutable struct LaurentPolynomial{T} <:AbstractLaurentPolynomial{T}
     coeffs::Vector{T}
     degmin::Int
     haslog::Bool
