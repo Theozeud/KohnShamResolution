@@ -41,5 +41,5 @@ function deriv!(lpb::LaurentPolynomialBasis)
     for i in eachindex(lpb)
         deriv!(lpb[i])
     end
-    lbp
+    lpb
 end

@@ -5,7 +5,7 @@ using Plots
 
 # Test "Piecewise LaurentPolynomial"
 T = Float16
-m = mesh(1:10)
+m = mesh(1:1000)
 
 hf1 = HatFunctionP1(m, 1, Float16)
 hf2 = HatFunctionP1(m, 2, Float16)
@@ -20,4 +20,8 @@ lpb = LaurentPolynomialBasis([hf1,hf2,hf3])
 mass_matrix(lpb, m[begin], m[end])
 
 hfbasis = HatBasis(m, Float16)
+@time mass_matrix(hfbasis, m[begin], m[end])
+
+deriv!(hfbasis)
+
 mass_matrix(hfbasis, m[begin], m[end])
