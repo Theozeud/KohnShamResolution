@@ -151,6 +151,21 @@ function Base.:+(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,T
     r
 end
 
+function Base.:+(p::LaurentPolynomial{TP}, x::T) where {TP,T}
+    NewT = promote_type(TP,T)
+    r = Laurent_zero(NewT, min(degmin(p),0), max(degmax(p),0))
+    for i in eachindex(r)
+        if i == 0
+            r[i] = NewT(p[i]) + NewT(x)
+        else
+            r[i] = NewT(p[i])
+        end
+    end
+    r.coeff_log = p.coeff_log
+    r.haslog = p.haslog
+    r
+end
+
 function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
     if haslog(p) || haslog(q)
         @error "We can't multiply two laurent polynomial if at least one of them have a log term."
