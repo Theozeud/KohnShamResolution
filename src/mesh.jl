@@ -49,12 +49,12 @@ end
         if m[i] > x
             return i-1
         end
-   end
-   if x == m[end]
+    end
+    if x == m[end]
         return lastindex(m)
-   else
+    else
         return lastindex(m)+1
-   end
+    end
 end
    
 @inline Base.iterate(m::OneDMesh, state = 1) = state > length(m) ? nothing : (m[state],state+1)
