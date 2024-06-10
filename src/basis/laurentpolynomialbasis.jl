@@ -60,7 +60,7 @@ function build_on_basis(basis::LaurentPolynomialBasis{TL}, coeff) where TL
         @error "The basis is empty."
     end
     @assert length(coeff) == length(basis)
-    poly = zero(first(basis.element))
+    poly = zero(first(basis.elements))
     for i ∈ eachindex(basis)
         poly += coeff[i] * basis[i]
     end

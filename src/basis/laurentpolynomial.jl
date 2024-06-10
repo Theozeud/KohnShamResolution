@@ -167,6 +167,10 @@ function Base.:+(p::LaurentPolynomial{TP}, x::T) where {TP,T}
     r
 end
 
+function Base.:+(x::T, p::LaurentPolynomial{TP}) where {TP,T}
+    p + x
+end
+
 function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
     if haslog(p) || haslog(q)
         @error "We can't multiply two laurent polynomial if at least one of them have a log term."

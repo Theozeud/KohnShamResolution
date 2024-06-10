@@ -5,8 +5,8 @@ mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractLaurentPolynomial{T}
     default_value::T
 end
 
-@inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, PiecewiseLaurentPolynomial{T}[], Int[], T(0))
-@inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = PiecewiseLaurentPolynomial(pwlp.mesh, PiecewiseLaurentPolynomial{T}[], Int[], T(0))
+@inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, LaurentPolynomial{T}[], Int[], T(0))
+@inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = PiecewiseLaurentPolynomial(pwlp.mesh, LaurentPolynomial{T}[], Int[], T(0))
 @inline Base.eachindex(pwlp::PiecewiseLaurentPolynomial) = eachindex(pwlp.mesh)
 @inline Base.firstindex(pwlp::PiecewiseLaurentPolynomial) = firstindex(pwlp.mesh)
 @inline Base.lastindex(pwlp::PiecewiseLaurentPolynomial) = lastindex(pwlp.mesh)
@@ -30,6 +30,24 @@ function elag!(p::PiecewiseLaurentPolynomial)
 end
 
 ## Functions
+function Base.:*(p::PiecewiseLaurentPolynomial{TP}, x::T) where{TP, T}
+    NewT = promote_type(TP,T)
+    if iszero(x)
+        return zero(p)
+    end
+    laurent_poly = LaurentPolynomial{NewT}[]
+    index = Int[]
+    for i ∈ p.index
+        fp = getfunction(p,i)
+        push!(laurent_poly, x * fp)
+        push!(index, i)
+    end
+    PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(x) * NewT(p.default_value))
+end
+
+function Base.:*(x::T, p::PiecewiseLaurentPolynomial{TP}) where{TP, T}
+    p * x
+end
 
 function Base.:+(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where {TP,TQ}
     if p.mesh.points != q.mesh.points
@@ -51,13 +69,13 @@ function Base.:+(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomia
                 push!(index,i)
             end
         else
-            push!(laurent_poly + q.default_value, fp)
+            push!(laurent_poly, q.default_value + fp)
             push!(index,i)
         end
     end
     for i ∈ setdiff(index_q,index_p)
         fq = getfunction(q,i)
-        push!(laurent_poly + p.default_value, fq)
+        push!(laurent_poly, p.default_value + fq)
         push!(index,i)
     end
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(p.default_value) + NewT(q.default_value))

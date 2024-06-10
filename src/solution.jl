@@ -13,7 +13,7 @@ struct KohnShamSolution
         else
             success = "SUCCESS"
         end
-        new(success, solver.ϵ[] , solver.n, solver.niter, solver.values_stop_crit)
+        new(success, solver.ϵ , solver.n, solver.niter, solver.values_stop_crit)
         
     end
 end

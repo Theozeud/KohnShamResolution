@@ -52,7 +52,6 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     CacheODA(A, M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_ϵ, tmp_ϵ_sort, tmp_n, tmp_tn)
 end
 
-
 function performstep!(method::ODA, solver::KhonShamSolver)
 
     @unpack tmp_D, tmp_U, tmp_ϵ, tmp_n = solver.cache
@@ -137,7 +136,6 @@ function aufbau!(solver::KhonShamSolver)
     end
 end
 
-
 function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::KhonShamSolver)
 
     @unpack lₕ = discretization
@@ -158,15 +156,13 @@ function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::
     end
 end
 
-
 function update_density!(::ODA, solver::KhonShamSolver)
 
     @unpack Dprev = solver
-    @unpack tmp_D, tmp_Dstar, tmp_tn = solver.cache
+    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_n, tmp_tn = solver.cache
 
-    build_density!(solver.discretization, temp_Dstar, temp_U, temp_n)
+    build_density!(solver.discretization, tmp_Dstar, tmp_U, tmp_n)
 
     tmp_tn = 0.5
     @. tmp_D = tmp_tn * tmp_Dstar + (1 - tmp_tn) * Dprev
 end
-
