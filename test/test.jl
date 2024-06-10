@@ -1,8 +1,8 @@
 using KohnShamResolution
 
 # Creation of the model
-_z = 1
-_N = 1
+_z = 2
+_N = 10
 
 KM = KohnShamExtended(z = _z,N = _N)
 
@@ -11,7 +11,7 @@ method = ODA()
 
 # Discretization 
 lₕ = 2
-m = mesh(1:10)
+m = mesh(1:5)
 basis = HatBasis(m)
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 

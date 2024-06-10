@@ -50,3 +50,7 @@ function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)
     density *= 1/4π
 end
 
+function build_energy()
+
+
+end

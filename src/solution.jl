@@ -14,7 +14,6 @@ struct KohnShamSolution
             success = "SUCCESS"
         end
         new(success, solver.ϵ , solver.n, solver.niter, solver.values_stop_crit)
-        
     end
 end
 

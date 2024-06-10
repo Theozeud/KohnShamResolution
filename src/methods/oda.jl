@@ -86,6 +86,9 @@ function aufbau!(solver::KhonShamSolver)
     @unpack tmp_ϵ, tmp_ϵ_sort, tmp_n = solver.cache
     @unpack lₕ, Nₕ = solver.discretization
 
+    # sort tmp_ϵ to order in l
+    sort!(tmp_ϵ; dims = 1)
+
     # splat the vector of eigenvalue
     vector_ϵ = [tmp_ϵ...]
 
@@ -94,32 +97,37 @@ function aufbau!(solver::KhonShamSolver)
 
     remain = N
     idx = 1
+    B = Int[]
+    C = collect(1:(lₕ+1)*Nₕ)
     while remain > 0 && idx < (lₕ+1)*Nₕ
         
         # Find the next lowest eigenvalue(s) (may be several in case of degeneracy)
-        a = first(vector_ϵ)
-        A = [1]
+        A = Int[]
+        a = isempty(B) ? first(vector_ϵ) : vector_ϵ[first(C)]
         for j ∈ eachindex(vector_ϵ)
-            if vector_ϵ[j] < a 
-                a = vector_ϵ[j]
-                A = [j]
-            elseif vector_ϵ[j] == a 
-                push!(A,j)
+            if j ∉ B
+                if vector_ϵ[j] < a 
+                    a = vector_ϵ[j]
+                    A = [j]
+                elseif vector_ϵ[j] == a 
+                    push!(A,j)
+                end
             end
         end
-
-        # Remove this eigenvalue
-        for i in A
-            deleteat!(vector_ϵ, i)
-        end
         
+        # Transfer to B the index of
+        push!(B, A...)
+        for i in A
+            remove!(C, i)
+        end
+
         # Count total degeneracy
         degen = sum(degen_matrix[i] for i in A)
         
         # See what to do depending on the case
         if remain - degen ≥ 0
             for i in A
-                tmp_n[i] = 2 * degen[i]
+                tmp_n[i] = 2 * degen_matrix[i]
             end
             remain -= degen
         else
@@ -128,7 +136,7 @@ function aufbau!(solver::KhonShamSolver)
                 tmp_n[first(A)] = 2 * remain
             else
                 # Second case, if degeneracy
-                @error "There is degeneracy but no implementation for this case for the moment."
+                @error "There is accidental degeneracy but no implementation for this case for the moment."
             end
             break
         end
