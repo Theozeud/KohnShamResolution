@@ -21,10 +21,14 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     @unpack lₕ, Nₕ, basis = discretization
 
     # Init base matrices
-    A   = zeros(Nₕ,Nₕ) # mass_matrix
-    M₀  = zeros(Nₕ,Nₕ) # mass_matrix
-    M₋₁ = zeros(Nₕ,Nₕ) # mass_matrix
-    M₋₂ = zeros(Nₕ,Nₕ) # mass_matrix
+    @assert length(basis) == Nₕ
+    
+    deriv_basis = deriv(basis)
+
+    A   = mass_matrix(deriv_basis, m[begin], m[end])
+    M₀  = mass_matrix(basis, m[begin], m[end])
+    M₋₁ = weight_mass_matrix(hfbasis, -1, m[begin], m[end])
+    M₋₂ = weight_mass_matrix(hfbasis, -2, m[begin], m[end])
 
     # Creation of the fix part of the hamiltonian   
     Kin =  zeros(lₕ+1, Nₕ, Nₕ)
@@ -39,7 +43,7 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     tmp_D       = zeros(lₕ+1, Nₕ, Nₕ)
     tmp_Dstar   = zeros(lₕ+1, Nₕ, Nₕ)
     tmp_U       = zeros(lₕ+1, Nₕ, Nₕ)
-    tmp_ϵ       = zeros(lₕ+1,Nₕ)
+    tmp_ϵ       = zeros(lₕ+1, Nₕ)
     tmp_ϵ_sort  = zeros((lₕ+1)*Nₕ)
     tmp_n       = zeros(lₕ+1, Nₕ)
     
@@ -103,7 +107,7 @@ end
 function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::KhonShamSolver)
 
     @unpack lₕ = discretization
-    @unpack M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_ϵ = solver.cache
+    @unpack M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_U, tmp_ϵ = solver.cache
 
     # STEP 1 : Find Hartree term 
     #build_hartree!(discretization, matrix) 
@@ -111,19 +115,22 @@ function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::
     # STEP 2 : compute an approximation of the exchange correlation term
     #build_exchange_corr!(discretization, matrix)
 
+    # STEP 3 : Solve the generalized eigenvalue problem for each section l
     for l ∈ 0:lₕ
+        # building the hamiltonian of the lᵗʰ section
         tmp_H .= Hfix[l+1]
+        # solving
         tmp_ϵ[l+1,:], tmp_U[l+1,:,:] = solve_generalized_eigenvalue_problem(tmp_H, M₀)
     end
-
 end
 
 
-function update_density(::ODA, solver::KhonShamSolver)
+function update_density!(::ODA, solver::KhonShamSolver)
 
-    # STEP 7 : update this matrix with a convex approach
-    # some optimisation to find a good tₙ
-    tmp_tₙ = 0.5
-    @. tmp_D = tmp_tₙ * tmp_Dstar + (1 - tmp_tₙ) * solver.Dprev
+    @unpack Dprev = solver
+    @unpack tmp_D, tmp_Dstar, tmp_tn = solver.cache
+
+    tmp_tn = 0.5
+    @. tmp_D = tmp_tn * tmp_Dstar + (1 - tmp_tn) * solver.Dprev
 end
 
