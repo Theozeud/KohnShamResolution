@@ -5,6 +5,8 @@ mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractLaurentPolynomial{T}
     default_value::T
 end
 
+@inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, PiecewiseLaurentPolynomial{T}[], Int[], T(0))
+@inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = PiecewiseLaurentPolynomial(pwlp.mesh, PiecewiseLaurentPolynomial{T}[], Int[], T(0))
 @inline Base.eachindex(pwlp::PiecewiseLaurentPolynomial) = eachindex(pwlp.mesh)
 @inline Base.firstindex(pwlp::PiecewiseLaurentPolynomial) = firstindex(pwlp.mesh)
 @inline Base.lastindex(pwlp::PiecewiseLaurentPolynomial) = lastindex(pwlp.mesh)
@@ -162,7 +164,6 @@ function get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where 
     end
     support
 end
-
 
 function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     @assert a ≤ b

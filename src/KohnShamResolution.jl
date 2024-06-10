@@ -15,7 +15,7 @@ module KohnShamResolution
     include("basis/laurentpolynomial.jl")
 
     export LaurentPolynomialBasis
-    export mass_matrix, weight_mass_matrix
+    export mass_matrix, weight_mass_matrix, build_on_basis
     include("basis/laurentpolynomialbasis.jl")
 
     export OneDMesh

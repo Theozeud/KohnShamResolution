@@ -37,10 +37,12 @@ function build_exchange_corr()
 end
 
 function build_density!(kd::KohnShamSphericalDiscretization, temp_Dstar, temp_U, temp_n)
-    @unpack lₕ, Nₕ = kd
+    @unpack lₕ, Nₕ, basis, mesh = kd
+    density = zero_piecewiselaurantpolynomial(mesh)
     for l ∈ 1:lₕ+1
         for k ∈ 1:Nₕ
-            temp_Dstar[l,:,:] .+= temp_n[l,k]*tensorproduct(temp_U[l,k,:], temp_U[l,k,:])
+            eigen_vector = build_on_basis(basis, temp_U[l,k,:])
+            temp_Dstar[l,:,:] .+= temp_n[l,k]* 
         end
     end
 end

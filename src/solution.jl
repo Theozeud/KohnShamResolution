@@ -13,7 +13,7 @@ struct KohnShamSolution
         else
             success = "SUCCESS"
         end
-        new(success, solver.ϵ , solver.n, solver.niter, solver.values_stop_crit)
+        new(success, solver.ϵ[] , solver.n, solver.niter, solver.values_stop_crit)
         
     end
 end
@@ -34,3 +34,7 @@ function Base.show(io::IO, sol::KohnShamSolution)
     printstyled(io, "Stopping criteria = "; bold = true)
     println(io, string(last(sol.crit)))
 end
+
+# afficher en plus le fondamentale et l'orbital correspondant, 
+# affciher les énergies ϵ seulement pour les n non nuls
+# retenir les états occupés

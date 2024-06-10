@@ -71,6 +71,11 @@ function performstep!(method::ODA, solver::KhonShamSolver)
     solver.U .= tmp_U
     solver.ϵ .= tmp_ϵ
     solver.n .= tmp_n
+
+    tmp_D   .= zero(tmp_D)
+    tmp_U   .= zero(tmp_U)
+    tmp_ϵ   .= zero(tmp_ϵ)
+    tmp_n   .= zero(tmp_n)
 end
 
 stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev)
@@ -158,6 +163,8 @@ function update_density!(::ODA, solver::KhonShamSolver)
 
     @unpack Dprev = solver
     @unpack tmp_D, tmp_Dstar, tmp_tn = solver.cache
+
+    build_density!(solver.discretization, temp_Dstar, temp_U, temp_n)
 
     tmp_tn = 0.5
     @. tmp_D = tmp_tn * tmp_Dstar + (1 - tmp_tn) * solver.Dprev

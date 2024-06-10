@@ -10,7 +10,6 @@ end
 
 Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,0))
 
-
 @inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin+length(p.coeffs)-1)
 @inline degmax(p::LaurentPolynomial) = p.degmin+length(p.coeffs)-1
 @inline degmin(p::LaurentPolynomial) = p.degmin
@@ -229,21 +228,10 @@ end
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
 
-# Test
-#px = Monomial(1)
-#p = LaurentPolynomial([4,5,0,1,2],-3,false,0)
-#q = integrate(p)
-#r = integrate(q)
-
-
-
 #=
 lpb = LaurentPolynomialBasis([px,px2,p,p,p,p,p])
-
 using PrettyTables
 showpt(A) = pretty_table(A, show_header = false; alignment = :c)
-
 @time M = mass_matrix(lpb,1,2)
-
 showpt(M)
 =#
