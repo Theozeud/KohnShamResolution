@@ -44,7 +44,7 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     tmp_Dstar   = zeros(lₕ+1, Nₕ, Nₕ)
     tmp_U       = zeros(lₕ+1, Nₕ, Nₕ)
     tmp_ϵ       = zeros(lₕ+1, Nₕ)
-    tmp_ϵ_sort  = zeros((lₕ+1)*Nₕ)
+    tmp_ϵ_sort  = Int[]
     tmp_n       = zeros(lₕ+1, Nₕ)
     
     tmp_tn      = 0.0     
@@ -79,27 +79,56 @@ stopping_criteria(::ODA, D, Dprev) = norm(D .- Dprev)
 function aufbau!(solver::KhonShamSolver)
 
     @unpack N = solver.model
-    @unpack tmp_ϵ, tmp_n = solver.cache
+    @unpack tmp_ϵ, tmp_ϵ_sort, tmp_n = solver.cache
+    @unpack lₕ, Nₕ = solver.discretization
 
-    (d1,_) = size(tmp_ϵ)
-    index_ϵ_sort = sortperm(tmp_ϵ, dims = 2)
-    count = N
-    i = firstindex(index_ϵ_sort)
-    while count > 0
-        l = div(index_ϵ_sort[i], d1)
-        if count - (2*l + 1) ≥ 0
-            for k in -l:l
-                tmp_n[l+1,k+l+1] = 2
+    # splat the vector of eigenvalue
+    vector_ϵ = [tmp_ϵ...]
+
+    # Create the degeneracy matrix
+    degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:lₕ] for i ∈ 1:Nₕ])
+
+    remain = N
+    idx = 1
+    while remain > 0 && idx < (lₕ+1)*Nₕ
+        
+        # Find the next lowest eigenvalue(s) (may be several in case of degeneracy)
+        a = first(vector_ϵ)
+        A = [1]
+        for j ∈ eachindex(vector_ϵ)
+            if vector_ϵ[j] < a 
+                a = vector_ϵ[j]
+                A = [j]
+            elseif vector_ϵ[j] == a 
+                push!(A,j)
             end
-            count = count - (2*l + 1)
+        end
+
+        # Remove this eigenvalue
+        for i in A
+            deleteat!(vector_ϵ, i)
+        end
+        
+        # Count total degeneracy
+        degen = sum(degen_matrix[i] for i in A)
+        
+        # See what to do depending on the case
+        if remain - degen ≥ 0
+            for i in A
+                tmp_n[i] = 2 * degen[i]
+            end
+            remain -= degen
         else
-            for k in -l:l
-                tmp_n[l+1,k+l+1] = 2/(2*l+1)
+            if length(A) == 1
+                # First case, if no degeneracy
+                tmp_n[first(A)] = 2 * remain
+            else
+                # Second case, if degeneracy
+                @error "There is degeneracy but no implementation for this case for the moment."
             end
-            count = 0
             break
         end
-        i+=1
+        idx += length(A)
     end
 end
 
