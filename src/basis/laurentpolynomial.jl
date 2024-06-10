@@ -217,12 +217,12 @@ function deriv!(p::LaurentPolynomial)
     p
 end
 
-function deriv(p::LaurentPolynomial)
+function deriv(p::LaurentPolynomial{T}) where T
     new_coeffs = p.coeffs .* [i for i in eachindex(p)]
     if haslog(p)
         new_coeffs[-degmin(p)+1] = p.coeff_log
     end
-    LaurentPolynomial(new_coeffs, p.degmin-1, false, 0.0)
+    LaurentPolynomial(new_coeffs, p.degmin-1, false, T(0))
 end
 
 

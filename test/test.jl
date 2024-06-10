@@ -13,9 +13,10 @@ method = ODA()
 lₕ = 1
 Nₕ = 1
 basis = LaurentPolynomialBasis([Monomial(1)])
+m = mesh(1:5)
 
 # Solve
-groundstate(KM, KohnShamSphericalDiscretization(lₕ,Nₕ,basis), method; tol = 0.1)
+groundstate(KM, KohnShamSphericalDiscretization(lₕ,Nₕ,basis, m), method; tol = 0.1)
 
 # Plot Results
 

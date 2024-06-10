@@ -2,6 +2,7 @@ struct KohnShamSphericalDiscretization <: KohnShamDiscretization
     lₕ::Int
     Nₕ::Int
     basis::Basis
+    mesh::OneDMesh
 end
 
 init_density_matrix(kd::KohnShamSphericalDiscretization)        = zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ), zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ)  

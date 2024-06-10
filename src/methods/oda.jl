@@ -18,17 +18,17 @@ end
 
 function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDiscretization)
 
-    @unpack lₕ, Nₕ, basis = discretization
+    @unpack lₕ, Nₕ, basis, mesh = discretization
 
     # Init base matrices
     @assert length(basis) == Nₕ
     
     deriv_basis = deriv(basis)
 
-    A   = mass_matrix(deriv_basis, m[begin], m[end])
-    M₀  = mass_matrix(basis, m[begin], m[end])
-    M₋₁ = weight_mass_matrix(hfbasis, -1, m[begin], m[end])
-    M₋₂ = weight_mass_matrix(hfbasis, -2, m[begin], m[end])
+    A   = mass_matrix(deriv_basis, mesh[begin], mesh[end])
+    M₀  = mass_matrix(basis, mesh[begin], mesh[end])
+    M₋₁ = weight_mass_matrix(basis, -1, mesh[begin], mesh[end])
+    M₋₂ = weight_mass_matrix(basis, -2, mesh[begin], mesh[end])
 
     # Creation of the fix part of the hamiltonian   
     Kin =  zeros(lₕ+1, Nₕ, Nₕ)
