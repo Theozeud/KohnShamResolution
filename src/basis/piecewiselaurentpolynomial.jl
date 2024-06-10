@@ -185,9 +185,11 @@ function deriv!(p::PiecewiseLaurentPolynomial)
 end
 
 function deriv(p::PiecewiseLaurentPolynomial{T}) where T
-    laurent_poly = LaurentPolynomial{NewT}[]
-    for i in eachindex(p)
-        push!(laurent_poly, deriv(p.functions[findfirst(item->item == i, p.index)]))
+    laurent_poly = LaurentPolynomial{T}[]
+    for i ∈ eachindex(p)
+        if i ∈ p.index
+            push!(laurent_poly, deriv(p.functions[findfirst(item->item == i, p.index)]))
+        end
     end
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly, p.index, T(0))
 end

@@ -20,7 +20,6 @@ function mesh(point::Real, funMesh::Base.Callable, Nmesh::Int)
     mesh(points)
 end
 
-#=
 function mesh(point::Real, funMesh::Base.Callable, Rmax::Real)
     points = [point]
     nextpoint = funMesh(point)
@@ -30,7 +29,6 @@ function mesh(point::Real, funMesh::Base.Callable, Rmax::Real)
     end
     mesh(points)
 end
-=#
 
 @inline Base.eachindex(m::OneDMesh) = eachindex(m.points)
 @inline Base.firstindex(m::OneDMesh) = firstindex(m.points)

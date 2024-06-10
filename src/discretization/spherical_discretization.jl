@@ -3,13 +3,14 @@ struct KohnShamSphericalDiscretization <: KohnShamDiscretization
     Nₕ::Int
     basis::Basis
     mesh::OneDMesh
+
+    KohnShamSphericalDiscretization(lₕ::Int, basis::Basis, mesh::OneDMesh) = new(lₕ, length(basis), basis, mesh)
 end
 
 init_density_matrix(kd::KohnShamSphericalDiscretization)        = zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ), zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ)  
 init_coeffs_discretization(kd::KohnShamSphericalDiscretization) = zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ)
 init_energy(kd::KohnShamSphericalDiscretization)                = zeros(kd.lₕ+1, kd.Nₕ)
 init_occupation(kd::KohnShamSphericalDiscretization)            = zeros(kd.lₕ+1, kd.Nₕ)
-
 
 function build_kinetic!(kd::KohnShamSphericalDiscretization, Kin, A, M₋₂)
     @unpack lₕ = kd

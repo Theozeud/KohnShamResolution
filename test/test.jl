@@ -9,14 +9,14 @@ KM = KohnShamExtended(z = _z,N = _N)
 # Choice of the method
 method = ODA()
 
-# Choice of the Solver Options
-lₕ = 1
-Nₕ = 1
-basis = LaurentPolynomialBasis([Monomial(1)])
-m = mesh(1:5)
+# Discretization 
+lₕ = 2
+m = mesh(1:10)
+basis = HatBasis(m)
+D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
 # Solve
-groundstate(KM, KohnShamSphericalDiscretization(lₕ,Nₕ,basis, m), method; tol = 0.1)
+@time groundstate(KM, D, method; tol = 0.1)
 
 # Plot Results
 
