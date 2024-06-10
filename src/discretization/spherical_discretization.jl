@@ -41,9 +41,12 @@ function build_density!(kd::KohnShamSphericalDiscretization, temp_Dstar, temp_U,
     density = zero_piecewiselaurantpolynomial(mesh)
     for l ∈ 1:lₕ+1
         for k ∈ 1:Nₕ
-            eigen_vector = build_on_basis(basis, temp_U[l,k,:])
-            temp_Dstar[l,:,:] .+= temp_n[l,k]* 
+            if temp_n[l,k] != 0
+                eigen_vector = build_on_basis(basis, temp_U[l,k,:])
+                density += temp_n[l,k] * eigen_vector * eigen_vector
+            end
         end
     end
+    density *= 1/4π
 end
 

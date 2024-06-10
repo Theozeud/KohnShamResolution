@@ -1,6 +1,5 @@
 abstract type AbstractLaurentPolynomial{T} end
 
-
 mutable struct LaurentPolynomial{T} <:AbstractLaurentPolynomial{T}
     coeffs::Vector{T}
     degmin::Int
@@ -138,6 +137,10 @@ function Base.:*(r::Real, p::LaurentPolynomial)
     elag!(LaurentPolynomial(p.coeffs .* r, p.degmin, haslog(p), p.coeff_log * r))
 end
 
+function Base.:*(p::LaurentPolynomial, r::Real)
+    r * p
+end
+
 function Base.:+(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
     NewT = promote_type(TP,TQ)
     r = Laurent_zero(NewT, min(degmin(p), degmin(q)), max(degmax(p), degmax(q)))
@@ -224,8 +227,8 @@ function deriv(p::LaurentPolynomial{T}) where T
     LaurentPolynomial(new_coeffs, p.degmin-1, false, T(0))
 end
 
-
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
+
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
 
 #=
