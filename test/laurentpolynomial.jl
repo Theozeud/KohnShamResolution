@@ -22,6 +22,4 @@ mass_matrix(lpb, m[begin], m[end])
 hfbasis = HatBasis(m, Float16)
 @time mass_matrix(hfbasis, m[begin], m[end])
 
-deriv!(hfbasis)
-
-mass_matrix(hfbasis, m[begin], m[end])
+weight_mass_matrix(hfbasis, -2, m[begin], m[end])

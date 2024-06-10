@@ -97,6 +97,26 @@ function Base.:*(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomia
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(p.default_value) * NewT(q.default_value))
 end
 
+function Base.:*(p::LaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where{TP, TQ}
+    NewT = promote_type(TP,TQ)
+    laurent_poly = LaurentPolynomial{NewT}[]
+    index = Int[]
+    if iszero(p)
+        return PiecewiseLaurentPolynomial(q.mesh, LaurentPolynomial{NewT}[], Int[], NewT(0))
+    end
+    for i ∈ q.mesh
+        if i ∈ q.index
+            fq = getfunction(q,i)
+            push!(laurent_poly, p * fq)
+            push!(index, i)
+        else
+            push!(laurent_poly, q.default_value * p)
+            push!(index, i)
+        end
+    end
+    PiecewiseLaurentPolynomial(q.mesh, laurent_poly, index, NewT(q.default_value))
+end
+
 function get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     @assert a≤b
     support = Tuple[]

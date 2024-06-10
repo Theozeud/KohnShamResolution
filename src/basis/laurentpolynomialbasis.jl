@@ -43,3 +43,12 @@ function deriv!(lpb::LaurentPolynomialBasis)
     end
     lpb
 end
+
+function deriv(lpb::LaurentPolynomialBasis)
+    TL = eltype(lpb.elements)
+    deriv_laurent = TL[]
+    for i in eachindex(lpb)
+        push!(deriv_laurent, deriv(lpb[i]))
+    end
+    LaurentPolynomialBasis(deriv_laurent)
+end

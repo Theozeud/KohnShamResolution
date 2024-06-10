@@ -10,8 +10,8 @@ KM = KohnShamExtended(z = _z,N = _N)
 method = ODA()
 
 # Choice of the Solver Options
-lₕ = 2
-Nₕ = 2 
+lₕ = 1
+Nₕ = 1
 basis = LaurentPolynomialBasis([Monomial(1)])
 
 # Solve
