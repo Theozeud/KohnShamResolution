@@ -5,6 +5,7 @@ module KohnShamResolution
     using TimerOutputs
     using ProgressMeter
     using UnPack
+    using Integrals
     
     include("utils.jl")
     include("tools/computation_tools.jl")
@@ -29,8 +30,10 @@ module KohnShamResolution
     export HatFunctionP1, HatBasis
     include("basis/hat_functions.jl")
 
-    export KohnShamExtended
+    export AbstractExchangeCorrelation, ExchangeCorrelation, NoExchangeCorrelation, KohnShamExtended
+    export build_SlaterXα, exc_SlaterXα, vxc_SlaterXα
     export exchcorr, charge, nbelec, potential
+    export ReducedHartreeFock, SlaterXα
     include("model/model.jl")
 
     export KohnShamDiscretization, KohnShamSphericalDiscretization
