@@ -124,7 +124,7 @@ function Base.:*(p::LaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) wh
     if iszero(p)
         return PiecewiseLaurentPolynomial(q.mesh, LaurentPolynomial{NewT}[], Int[], NewT(0))
     end
-    for i ∈ q.mesh
+    for i ∈ eachindex(q)
         if i ∈ q.index
             fq = getfunction(q,i)
             push!(laurent_poly, p * fq)

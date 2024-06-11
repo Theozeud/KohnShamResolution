@@ -19,17 +19,17 @@ end
 
 function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDiscretization)
 
-    @unpack lₕ, Nₕ, basis, mesh = discretization
+    @unpack lₕ, Nₕ, basis, mesh, Rmin, Rmax = discretization
 
     # Init base matrices
     @assert length(basis) == Nₕ
     
     deriv_basis = deriv(basis)
 
-    A   = mass_matrix(deriv_basis, mesh[begin], mesh[end])
-    M₀  = mass_matrix(basis, mesh[begin], mesh[end])
-    M₋₁ = weight_mass_matrix(basis, -1, mesh[begin], mesh[end])
-    M₋₂ = weight_mass_matrix(basis, -2, mesh[begin], mesh[end])
+    A   = mass_matrix(deriv_basis, Rmin, Rmax)
+    M₀  = mass_matrix(basis, Rmin, Rmax)
+    M₋₁ = weight_mass_matrix(basis, -1, Rmin, Rmax)
+    M₋₂ = weight_mass_matrix(basis, -2, Rmin, Rmax)
 
     # Creation of the fix part of the hamiltonian   
     Kin =  zeros(lₕ+1, Nₕ, Nₕ)
@@ -102,8 +102,7 @@ function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::
     # STEP 3 : Solve the generalized eigenvalue problem for each section l
     for l ∈ 0:lₕ
         # building the hamiltonian of the lᵗʰ section
-        @show @. tmp_H = Hfix[l+1,:,:] 
-        @show tmp_exc
+        @. tmp_H = Hfix[l+1,:,:] + tmp_exc
         # solving
         tmp_ϵ[l+1,:], tmp_U[l+1,:,:] = solve_generalized_eigenvalue_problem(tmp_H, M₀)
     end
