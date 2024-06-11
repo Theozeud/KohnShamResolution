@@ -133,23 +133,22 @@ function shift!(p::LaurentPolynomial, n::Int)
     p.degmin += n
 end
 
+##################################################################################
+#                            Elementary Computations
+##################################################################################
+
+function Base.:-( p::LaurentPolynomial{TP}) where {TP,T}
+    coeffs = - p.coeffs
+    coeff_log = -p.coeff_log
+    LaurentPolynomial(coeffs, p.degmin, haslog(p), coeff_log)
+end
+
 function Base.:*(r::Real, p::LaurentPolynomial)
     elag!(LaurentPolynomial(p.coeffs .* r, p.degmin, haslog(p), p.coeff_log * r))
 end
 
 function Base.:*(p::LaurentPolynomial, r::Real)
     r * p
-end
-
-function Base.:+(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
-    NewT = promote_type(TP,TQ)
-    r = Laurent_zero(NewT, min(degmin(p), degmin(q)), max(degmax(p), degmax(q)))
-    for i in eachindex(r)
-        r[i] = NewT(p[i]) + NewT(q[i])
-    end
-    r.coeff_log = p.coeff_log + q.coeff_log
-    r.haslog = p.haslog || q.haslog
-    r
 end
 
 function Base.:+(p::LaurentPolynomial{TP}, x::T) where {TP,T}
@@ -167,8 +166,27 @@ function Base.:+(p::LaurentPolynomial{TP}, x::T) where {TP,T}
     r
 end
 
-function Base.:+(x::T, p::LaurentPolynomial{TP}) where {TP,T}
+function Base.:+(x, p::LaurentPolynomial) 
     p + x
+end
+
+function Base.:-(x, p::LaurentPolynomial) 
+    x + (-p)
+end
+
+function Base.:-(p::LaurentPolynomial, x)
+    p + (-x)
+end
+
+function Base.:+(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
+    NewT = promote_type(TP,TQ)
+    r = Laurent_zero(NewT, min(degmin(p), degmin(q)), max(degmax(p), degmax(q)))
+    for i in eachindex(r)
+        r[i] = NewT(p[i]) + NewT(q[i])
+    end
+    r.coeff_log = p.coeff_log + q.coeff_log
+    r.haslog = p.haslog || q.haslog
+    r
 end
 
 function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
@@ -185,6 +203,20 @@ function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
     r
 end
 
+##################################################################################
+#                            Integration & Derivation
+##################################################################################
+
+function integrate(p::LaurentPolynomial{T}) where T
+    if haslog(p)
+        @error "We can't integrate a laurent polynomial with already a log term."
+    end
+    _haslog = p[-1] != 0 ? true : false
+    coeff_log = p[-1]
+    new_coeffs = p.coeffs .* [i == -1 ? 0//1 : 1//(1+i) for i in eachindex(p)]
+    LaurentPolynomial(new_coeffs, p.degmin+1, _haslog, eltype(new_coeffs)(coeff_log))
+end
+
 function integrate!(p::LaurentPolynomial)
     if haslog(p)
         @error "We can't integrate a laurent polynomial with already a log term."
@@ -197,20 +229,17 @@ function integrate!(p::LaurentPolynomial)
     shift!(p,1)
 end
 
-
-function integrate(p::LaurentPolynomial{T}) where T
-    if haslog(p)
-        @error "We can't integrate a laurent polynomial with already a log term."
-    end
-    _haslog = p[-1] != 0 ? true : false
-    coeff_log = p[-1]
-    new_coeffs = p.coeffs .* [i == -1 ? 0//1 : 1//(1+i) for i in eachindex(p)]
-    LaurentPolynomial(new_coeffs, p.degmin+1, _haslog, eltype(new_coeffs)(coeff_log))
-end
-
 function integrate(p::LaurentPolynomial, a::Real, b::Real)
     int_p = integrate(p)
     int_p(b) - int_p(a)
+end
+
+function deriv(p::LaurentPolynomial{T}) where T
+    new_coeffs = p.coeffs .* [i for i in eachindex(p)]
+    if haslog(p)
+        new_coeffs[-degmin(p)+1] = p.coeff_log
+    end
+    LaurentPolynomial(new_coeffs, p.degmin-1, false, T(0))
 end
 
 function deriv!(p::LaurentPolynomial)
@@ -223,16 +252,7 @@ function deriv!(p::LaurentPolynomial)
     p
 end
 
-function deriv(p::LaurentPolynomial{T}) where T
-    new_coeffs = p.coeffs .* [i for i in eachindex(p)]
-    if haslog(p)
-        new_coeffs[-degmin(p)+1] = p.coeff_log
-    end
-    LaurentPolynomial(new_coeffs, p.degmin-1, false, T(0))
-end
-
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
-
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
 
 #=

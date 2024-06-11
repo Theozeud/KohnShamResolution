@@ -29,7 +29,52 @@ function elag!(p::PiecewiseLaurentPolynomial)
     p
 end
 
-## Functions
+##################################################################################
+#                            Elementary Computations
+##################################################################################
+
+function Base.:+(p::PiecewiseLaurentPolynomial{TP}, x::T) where{TP, T}
+    NewT = promote_type(TP,T)
+    if iszero(x)
+        return p
+    end
+    laurent_poly = LaurentPolynomial{NewT}[]
+    index = Int[]
+    for i ∈ eachindex(p)
+        if i∈ p.index        
+            fp = getfunction(p,i)
+            if !ismonomial(fp) || degmin(fp) != 0 || fp[degmin(fp)] != -x
+                push!(laurent_poly, x + fp)
+                push!(index, i)
+            end
+        end
+    end
+    PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(x) + NewT(p.default_value))
+end
+
+function Base.:+(x, p::PiecewiseLaurentPolynomial)
+    p + x
+end
+
+function Base.:-(p::PiecewiseLaurentPolynomial{T}) where T
+    laurent_poly = LaurentPolynomial{T}[]
+    index = Int[]
+    for i ∈ p.index
+        fp = getfunction(p,i)
+        push!(laurent_poly, -fp)
+        push!(index, i)
+    end
+    PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, -NewT(p.default_value))
+end
+
+function Base.:-(x, p::PiecewiseLaurentPolynomial)
+    x + (-p)
+end
+
+function Base.:-(p::PiecewiseLaurentPolynomial, x)
+    p + (-x)
+end
+
 function Base.:*(p::PiecewiseLaurentPolynomial{TP}, x::T) where{TP, T}
     NewT = promote_type(TP,T)
     if iszero(x)
@@ -47,6 +92,30 @@ end
 
 function Base.:*(x::T, p::PiecewiseLaurentPolynomial{TP}) where{TP, T}
     p * x
+end
+
+function Base.:*(p::LaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where{TP, TQ}
+    NewT = promote_type(TP,TQ)
+    laurent_poly = LaurentPolynomial{NewT}[]
+    index = Int[]
+    if iszero(p)
+        return PiecewiseLaurentPolynomial(q.mesh, LaurentPolynomial{NewT}[], Int[], NewT(0))
+    end
+    for i ∈ eachindex(q)
+        if i ∈ q.index
+            fq = getfunction(q,i)
+            push!(laurent_poly, p * fq)
+            push!(index, i)
+        else
+            push!(laurent_poly, q.default_value * p)
+            push!(index, i)
+        end
+    end
+    PiecewiseLaurentPolynomial(q.mesh, laurent_poly, index, NewT(q.default_value))
+end
+
+function Base.:*(q::PiecewiseLaurentPolynomial, p::LaurentPolynomial)
+    p * q
 end
 
 function Base.:+(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where {TP,TQ}
@@ -117,25 +186,9 @@ function Base.:*(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomia
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(p.default_value) * NewT(q.default_value))
 end
 
-function Base.:*(p::LaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where{TP, TQ}
-    NewT = promote_type(TP,TQ)
-    laurent_poly = LaurentPolynomial{NewT}[]
-    index = Int[]
-    if iszero(p)
-        return PiecewiseLaurentPolynomial(q.mesh, LaurentPolynomial{NewT}[], Int[], NewT(0))
-    end
-    for i ∈ eachindex(q)
-        if i ∈ q.index
-            fq = getfunction(q,i)
-            push!(laurent_poly, p * fq)
-            push!(index, i)
-        else
-            push!(laurent_poly, q.default_value * p)
-            push!(index, i)
-        end
-    end
-    PiecewiseLaurentPolynomial(q.mesh, laurent_poly, index, NewT(q.default_value))
-end
+##################################################################################
+#                            Integration & Derivation
+##################################################################################
 
 function get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     @assert a≤b
@@ -183,6 +236,25 @@ function get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where 
     support
 end
 
+function integrate(p::PiecewiseLaurentPolynomial{T}) where T
+    laurent_poly = LaurentPolynomial{T}[]
+    for i ∈ eachindex(p)
+        if i ∈ p.index
+            push!(laurent_poly, integrate(p.functions[findfirst(item->item == i, p.index)]))
+        end
+    end
+    PiecewiseLaurentPolynomial(p.mesh, laurent_poly, p.index, T(0))
+end
+
+function integrate!(p::PiecewiseLaurentPolynomial)
+    for i ∈ eachindex(p)
+        if i ∈ p.index
+            integrate!(p.functions[findfirst(item->item == i, p.index)])
+        end
+    end
+    p
+end
+
 function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     @assert a ≤ b
     support = get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real)
@@ -194,15 +266,6 @@ function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     val
 end
 
-function deriv!(p::PiecewiseLaurentPolynomial)
-    for i ∈ eachindex(p)
-        if i ∈ p.index
-            deriv!(p.functions[findfirst(item->item == i, p.index)])
-        end
-    end
-    p
-end
-
 function deriv(p::PiecewiseLaurentPolynomial{T}) where T
     laurent_poly = LaurentPolynomial{T}[]
     for i ∈ eachindex(p)
@@ -211,6 +274,15 @@ function deriv(p::PiecewiseLaurentPolynomial{T}) where T
         end
     end
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly, p.index, T(0))
+end
+
+function deriv!(p::PiecewiseLaurentPolynomial)
+    for i ∈ eachindex(p)
+        if i ∈ p.index
+            deriv!(p.functions[findfirst(item->item == i, p.index)])
+        end
+    end
+    p
 end
 
 scalar_product(p::PiecewiseLaurentPolynomial, q::PiecewiseLaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
