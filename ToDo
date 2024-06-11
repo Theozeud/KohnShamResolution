@@ -7,3 +7,14 @@ using PrettyTables
 showpt(A) = pretty_table(A, show_header = false; alignment = :c)
 @time M = mass_matrix(lpb,1,2)
 showpt(M)
+
+
+## Faire un diapo avec quelques stats
+- Diagram of the code
+- number of line
+- reference for time of computation
+  - mass_matrix
+  - eigenvalue
+  - ...
+
+  

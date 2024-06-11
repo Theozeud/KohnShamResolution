@@ -255,10 +255,3 @@ end
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
 
-#=
-lpb = LaurentPolynomialBasis([px,px2,p,p,p,p,p])
-using PrettyTables
-showpt(A) = pretty_table(A, show_header = false; alignment = :c)
-@time M = mass_matrix(lpb,1,2)
-showpt(M)
-=#

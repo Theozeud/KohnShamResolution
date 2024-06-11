@@ -94,6 +94,27 @@ function Base.:*(x::T, p::PiecewiseLaurentPolynomial{TP}) where{TP, T}
     p * x
 end
 
+function Base.:+(p::LaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where{TP, TQ}
+    NewT = promote_type(TP,TQ)
+    laurent_poly = LaurentPolynomial{NewT}[]
+    index = Int[]
+    for i ∈ eachindex(q)
+        if i ∈ q.index
+            fq = getfunction(q,i)
+            push!(laurent_poly, p + fq)
+            push!(index, i)
+        else
+            push!(laurent_poly, q.default_value + p)
+            push!(index, i)
+        end
+    end
+    PiecewiseLaurentPolynomial(q.mesh, laurent_poly, index, NewT(q.default_value))
+end
+
+function Base.:+(q::PiecewiseLaurentPolynomial, p::LaurentPolynomial) 
+    p + q
+end
+
 function Base.:*(p::LaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where{TP, TQ}
     NewT = promote_type(TP,TQ)
     laurent_poly = LaurentPolynomial{NewT}[]
