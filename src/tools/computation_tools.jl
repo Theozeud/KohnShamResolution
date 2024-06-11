@@ -29,7 +29,7 @@ end
 
 
 # Approximate integral
-function approximate_integral(f, domain; method = QuadGKJL(), retol = 1e-3, abstol = 1e-3)
-    prob = IntegralProblem((x,p) -> f, domain, p)
-    solve(prob, method, retol = retol, abstol = abstol).u
+function approximate_integral(f, domain; method = QuadGKJL(), reltol = 1e-3, abstol = 1e-3)
+    prob = IntegralProblem((x,p) -> f(x), domain)
+    solve(prob, method; reltol = reltol, abstol = abstol).u
 end

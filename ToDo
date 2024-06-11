@@ -1,0 +1,5 @@
+LaurentPolynomial & co
+- Ajouter l'opérateur  - laurentpoly
+- Ajouter l'opérateur laurentpoly - laurentpoly
+- Ajouter l'opérateur laurentpoly - nombre
+- Ajouter l'opérateur nombre - laurentpoly

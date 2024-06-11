@@ -21,5 +21,5 @@ end
 
 
 function HatBasis(mesh::OneDMesh, T::Type = Float64)
-    LaurentPolynomialBasis([HatFunctionP1(mesh, i, T) for i ∈ mesh])
+    LaurentPolynomialBasis([HatFunctionP1(mesh, i, T) for i ∈ eachindex(mesh)])
 end

@@ -41,8 +41,8 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     # Initialization of array for temporary stockage of computations
     tmp_H       = zeros(Nₕ, Nₕ)
 
-    tmp_D       = zeros(lₕ+1, Nₕ, Nₕ)
-    tmp_Dstar   = zeros(lₕ+1, Nₕ, Nₕ)
+    tmp_D       = zero_piecewiselaurantpolynomial(mesh)
+    tmp_Dstar   = zero_piecewiselaurantpolynomial(mesh)
     tmp_U       = zeros(lₕ+1, Nₕ, Nₕ)
     tmp_exc     = zeros(Nₕ, Nₕ)
     tmp_ϵ       = zeros(lₕ+1, Nₕ)
@@ -57,7 +57,7 @@ end
 
 function performstep!(method::ODA, solver::KhonShamSolver)
 
-    @unpack tmp_D, tmp_U, tmp_exc, tmp_ϵ, tmp_n = solver.cache
+    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_exc, tmp_ϵ, tmp_n = solver.cache
 
     # STEP 1 : Resolution of the generalized eigenvalue problem to find atomic orbitals and corresonding energies
     find_orbital!(solver.discretization, solver)
@@ -69,20 +69,21 @@ function performstep!(method::ODA, solver::KhonShamSolver)
     update_density!(method, solver)
 
     # Registering into solver
-    solver.D .= tmp_D
+    solver.D  = tmp_D
     solver.U .= tmp_U
     solver.ϵ .= tmp_ϵ
     solver.n .= tmp_n
 
-    tmp_D       .= zero(tmp_D)
+    tmp_D        = zero(tmp_D)
+    tmp_Dstar    = zero(tmp_Dstar)
     tmp_U       .= zero(tmp_U)
-    tmp_exc    .= zero(tmp_exc)
+    tmp_exc     .= zero(tmp_exc)
     tmp_ϵ       .= zero(tmp_ϵ)
     tmp_n       .= zero(tmp_n)
 end
 
-stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev)
-stopping_criteria(::ODA, D, Dprev) = norm(D .- Dprev)
+stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev, solver.discretization.mesh)
+stopping_criteria(::ODA, D, Dprev, points) = max([D(x)- Dprev(x) for x ∈ points]...)
 
 function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::KhonShamSolver)
 
@@ -90,18 +91,19 @@ function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::
     @unpack M₀, Hfix, tmp_H, tmp_U, tmp_exc, tmp_ϵ = solver.cache
     @unpack exc = solver.model
     @unpack Dprev = solver
-    @unpack quad_method, quad_retol, quad_atol = solver.opts
+    @unpack quad_method, quad_reltol, quad_abstol = solver.opts
 
     # STEP 1 : Find Hartree term 
     #build_hartree!(discretization, matrix) 
 
     # STEP 2 : compute an approximation of the exchange correlation term
-    build_exchange_corr!(discretization, tmp_exc, Dprev, exc; quad_method = quad_method, quad_retol = quad_retol, quad_atol = quad_atol)
+    build_exchange_corr!(discretization, tmp_exc, Dprev, exc; quad_method = quad_method, quad_reltol = quad_reltol, quad_abstol = quad_abstol)
 
     # STEP 3 : Solve the generalized eigenvalue problem for each section l
     for l ∈ 0:lₕ
         # building the hamiltonian of the lᵗʰ section
-        @. tmp_H = Hfix[l+1,:,:] + tmp_exc
+        @show @. tmp_H = Hfix[l+1,:,:] 
+        @show tmp_exc
         # solving
         tmp_ϵ[l+1,:], tmp_U[l+1,:,:] = solve_generalized_eigenvalue_problem(tmp_H, M₀)
     end
@@ -179,5 +181,5 @@ function update_density!(::ODA, solver::KhonShamSolver)
     build_density!(solver.discretization, tmp_Dstar, tmp_U, tmp_n)
 
     tmp_tn = 0.5
-    @. tmp_D = tmp_tn * tmp_Dstar + (1 - tmp_tn) * Dprev
+    tmp_D = tmp_tn * tmp_Dstar + (1 - tmp_tn) * Dprev
 end

@@ -2,8 +2,8 @@ struct SolverOptions{T}
     ε::T
     maxiter::Int
     quad_method
-    quad_retol::T
-    quad_atol::T
+    quad_reltol::T
+    quad_abstol::T
 end
 
 mutable struct KhonShamSolver{TSC}
