@@ -7,7 +7,12 @@ end
 groundstate(problem::DFTProblem; kwargs...) =  groundstate(model(problem), discretization(problem), method(problem); kwargs...)
 
 
-function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::AbstractKohnShamResolutionMethod; tol::Real, maxiter::Int = 5)
+function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::AbstractKohnShamResolutionMethod; 
+    tol::Real, 
+    maxiter::Int = 10,
+    quad_method = QuadGKJL(),
+    quad_retol::Real  = 1e-3,
+    quad_atol::Real   = 1e-3)
 
     # Init storage array
     D, Dprev    = init_density_matrix(discretization)
@@ -19,7 +24,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     cache = init_cache(method, model, discretization)
 
     # Registering SolverOptions
-    opts = SolverOptions(tol, maxiter)
+    opts = SolverOptions(tol, maxiter, quad_method, quad_retol, quad_atol)
     niter = 0
     current_stop_crit =  2*tol
     values_stop_crit = [current_stop_crit]    

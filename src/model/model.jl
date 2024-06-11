@@ -23,7 +23,7 @@ abstract type AbstractDFTModel end
 ```
     KohnSham Model
 ```
-Base.@kwdef struct KohnShamExtended{TZ,TN,TEXCH <: ExchangeCorrelation,TPOT} <: AbstractDFTModel
+Base.@kwdef struct KohnShamExtended{TZ,TN,TEXCH <: AbstractExchangeCorrelation,TPOT} <: AbstractDFTModel
     z::TZ
     N::TN
     exc::TEXCH = NoExchangeCorrelation()

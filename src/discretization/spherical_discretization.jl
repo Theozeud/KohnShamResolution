@@ -1,10 +1,11 @@
-struct KohnShamSphericalDiscretization <: KohnShamDiscretization
+struct KohnShamSphericalDiscretization{T} <: KohnShamDiscretization
     lₕ::Int
     Nₕ::Int
     basis::Basis
-    mesh::OneDMesh
+    mesh::OneDMesh{T}
+    Rmax::T
 
-    KohnShamSphericalDiscretization(lₕ::Int, basis::Basis, mesh::OneDMesh) = new(lₕ, length(basis), basis, mesh)
+    KohnShamSphericalDiscretization(lₕ::Int, basis::Basis, mesh::OneDMesh) = new{eltype(mesh)}(lₕ, length(basis), basis, mesh, last(mesh))
 end
 
 init_density_matrix(kd::KohnShamSphericalDiscretization)        = zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ), zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ)  
@@ -31,9 +32,20 @@ function build_hartree(kd::KohnShamSphericalDiscretization, Hartree)
 
 end
 
-function build_exchange_corr()
-
-
+function build_exchange_corr!(kd::KohnShamSphericalDiscretization, exc_mat, ρ, exc::AbstractExchangeCorrelation; quad_method, quad_retol, quad_atol)
+    @unpack Nₕ, basis, Rmax = kd
+    if !isthereExchangeCorrelation(exc)
+        return exc_mat .= zeros(Nₕ,Nₕ)
+    end
+    for i ∈ eachindex(basis)
+        for j ∈ eachindex(basis)
+            if j<i
+                exc_mat[i,j] = exc_mat[j,i]
+            else
+                exc_mat[i,j] = approximate_integral(x -> exc.vxc(ρ(x)), (0, Rmax) ; method = quad_method, retol = quad_retol, abstol = quad_atol)
+            end
+        end
+    end
 end
 
 function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)

@@ -30,10 +30,14 @@ function mesh(point::Real, funMesh::Base.Callable, Rmax::Real)
     mesh(points)
 end
 
+@inline Base.eltype(::OneDMesh{T}) where T = T
 @inline Base.eachindex(m::OneDMesh) = eachindex(m.points)
 @inline Base.firstindex(m::OneDMesh) = firstindex(m.points)
 @inline Base.lastindex(m::OneDMesh) = lastindex(m.points)
 @inline Base.getindex(m::OneDMesh, n::Int) = m.points[n]
+@inline Base.setindex!(m::OneDMesh{T}, val::T, n::Int) where T = m.points[n] = val
+@inline Base.first(m::OneDMesh) = m[firstindex(m)]
+@inline Base.last(m::OneDMesh) = m[lastindex(m)]
 
 @inline Base.length(m::OneDMesh) = length(m.points)
 @inline Base.size(m::OneDMesh) = size(m.points)

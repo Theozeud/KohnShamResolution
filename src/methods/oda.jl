@@ -10,6 +10,7 @@ struct CacheODA <: AbstractKohnShamCache
     tmp_Dstar
     tmp_D
     tmp_U
+    tmp_exc 
     tmp_ϵ
     tmp_ϵ_sort
     tmp_n    
@@ -43,18 +44,20 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     tmp_D       = zeros(lₕ+1, Nₕ, Nₕ)
     tmp_Dstar   = zeros(lₕ+1, Nₕ, Nₕ)
     tmp_U       = zeros(lₕ+1, Nₕ, Nₕ)
+    tmp_exc     = zeros(Nₕ, Nₕ)
     tmp_ϵ       = zeros(lₕ+1, Nₕ)
     tmp_ϵ_sort  = Int[]
     tmp_n       = zeros(lₕ+1, Nₕ)
     
+    
     tmp_tn      = 0.0     
 
-    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_ϵ, tmp_ϵ_sort, tmp_n, tmp_tn)
+    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_exc, tmp_ϵ, tmp_ϵ_sort, tmp_n, tmp_tn)
 end
 
 function performstep!(method::ODA, solver::KhonShamSolver)
 
-    @unpack tmp_D, tmp_U, tmp_ϵ, tmp_n = solver.cache
+    @unpack tmp_D, tmp_U, tmp_exc, tmp_ϵ, tmp_n = solver.cache
 
     # STEP 1 : Resolution of the generalized eigenvalue problem to find atomic orbitals and corresonding energies
     find_orbital!(solver.discretization, solver)
@@ -71,14 +74,38 @@ function performstep!(method::ODA, solver::KhonShamSolver)
     solver.ϵ .= tmp_ϵ
     solver.n .= tmp_n
 
-    tmp_D   .= zero(tmp_D)
-    tmp_U   .= zero(tmp_U)
-    tmp_ϵ   .= zero(tmp_ϵ)
-    tmp_n   .= zero(tmp_n)
+    tmp_D       .= zero(tmp_D)
+    tmp_U       .= zero(tmp_U)
+    tmp_exc    .= zero(tmp_exc)
+    tmp_ϵ       .= zero(tmp_ϵ)
+    tmp_n       .= zero(tmp_n)
 end
 
 stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev)
 stopping_criteria(::ODA, D, Dprev) = norm(D .- Dprev)
+
+function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::KhonShamSolver)
+
+    @unpack lₕ = discretization
+    @unpack M₀, Hfix, tmp_H, tmp_U, tmp_exc, tmp_ϵ = solver.cache
+    @unpack exc = solver.model
+    @unpack Dprev = solver
+    @unpack quad_method, quad_retol, quad_atol = solver.opts
+
+    # STEP 1 : Find Hartree term 
+    #build_hartree!(discretization, matrix) 
+
+    # STEP 2 : compute an approximation of the exchange correlation term
+    build_exchange_corr!(discretization, tmp_exc, Dprev, exc; quad_method = quad_method, quad_retol = quad_retol, quad_atol = quad_atol)
+
+    # STEP 3 : Solve the generalized eigenvalue problem for each section l
+    for l ∈ 0:lₕ
+        # building the hamiltonian of the lᵗʰ section
+        @. tmp_H = Hfix[l+1,:,:] + tmp_exc
+        # solving
+        tmp_ϵ[l+1,:], tmp_U[l+1,:,:] = solve_generalized_eigenvalue_problem(tmp_H, M₀)
+    end
+end
 
 function aufbau!(solver::KhonShamSolver)
 
@@ -141,26 +168,6 @@ function aufbau!(solver::KhonShamSolver)
             break
         end
         idx += length(A)
-    end
-end
-
-function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::KhonShamSolver)
-
-    @unpack lₕ = discretization
-    @unpack M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_U, tmp_ϵ = solver.cache
-
-    # STEP 1 : Find Hartree term 
-    #build_hartree!(discretization, matrix) 
-
-    # STEP 2 : compute an approximation of the exchange correlation term
-    #build_exchange_corr!(discretization, matrix)
-
-    # STEP 3 : Solve the generalized eigenvalue problem for each section l
-    for l ∈ 0:lₕ
-        # building the hamiltonian of the lᵗʰ section
-        tmp_H .= Hfix[l+1]
-        # solving
-        tmp_ϵ[l+1,:], tmp_U[l+1,:,:] = solve_generalized_eigenvalue_problem(tmp_H, M₀)
     end
 end
 

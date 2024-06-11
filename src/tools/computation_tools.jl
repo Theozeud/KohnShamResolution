@@ -1,8 +1,3 @@
-# Quadrature
-function gaussian_quadrature()
-
-end
-
 # Solving linear problem
 ```
     Solve Linear Problem of the form AX = b
@@ -30,4 +25,11 @@ function tensorproduct(X::AbstractVector, Y::AbstractVector)
         end 
     end
     XY
+end
+
+
+# Approximate integral
+function approximate_integral(f, domain; method = QuadGKJL(), retol = 1e-3, abstol = 1e-3)
+    prob = IntegralProblem((x,p) -> f, domain, p)
+    solve(prob, method, retol = retol, abstol = abstol).u
 end

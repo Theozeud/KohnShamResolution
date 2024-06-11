@@ -1,8 +1,10 @@
-struct SolverOptions{Teps}
-    ε::Teps 
-    maxiter::Int     
+struct SolverOptions{T}
+    ε::T
+    maxiter::Int
+    quad_method
+    quad_retol::T
+    quad_atol::T
 end
-
 
 mutable struct KhonShamSolver{TSC}
     discretization
