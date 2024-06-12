@@ -5,6 +5,8 @@ mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractLaurentPolynomial{T}
     default_value::T
 end
 
+@inline Base.eltype(::PiecewiseLaurentPolynomial{T,TM}) where {T,TM} = T
+
 @inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, LaurentPolynomial{T}[], Int[], T(0))
 @inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = PiecewiseLaurentPolynomial(pwlp.mesh, LaurentPolynomial{T}[], Int[], T(0))
 @inline Base.eachindex(pwlp::PiecewiseLaurentPolynomial) = eachindex(pwlp.mesh)
@@ -90,8 +92,12 @@ function Base.:*(p::PiecewiseLaurentPolynomial{TP}, x::T) where{TP, T}
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(x) * NewT(p.default_value))
 end
 
-function Base.:*(x::T, p::PiecewiseLaurentPolynomial{TP}) where{TP, T}
+function Base.:*(x, p::PiecewiseLaurentPolynomial) 
     p * x
+end
+
+function Base.:/(p::PiecewiseLaurentPolynomial, x) 
+    p * x^(-1)
 end
 
 function Base.:+(p::LaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) where{TP, TQ}

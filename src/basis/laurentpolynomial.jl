@@ -9,6 +9,8 @@ end
 
 Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,0))
 
+@inline Base.eltype(::LaurentPolynomial{T}) where T = T
+
 @inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin+length(p.coeffs)-1)
 @inline degmax(p::LaurentPolynomial) = p.degmin+length(p.coeffs)-1
 @inline degmin(p::LaurentPolynomial) = p.degmin
@@ -149,6 +151,10 @@ end
 
 function Base.:*(p::LaurentPolynomial, r::Real)
     r * p
+end
+
+function Base.:/(p::LaurentPolynomial, r::Real)
+    p * r^(-1)
 end
 
 function Base.:+(p::LaurentPolynomial{TP}, x::T) where {TP,T}
