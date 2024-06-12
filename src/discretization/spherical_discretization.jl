@@ -28,9 +28,21 @@ function build_coulomb!(kd::KohnShamSphericalDiscretization, Coul, model, M₋�
     end 
 end
 
-function build_hartree(kd::KohnShamSphericalDiscretization, Hartree)
-
-
+function build_hartree(kd::KohnShamSphericalDiscretization, Hartree, ρ)
+    @unpack basis, Rmin, Rmax = kd
+    int1 = integrate(Monomial(1) * ρ)
+    int2 = integrate(Monomial(2) * ρ)
+    potential = 4π*(int1 - int1(Rmin) + Monomial(-1) * (int2(Rmax) - int2))
+    for i ∈ eachindex(basis)
+        for j ∈ eachindex(basis)
+            if j<i
+                Hartree[i,j] = Hartree[j,i]
+            else
+                Hartree[i,j] = integrate(potential * basis[i] * basis[j], Rmin, Rmax)
+            end
+        end
+    end
+    Hartree
 end
 
 function build_exchange_corr!(kd::KohnShamSphericalDiscretization, exc_mat, ρ, exc::AbstractExchangeCorrelation; quad_method, quad_reltol, quad_abstol)
@@ -52,16 +64,15 @@ end
 
 function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)
     @unpack lₕ, Nₕ, basis, mesh = kd
-    density = zero_piecewiselaurantpolynomial(mesh)
     for l ∈ 1:lₕ+1
         for k ∈ 1:Nₕ
             if n[l,k] != 0
                 eigen_vector = build_on_basis(basis, U[l,k,:])
-                density += n[l,k] * eigen_vector * eigen_vector
+                Dstar += n[l,k] * eigen_vector * eigen_vector
             end
         end
     end
-    density *= 1/4π
+    Dstar *= 1/(4π)
 end
 
 function build_energy()
