@@ -64,7 +64,7 @@ function Base.:-(p::PiecewiseLaurentPolynomial{T}) where T
         push!(laurent_poly, -fp)
         push!(index, i)
     end
-    PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, -NewT(p.default_value))
+    PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, -p.default_value)
 end
 
 function Base.:-(x, p::PiecewiseLaurentPolynomial)

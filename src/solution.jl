@@ -4,6 +4,7 @@ struct KohnShamSolution
     success::String 
     ϵ
     n
+    E::Real
     niter::Int
     crit::Vector
 
@@ -13,7 +14,7 @@ struct KohnShamSolution
         else
             success = "SUCCESS"
         end
-        new(success, solver.ϵ , solver.n, solver.niter, solver.values_stop_crit)
+        new(success, solver.ϵ , solver.n, min(solver.ϵ...), solver.niter, solver.values_stop_crit)
     end
 end
 
@@ -28,6 +29,8 @@ function Base.show(io::IO, sol::KohnShamSolution)
     println(io, string(sol.ϵ))
     printstyled(io, "n = "; bold = true)
     println(io, string(sol.n))
+    printstyled(io, "E = "; bold = true, color = :green)
+    println(io, sol.E)
     printstyled(io, "niter = "; bold = true)
     println(io, string(sol.niter))
     printstyled(io, "Stopping criteria = "; bold = true)

@@ -23,12 +23,12 @@ end
 function HatBasis(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left)
     if left && right
         index = eachindex(mesh)
-    elseif left && !right
-        index = eachindex(mesh)[begin:end-1]
-    elseif !left && right
+    elseif !left && !right
+        index = eachindex(mesh)[begin+1:end-1]
+    elseif !left
         index = eachindex(mesh)[begin+1:end]
     else
-        index = eachindex(mesh)[begin+1:end-1]
+        index = eachindex(mesh)[begin:end-1]
     end
     LaurentPolynomialBasis([HatFunctionP1(mesh, i, T) for i ∈ index])
 end

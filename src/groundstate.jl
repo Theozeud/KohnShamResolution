@@ -12,7 +12,8 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     maxiter::Int = 10,
     quad_method = QuadGKJL(),
     quad_reltol::Real  = 1e-3,
-    quad_abstol::Real   = 1e-3)
+    quad_abstol::Real   = 1e-3,
+    hartree::Bool = true)
 
     # Init storage array
     D, Dprev    = init_density_matrix(discretization)
@@ -24,7 +25,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     cache = init_cache(method, model, discretization)
 
     # Registering SolverOptions
-    opts = SolverOptions(tol, maxiter, quad_method, quad_reltol, quad_abstol)
+    opts = SolverOptions(tol, maxiter, quad_method, quad_reltol, quad_abstol, hartree)
     niter = 0
     current_stop_crit =  2*tol
     values_stop_crit = [current_stop_crit]    
@@ -44,10 +45,10 @@ function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod
 end
 
 function loopfooter!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
+    @show solver.current_stop_crit = stopping_criteria(method, solver)
+    push!(solver.values_stop_crit, solver.current_stop_crit)
     solver.Dprev  = solver.D
     solver.niter += 1
-    solver.current_stop_crit = stopping_criteria(method, solver)
-    push!(solver.values_stop_crit, solver.current_stop_crit)
 end
 
 

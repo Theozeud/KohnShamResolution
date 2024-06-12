@@ -54,6 +54,4 @@ module KohnShamResolution
 
     export groundstate
     include("groundstate.jl")
-    
-
 end

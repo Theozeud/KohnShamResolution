@@ -137,7 +137,7 @@ end
 #                            Elementary Computations
 ##################################################################################
 
-function Base.:-( p::LaurentPolynomial{TP}) where {TP,T}
+function Base.:-( p::LaurentPolynomial)
     coeffs = - p.coeffs
     coeff_log = -p.coeff_log
     LaurentPolynomial(coeffs, p.degmin, haslog(p), coeff_log)

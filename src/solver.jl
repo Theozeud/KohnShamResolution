@@ -4,6 +4,7 @@ struct SolverOptions{T}
     quad_method
     quad_reltol::T
     quad_abstol::T
+    hartree::Bool
 end
 
 mutable struct KhonShamSolver{TSC}
