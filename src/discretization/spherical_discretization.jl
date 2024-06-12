@@ -17,7 +17,7 @@ init_occupation(kd::KohnShamSphericalDiscretization)            = zeros(kd.lₕ+
 function build_kinetic!(kd::KohnShamSphericalDiscretization, Kin, A, M₋₂)
     @unpack lₕ = kd
     for l ∈ 0:lₕ
-        @. Kin[l+1,:,:] = - A - l*(l+1)*M₋₂
+        @. Kin[l+1,:,:] =  1/2 * (A + l*(l+1)*M₋₂)
     end 
 end
 
@@ -68,6 +68,7 @@ function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)
         for k ∈ 1:Nₕ
             if n[l,k] != 0
                 eigen_vector = build_on_basis(basis, U[l,k,:])
+                eigen_vector = eigen_vector / sqrt(scalar_product(eigen_vector, eigen_vector, mesh)) 
                 Dstar += n[l,k] * eigen_vector * eigen_vector
             end
         end

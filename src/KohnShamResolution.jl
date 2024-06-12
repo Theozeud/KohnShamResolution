@@ -34,7 +34,7 @@ module KohnShamResolution
     export build_SlaterXα, exc_SlaterXα, vxc_SlaterXα
     export exchcorr, charge, nbelec, potential
     export ReducedHartreeFock, SlaterXα
-    include("model/model.jl")
+    include("model/kohnsham_model.jl")
 
     export KohnShamDiscretization, KohnShamSphericalDiscretization
     include("discretization/abstract_discretization.jl")

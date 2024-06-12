@@ -9,7 +9,7 @@ groundstate(problem::DFTProblem; kwargs...) =  groundstate(model(problem), discr
 
 function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::AbstractKohnShamResolutionMethod; 
     tol::Real, 
-    maxiter::Int = 10,
+    maxiter::Int = 100,
     quad_method = QuadGKJL(),
     quad_reltol::Real  = 1e-3,
     quad_abstol::Real   = 1e-3,
@@ -37,7 +37,6 @@ end
 function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod; show_progress = false)
     p = ProgressThresh(solver.opts.ε; enabled = show_progress, desc = "Itération Principale") 
     while solver.current_stop_crit > solver.opts.ε && solver.niter < solver.opts.maxiter
-        println("Itérations")
         update!(p, solver.current_stop_crit)
         performstep!(method, solver)
         loopfooter!(solver, method)
@@ -45,7 +44,7 @@ function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod
 end
 
 function loopfooter!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
-    @show solver.current_stop_crit = stopping_criteria(method, solver)
+    solver.current_stop_crit = stopping_criteria(method, solver)
     push!(solver.values_stop_crit, solver.current_stop_crit)
     solver.Dprev  = solver.D
     solver.niter += 1

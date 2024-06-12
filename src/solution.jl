@@ -30,12 +30,14 @@ function Base.show(io::IO, sol::KohnShamSolution)
     printstyled(io, "n = "; bold = true)
     println(io, string(sol.n))
     printstyled(io, "E = "; bold = true, color = :green)
-    println(io, sol.E)
+    printstyled(io, sol.E; bold = true, color = :green)
+    println("")
     printstyled(io, "niter = "; bold = true)
     println(io, string(sol.niter))
     printstyled(io, "Stopping criteria = "; bold = true)
     println(io, string(last(sol.crit)))
 end
+
 
 # afficher en plus le fondamentale et l'orbital correspondant, 
 # affciher les énergies ϵ seulement pour les n non nuls
