@@ -27,7 +27,6 @@ function tensorproduct(X::AbstractVector, Y::AbstractVector)
     XY
 end
 
-
 # Approximate integral
 function approximate_integral(f, domain; method = QuadGKJL(), reltol = 1e-3, abstol = 1e-3)
     prob = IntegralProblem((x,p) -> f(x), domain)
