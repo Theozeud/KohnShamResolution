@@ -115,12 +115,13 @@ end
 function aufbau!(solver::KhonShamSolver)
 
     @unpack N = solver.model
-    @unpack tmp_ϵ, tmp_ϵ_sort, tmp_n = solver.cache
+    @unpack tmp_ϵ, tmp_ϵ_sort, tmp_n, tmp_U = solver.cache
     @unpack lₕ, Nₕ = solver.discretization
 
     # sort tmp_ϵ to order in l
-    sort!(tmp_ϵ; dims = 1)
-
+    #sort!(tmp_ϵ; dims = 1)
+    sort_X_and_rearrange_U!(tmp_ϵ, tmp_U)
+    
     # splat the vector of eigenvalue
     vector_ϵ = [tmp_ϵ...]
 
@@ -184,4 +185,22 @@ function update_density!(::ODA, solver::KhonShamSolver)
     tmp_Dstar = build_density!(solver.discretization, tmp_Dstar, tmp_U, tmp_n)
     tmp_tn = 0.8
     tmp_D = tmp_tn * tmp_Dstar + (1 - tmp_tn) * Dprev
+end
+
+
+function sort_X_and_rearrange_U!(X, U)
+
+    X_vec = vec(X)
+    sorted_indices = sortperm(X_vec)
+    X_sorted = reshape(X_vec[sorted_indices], size(X))
+
+    U_sorted = similar(U)
+    for k in axes(U,3)
+        U_slice = vec(U[:, :, k])
+        U_sorted_slice = U_slice[sorted_indices]
+        U_sorted[:, :, k] = reshape(U_sorted_slice, size(X))
+    end
+
+    @. X = X_sorted
+    @. U = U_sorted
 end
