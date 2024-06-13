@@ -19,7 +19,7 @@ pltA = []
 for z in zA
 
     Rmax = (1.5 * log(z) + 16*log(10))/z
-    m = logmesh(0,Rmax,150)
+    m = logmesh(0,Rmax,150,z)
     basis = HatBasis(m; left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 

@@ -13,7 +13,7 @@ end
 
 linmesh(a, b, n) = mesh(LinRange(a,b,n))
 
-function logmesh(a,b,n)
+function LogRange(a,b,n, z = 1)
     X = LinRange(a,b,n)
     a = first(X)
     b = last(X)
@@ -21,11 +21,15 @@ function logmesh(a,b,n)
     for i ∈ firstindex(X):lastindex(X)-1
         x = X[i]
         tmp = (b-a)/(b-x)
-        tmp = log(tmp)
+        tmp = z*log(tmp)
         Z[i] = b - (b-a)/(tmp+1)
     end
     Z[end] = b
-    mesh(Z)
+    Z
+end
+
+function LogMesh(a, b, n, z =1)
+    mesh(LogRange(a,b,n, z))
 end
 
 @inline Base.eltype(::OneDMesh{T}) where T = T
