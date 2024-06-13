@@ -18,4 +18,4 @@ basis = HatBasis(m; left = false, right = false)
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
 # Solve
-@time sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
+@time sol = groundstate(KM, D, method; tol = 1e-10, hartree = false)

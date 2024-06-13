@@ -62,12 +62,25 @@ function build_exchange_corr!(kd::KohnShamSphericalDiscretization, exc_mat, ρ, 
     exc_mat
 end
 
+function build_eigenvector(kd::KohnShamSphericalDiscretization, U)
+    @unpack lₕ, Nₕ, basis, mesh = kd
+    eigen_vector = []
+    for l ∈ 1:lₕ+1
+        for k ∈ 1:Nₕ
+            eiglk = build_on_basis(basis, U[l,k,:]) * Monomial(-1)
+            push!(eigen_vector, eiglk / sqrt(scalar_product(eiglk,eiglk, mesh))) 
+        end
+    end
+    reshape(eigen_vector, (Nₕ, lₕ+1))
+end
+
+
 function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)
     @unpack lₕ, Nₕ, basis, mesh = kd
     for l ∈ 1:lₕ+1
         for k ∈ 1:Nₕ
             if n[l,k] != 0
-                eigen_vector = build_on_basis(basis, U[l,k,:])
+                eigen_vector = build_on_basis(basis, U[l,k,:]) * Monomial(-1)
                 eigen_vector = eigen_vector / sqrt(scalar_product(eigen_vector, eigen_vector, mesh)) 
                 Dstar += n[l,k] * eigen_vector * eigen_vector
             end

@@ -7,20 +7,25 @@ method = ODA()
 
 # Discretization 
 lₕ = 0
-m = logmesh(0,50,100)
-basis = HatBasis(m; left = false, right = false)
-D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
 # One electron model
 zA = [1, 2, 3, 4]
 N = 1
 eigvalue_theo(n,z) = -z^2/(2*n^2)
-fundamental(z, x)     = z^(3/2)/sqrt(π)*exp(-z*abs(x))
 
 # Plot
 pltA = []
 
 for z in zA
+
+    Rmax = (1.5 * log(z) + 16*log(10))/z
+    m = logmesh(0,Rmax,150)
+    basis = HatBasis(m; left = false, right = false)
+    D = KohnShamSphericalDiscretization(lₕ, basis, m)
+
+    KM = KohnShamExtended(z = z, N = N)
+
+    sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
 
     plt = plot( size = (900,600), margin = 0.5Plots.cm, legend = :bottomright,
                 legendfontsize  = 14,  
@@ -31,10 +36,6 @@ for z in zA
     xlabel!("n")
     ylabel!("Energie")
     title!("z = "*string(z))
-
-    KM = KohnShamExtended(z = z,N = N)
-
-    sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
 
     index_ϵ = findall(x->x < 0, sol.ϵ[1,:])
 

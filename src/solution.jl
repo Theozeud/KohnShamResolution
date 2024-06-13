@@ -5,6 +5,7 @@ struct KohnShamSolution
     ϵ
     n
     E::Real
+    eigvect
     niter::Int
     crit::Vector
 
@@ -14,7 +15,10 @@ struct KohnShamSolution
         else
             success = "SUCCESS"
         end
-        new(success, solver.ϵ , solver.n, min(solver.ϵ...), solver.niter, solver.values_stop_crit)
+
+        eigvect = build_eigenvector(solver.discretization, solver.U)
+
+        new(success, solver.ϵ , solver.n, min(solver.ϵ...), eigvect, solver.niter, solver.values_stop_crit)
     end
 end
 
