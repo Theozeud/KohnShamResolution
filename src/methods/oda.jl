@@ -183,7 +183,7 @@ function update_density!(::ODA, solver::KhonShamSolver)
     @unpack tmp_D, tmp_Dstar, tmp_U, tmp_n, tmp_tn = solver.cache
 
     tmp_Dstar = build_density!(solver.discretization, tmp_Dstar, tmp_U, tmp_n)
-    tmp_tn = 0.8
+    tmp_tn = 1.0
     tmp_D = tmp_tn * tmp_Dstar + (1 - tmp_tn) * Dprev
 end
 

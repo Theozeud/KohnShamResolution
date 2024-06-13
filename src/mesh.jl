@@ -28,7 +28,7 @@ function LogRange(a,b,n, z = 1)
     Z
 end
 
-function LogMesh(a, b, n, z =1)
+function logmesh(a, b, n, z =1)
     mesh(LogRange(a,b,n, z))
 end
 
