@@ -1,5 +1,4 @@
 using KohnShamResolution
-include("../plot tools.jl")
 
 # Choice of the method
 method = ODA()
@@ -16,10 +15,12 @@ fundamental(z, x)     = z^(3/2)/sqrt(π)*exp(-z*abs(x))
 # Plot
 pltA = []
 
+cutting_pre = 10
+
 for z in zA
 
-    Rmax = (1.5 * log(z) + 16*log(10))/z
-    m = logmesh(0,Rmax,10)
+    Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
+    m = logmesh(0,Rmax,100)
     basis = HatBasis(m; left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
@@ -49,4 +50,4 @@ for z in zA
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "Comparaison Numérique - Théorique du fondamental pour les atomes à 1 electrons")
+savefig(pltfin, "image/hydrogenoide/with P1 elements/Comparaison Numérique - Théorique du fondamental")

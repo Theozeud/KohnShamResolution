@@ -28,7 +28,8 @@ module KohnShamResolution
     include("basis/piecewiselaurentpolynomial.jl")
 
     export HatFunctionP1, HatBasis
-    include("basis/hat_functions.jl")
+    export FunctionP2_node, FunctionP2_mid, P2Basis
+    include("basis/usual basis.jl")
 
     export AbstractExchangeCorrelation, ExchangeCorrelation, NoExchangeCorrelation, KohnShamExtended
     export build_SlaterXα, exc_SlaterXα, vxc_SlaterXα
