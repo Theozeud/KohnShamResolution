@@ -20,7 +20,7 @@ module KohnShamResolution
     include("basis/laurentpolynomialbasis.jl")
 
     export OneDMesh
-    export mesh, find_index
+    export mesh, find_index, linmesh, logmesh
     include("mesh.jl")
 
     export PiecewiseLaurentPolynomial

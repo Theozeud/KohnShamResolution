@@ -11,23 +11,21 @@ function mesh(points::AbstractArray{T})  where T<: Real
     OneDMesh(_points , steps)
 end
 
-function mesh(point::Real, funMesh::Base.Callable, Nmesh::Int)
-    points = zeros(Nmesh)
-    points[1] = point
-    for i in 2:Nmesh
-        @inbounds points[i] = funMesh(points[i-1])
-    end
-    mesh(points)
-end
+linmesh(a, b, n) = mesh(LinRange(a,b,n))
 
-function mesh(point::Real, funMesh::Base.Callable, Rmax::Real)
-    points = [point]
-    nextpoint = funMesh(point)
-    while nextpoint ≤ Rmax
-        push!(points, nextpoint)
-        nextpoint = funMesh(nextpoint)
+function logmesh(a,b,n)
+    X = LinRange(a,b,n)
+    a = first(X)
+    b = last(X)
+    Z = zero(X)
+    for i ∈ firstindex(X):lastindex(X)-1
+        x = X[i]
+        tmp = (b-a)/(b-x)
+        tmp = log(tmp)
+        Z[i] = b - (b-a)/(tmp+1)
     end
-    mesh(points)
+    Z[end] = b
+    mesh(Z)
 end
 
 @inline Base.eltype(::OneDMesh{T}) where T = T

@@ -1,22 +1,21 @@
 using KohnShamResolution
 
 # Creation of the model
-_z = 2
-_N = 10
+_z = 0.5
+_N = 1
 
 KM = KohnShamExtended(z = _z,N = _N)
+#KM = SlaterXα(_z, _N)
 
 # Choice of the method
 method = ODA()
 
 # Discretization 
-lₕ = 2
-m = mesh(1:5)
-basis = HatBasis(m)
+lₕ = 0
+
+m = logmesh(0,50,100)
+basis = HatBasis(m; left = false, right = false)
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
 # Solve
-@time groundstate(KM, D, method; tol = 0.1)
-
-# Plot Results
-
+@time sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
