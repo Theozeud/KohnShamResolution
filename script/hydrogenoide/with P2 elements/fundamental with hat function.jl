@@ -20,7 +20,7 @@ cutting_pre = 10
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0,Rmax,100)
+    m = logmesh(0,Rmax,40)
     basis = P2Basis(m; left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 

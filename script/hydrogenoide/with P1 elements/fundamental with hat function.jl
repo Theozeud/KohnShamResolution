@@ -15,7 +15,7 @@ fundamental(z, x)     = z^(3/2)/sqrt(π)*exp(-z*abs(x))
 # Plot
 pltA = []
 
-cutting_pre = 10
+cutting_pre = 5
 
 for z in zA
 
