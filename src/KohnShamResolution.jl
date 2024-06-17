@@ -10,12 +10,15 @@ module KohnShamResolution
     using ProgressMeter
     
     include("utils.jl")
-    include("tools/computation_tools.jl")
+    include("computational tools.jl")
 
     export LaurentPolynomial
-    export Monomial, deg, degmax, degmin, haslog, ismonomial, iszero
+    export Polynomial, Monomial, deg, degmax, degmin, haslog, ismonomial, iszero
     export integrate!, integrate, deriv!, deriv, scalar_product, elag!
     include("laurentpolynomial/laurentpolynomial.jl")
+
+    export Legendre
+    include("laurentpolynomial/legendre polynomial.jl")
 
     export OneDMesh
     export mesh, find_index, linmesh, LogRange, logmesh
@@ -27,11 +30,11 @@ module KohnShamResolution
 
     export LaurentPolynomialBasis
     export mass_matrix, weight_mass_matrix, build_on_basis
-    include("basis/laurentpolynomialbasis.jl")
+    include("finite element basis/laurentpolynomialbasis.jl")
 
-    export HatFunctionP1, HatBasis, BubbleBasis
-    export FunctionP2_node, FunctionP2_mid, P2Basis
-    include("basis/usual basis.jl")
+    export HatBasis, P1Basis, BubbleBasis, IntLegendreBasis
+    export HatFunctionP1, FunctionP2_node, FunctionP2_mid, P2Basis, IntLegendre_element
+    include("finite element basis/usual basis.jl")
 
     export AbstractExchangeCorrelation, ExchangeCorrelation, NoExchangeCorrelation, KohnShamExtended
     export build_SlaterXα, exc_SlaterXα, vxc_SlaterXα

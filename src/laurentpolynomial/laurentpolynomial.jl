@@ -7,6 +7,7 @@ mutable struct LaurentPolynomial{T} <:AbstractLaurentPolynomial{T}
     coeff_log::T
 end
 
+Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin, false, eltype(coeff)(0))
 Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,0))
 
 @inline Base.eltype(::LaurentPolynomial{T}) where T = T
@@ -146,7 +147,11 @@ function Base.:-( p::LaurentPolynomial)
 end
 
 function Base.:*(r::Real, p::LaurentPolynomial)
-    elag!(LaurentPolynomial(p.coeffs .* r, p.degmin, haslog(p), p.coeff_log * r))
+    if r == 1
+        return p
+    else
+        return elag!(LaurentPolynomial(p.coeffs .* r, p.degmin, haslog(p), p.coeff_log * r))
+    end
 end
 
 function Base.:*(p::LaurentPolynomial, r::Real)
@@ -182,6 +187,10 @@ end
 
 function Base.:-(p::LaurentPolynomial, x)
     p + (-x)
+end
+
+function Base.:-(p::LaurentPolynomial, q::LaurentPolynomial)
+    p + (-q)
 end
 
 function Base.:+(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
@@ -260,4 +269,3 @@ end
 
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
-
