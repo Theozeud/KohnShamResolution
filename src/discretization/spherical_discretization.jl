@@ -68,7 +68,7 @@ function build_eigenvector(kd::KohnShamSphericalDiscretization, U)
     for l ∈ 1:lₕ+1
         for k ∈ 1:Nₕ
             eiglk = build_on_basis(basis, U[l,:,k]) 
-            push!(eigen_vector,  1/sqrt(4π)* eiglk / sqrt(scalar_product(eiglk,eiglk, mesh))) * Monomial(-1)
+            push!(eigen_vector,  1/sqrt(4π)* eiglk / sqrt(scalar_product(eiglk,eiglk, mesh)) * Monomial(-1)) 
         end
     end
     reshape(eigen_vector, (Nₕ, lₕ+1))
