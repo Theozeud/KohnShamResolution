@@ -95,4 +95,44 @@ end
 #                             Peano hierarchical shape function
 ########################################################################################
 
-function Peano()
+@memoize function Bubble_laurent(mesh::OneDMesh, i::Int, j::Int, T::Type = Float64)
+    @assert i ≤ lastindex(mesh) - 1
+    pl = T(mesh[i])
+    pr = T(mesh[i+1])
+    if j == 1
+        LaurentPolynomial([pr/(pr-pl),T(1)/(pl-pr)], 0, false, T(0))
+    elseif j == 2
+        LaurentPolynomial([pl/(pl-pr),T(1)/(pl-pr)], 0, false, T(0))
+    elseif j == 3
+        p₁ = LaurentPolynomial([pr/(pr-pl),T(1)/(pl-pr)], 0, false, T(0))
+        p₂ = LaurentPolynomial([pl/(pl-pr),T(1)/(pc-pr)], 0, false, T(0))
+        p₁ * p₂
+    else
+        p₁ = LaurentPolynomial([pr/(pr-pl),T(1)/(pl-pr)], 0, false, T(0))
+        p₂ = LaurentPolynomial([pl/(pl-pr),T(1)/(pc-pr)], 0, false, T(0))
+        pⱼ₋₁ = Bubble_lauren(mesh, i, j-1, T)
+        pⱼ₋₁*(p₂ - p₁)
+    end
+end
+
+function Bubble(mesh::OneDMesh, i::Int, j, T::Type = Float64)
+    pⱼ = Bubble_laurent(mesh, i, j, T)
+    PiecewiseLaurentPolynomial(mesh, [pⱼ], [i], T(0))
+end
+
+function BubbleBasis(mesh::OneDMesh{TM}, T::Type = Float64; order::Int = 1, left::Bool = true, right::Bool = left) where TM
+    @assert order ≥ 1
+    basis = PiecewiseLaurentPolynomial{T,TM}[]
+    for i ∈ eachindex(mesh)[begin:end-1]
+        if i == firstindex(mesh) && left
+            push!(basis, Bubble(mesh, i, 1, T))
+        end
+        if i == lastindex(mesh)
+            push!(basis, Bubble(mesh, i, 2, T))
+        end
+        for p ∈ order+1:order
+            push!(basis, Bubble(mesh, i, p, T))
+        end
+    end
+    LaurentPolynomialBasis(basis)
+end

@@ -2,10 +2,12 @@ module KohnShamResolution
 
     using LinearAlgebra
     using SparseArrays
-    using TimerOutputs
-    using ProgressMeter
     using UnPack
     using Integrals
+    using Memoize
+
+    using TimerOutputs
+    using ProgressMeter
     
     include("utils.jl")
     include("tools/computation_tools.jl")
@@ -15,6 +17,10 @@ module KohnShamResolution
     export integrate!, integrate, deriv!, deriv, scalar_product, elag!
     include("laurentpolynomial/laurentpolynomial.jl")
 
+    export OneDMesh
+    export mesh, find_index, linmesh, LogRange, logmesh
+    include("mesh.jl")
+
     export PiecewiseLaurentPolynomial
     export get_support
     include("laurentpolynomial/piecewiselaurentpolynomial.jl")
@@ -23,11 +29,7 @@ module KohnShamResolution
     export mass_matrix, weight_mass_matrix, build_on_basis
     include("basis/laurentpolynomialbasis.jl")
 
-    export OneDMesh
-    export mesh, find_index, linmesh, LogRange, logmesh
-    include("mesh.jl")
-
-    export HatFunctionP1, HatBasis
+    export HatFunctionP1, HatBasis, BubbleBasis
     export FunctionP2_node, FunctionP2_mid, P2Basis
     include("basis/usual basis.jl")
 
