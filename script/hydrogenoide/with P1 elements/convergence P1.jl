@@ -60,4 +60,4 @@ for i ∈ eachindex(logerror)
             markershape = :x, markersize = 10)
 end
 
-savefig(plterror, "image/hydrogenoide/compareason/Convergence P1")
+savefig(plterror, "image/hydrogenoide/with P1 elements/Convergence P1")
