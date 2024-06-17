@@ -67,8 +67,8 @@ function build_eigenvector(kd::KohnShamSphericalDiscretization, U)
     eigen_vector = []
     for l ∈ 1:lₕ+1
         for k ∈ 1:Nₕ
-            eiglk = build_on_basis(basis, U[l,k,:]) * Monomial(-1)
-            push!(eigen_vector, eiglk / sqrt(scalar_product(eiglk,eiglk, mesh))) 
+            eiglk = build_on_basis(basis, U[l,:,k]) 
+            push!(eigen_vector,  1/sqrt(4π)* eiglk / sqrt(scalar_product(eiglk,eiglk, mesh))) * Monomial(-1)
         end
     end
     reshape(eigen_vector, (Nₕ, lₕ+1))
@@ -80,8 +80,8 @@ function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)
     for l ∈ 1:lₕ+1
         for k ∈ 1:Nₕ
             if n[l,k] != 0
-                eigen_vector = build_on_basis(basis, U[l,k,:]) * Monomial(-1)
-                eigen_vector = eigen_vector / sqrt(scalar_product(eigen_vector, eigen_vector, mesh)) 
+                eigen_vector = build_on_basis(basis, U[l,:,k]) 
+                eigen_vector = eigen_vector / sqrt(scalar_product(eigen_vector, eigen_vector, mesh)) * Monomial(-1)
                 Dstar += n[l,k] * eigen_vector * eigen_vector
             end
         end

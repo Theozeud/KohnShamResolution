@@ -1,4 +1,5 @@
 using KohnShamResolution
+using Plots
 
 # Choice of the method
 method = ODA()
