@@ -90,3 +90,9 @@ function P2Basis(mesh::OneDMesh{TM}, T::Type = Float64; left::Bool = true, right
     end
     LaurentPolynomialBasis(basis)
 end
+
+########################################################################################
+#                             Peano hierarchical shape function
+########################################################################################
+
+function Peano()

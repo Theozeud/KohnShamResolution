@@ -13,7 +13,11 @@ module KohnShamResolution
     export LaurentPolynomial
     export Monomial, deg, degmax, degmin, haslog, ismonomial, iszero
     export integrate!, integrate, deriv!, deriv, scalar_product, elag!
-    include("basis/laurentpolynomial.jl")
+    include("laurentpolynomial/laurentpolynomial.jl")
+
+    export PiecewiseLaurentPolynomial
+    export get_support
+    include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
     export LaurentPolynomialBasis
     export mass_matrix, weight_mass_matrix, build_on_basis
@@ -22,10 +26,6 @@ module KohnShamResolution
     export OneDMesh
     export mesh, find_index, linmesh, LogRange, logmesh
     include("mesh.jl")
-
-    export PiecewiseLaurentPolynomial
-    export get_support
-    include("basis/piecewiselaurentpolynomial.jl")
 
     export HatFunctionP1, HatBasis
     export FunctionP2_node, FunctionP2_mid, P2Basis
