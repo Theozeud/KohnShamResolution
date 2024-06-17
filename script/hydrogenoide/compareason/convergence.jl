@@ -16,7 +16,7 @@ Nmax = 6
 Nerror_P1 = []
 Nerror_P2 = []
 
-cutting_pre = 10
+cutting_pre = 30
 
 for n in 2:Nmax
 

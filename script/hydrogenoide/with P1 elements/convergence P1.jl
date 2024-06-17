@@ -15,7 +15,7 @@ eigvalue_theo(n,z) = -z^2/(2*n^2)
 Nmax = 9
 Nerror = []
 
-cutting_pre = 10
+cutting_pre = 30
 
 for n in 2:Nmax
 
