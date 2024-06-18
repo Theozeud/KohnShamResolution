@@ -8,6 +8,7 @@ method = ODA()
 # Discretization 
 lₕ = 0
 Rmin = 0
+Nmesh = 100
 
 # One electron model
 z = 1
@@ -26,13 +27,19 @@ BubbleBasis_order1(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::
 BubbleBasis_order2(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left) = BubbleBasis(mesh, T; order = 2, left = left, right = right)
 BubbleBasis_order3(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left) = BubbleBasis(mesh, T; order = 3, left = left, right = right)
 
-Basis = [HatBasis, P2Basis, BubbleBasis_order1, BubbleBasis_order2, BubbleBasis_order3]
-BasisName = ["P1", "P2", "Bubble 1", "Bubble 2", "Bubble 3"]
+IntLegendreBasis_order1(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left) = IntLegendreBasis(mesh, T; order = 1, left = left, right = right)
+IntLegendreBasis_order2(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left) = IntLegendreBasis(mesh, T; order = 2, left = left, right = right)
+IntLegendreBasis_order3(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left) = IntLegendreBasis(mesh, T; order = 3, left = left, right = right)
 
-for basis_fun in Basis
+
+Basis = [HatBasis, P2Basis, BubbleBasis_order1, BubbleBasis_order2, BubbleBasis_order3, IntLegendreBasis_order3]
+BasisName = ["P1", "P2", "Bubble 1", "Bubble 2", "Bubble 3", "IntLeg 3"]
+
+for (basis_fun,i) in zip(Basis,eachindex(Basis))
+    println(BasisName[i])
     condition_number = []
     for Rmax in RmaxArray
-        m = logmesh(0,Rmax,80)
+        m = logmesh(Rmin, Rmax, Nmesh; z = 1/z)
         basis = basis_fun(m; left = false, right = false)
         D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
@@ -63,7 +70,7 @@ plt_cn = plot(  size = (900,600), margin = 0.5Plots.cm, legend = :topright,
                 tickfontsize    = 14)
                 
 xlabel!(plt_cn, "Rmax")
-ylabel!(plt_cn, "Conditionning number")
+ylabel!(plt_cn, "Condition number")
 title!(plt_cn, "z = "*string(z))
 
 for (i,condition_number) ∈ zip(eachindex(RmaxArray),condition_number_Array)
@@ -86,4 +93,4 @@ for (i,condition_number) ∈ zip(eachindex(RmaxArray),condition_number_Array)
 end
 
 pltfin = plot(plt_cn, plt_cn_zoom, layout = (1,2), size = (2400,1000), margin = 1.2Plots.cm)
-savefig(pltfin, "image/hydrogenoide/compareason/Condition Number")
+savefig(pltfin, "image/hydrogenoide/compareason/CondNumb for z = "*string(z)*" and Nmesh ="*string(Nmesh))

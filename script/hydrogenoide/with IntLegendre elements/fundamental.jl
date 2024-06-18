@@ -17,15 +17,15 @@ fundamental(z, x)     = z^(3/2)/sqrt(π)*exp(-z*abs(x))
 pltA = []
 
 # Parameter
-cutting_pre = 5
+cutting_pre = 10
 T = Float64
-order = 1
+order = 3
 
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
     m = logmesh(0, Rmax, 100; z = 1/z, T = T)
-    basis = BubbleBasis(m; order = order, left = false, right = false)
+    basis = IntLegendreBasis(m; order = order, left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
     KM = KohnShamExtended(z = z, N = N)
@@ -54,4 +54,4 @@ for z in zA
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "image/hydrogenoide/with bubble elements/Vecteurs propres Ordre "*string(order))
+savefig(pltfin, "image/hydrogenoide/with IntLegendre elements/Vecteurs propres Ordre "*string(order))
