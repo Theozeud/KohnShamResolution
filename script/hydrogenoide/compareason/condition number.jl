@@ -22,13 +22,17 @@ condition_number_Array = []
 RmaxArray = 10:5:150
 
 # Basis to test
-Basis = [HatBasis, P2Basis]
-BasisName = ["P1", "P2"]
+BubbleBasis_order1(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left) = BubbleBasis(mesh, T; order = 1, left = left, right = right)
+BubbleBasis_order2(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left) = BubbleBasis(mesh, T; order = 2, left = left, right = right)
+BubbleBasis_order3(mesh::OneDMesh, T::Type = Float64; left::Bool = true, right::Bool = left) = BubbleBasis(mesh, T; order = 3, left = left, right = right)
+
+Basis = [HatBasis, P2Basis, BubbleBasis_order1, BubbleBasis_order2, BubbleBasis_order3]
+BasisName = ["P1", "P2", "Bubble 1", "Bubble 2", "Bubble 3"]
 
 for basis_fun in Basis
     condition_number = []
     for Rmax in RmaxArray
-        m = logmesh(0,Rmax,100)
+        m = logmesh(0,Rmax,80)
         basis = basis_fun(m; left = false, right = false)
         D = KohnShamSphericalDiscretization(lₕ, basis, m)
 

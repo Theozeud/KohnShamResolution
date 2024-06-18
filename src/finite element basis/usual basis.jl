@@ -126,15 +126,15 @@ function BubbleBasis(mesh::OneDMesh{TM}, T::Type = Float64; order::Int = 1, left
     @assert order ≥ 1
     basis = PiecewiseLaurentPolynomial{T,TM}[]
     for i ∈ eachindex(mesh)[begin:end-1]
-        if i ≠ firstindex(mesh) || !left
-            push!(basis, Bubble(mesh, i, 1, T))
-        end
-        if i ≠ lastindex(mesh) || !right
-            push!(basis, Bubble(mesh, i, 2, T))
+        if i ≠ firstindex(mesh) || left
+            push!(basis, HatFunctionP1(mesh, i, T))
         end
         for p ∈ 2:order
             push!(basis, Bubble(mesh, i, p+1, T))
         end
+    end
+    if right
+        push!(basis, HatFunctionP1(mesh, lastindex(mesh), T))
     end
     LaurentPolynomialBasis(basis)
 end

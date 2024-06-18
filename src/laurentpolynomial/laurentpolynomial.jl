@@ -268,4 +268,16 @@ function deriv!(p::LaurentPolynomial)
 end
 
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
-scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
+scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q, a, b)
+function normL2(p::LaurentPolynomial{T}, a::Real, b::Real) where T
+    if iszero(p)
+        return T(0)
+    else
+        int = scalar_product(p, p, a, b)
+        if int > 0
+            return sqrt(int)
+        else
+            return sqrt(-int)
+        end
+    end
+end

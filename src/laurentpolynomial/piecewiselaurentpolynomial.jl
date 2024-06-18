@@ -8,11 +8,19 @@ end
 @inline Base.eltype(::PiecewiseLaurentPolynomial{T,TM}) where {T,TM} = T
 
 @inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, LaurentPolynomial{T}[], Int[], T(0))
-@inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = PiecewiseLaurentPolynomial(pwlp.mesh, LaurentPolynomial{T}[], Int[], T(0))
+@inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = zero_piecewiselaurantpolynomial(pwlp.mesh, T)
 @inline Base.eachindex(pwlp::PiecewiseLaurentPolynomial) = eachindex(pwlp.mesh)
 @inline Base.firstindex(pwlp::PiecewiseLaurentPolynomial) = firstindex(pwlp.mesh)
 @inline Base.lastindex(pwlp::PiecewiseLaurentPolynomial) = lastindex(pwlp.mesh)
-@inline Base.getindex(pwlp::PiecewiseLaurentPolynomial, i::Int) = i ∈ pwlp.index ? (pwlp.mesh[i], pwlp.functions[findfirst(item->item == i, pwlp.index)]) : (pwlp.mesh[i], x->pwlp.default_value) 
+@inline function Base.getindex(pwlp::PiecewiseLaurentPolynomial, i::Int) 
+    if i ∈ pwlp.index && i != lastindex(pwlp)
+        return ((pwlp.mesh[i], pwlp.mesh[i+1]), pwlp.functions[findfirst(item->item == i, pwlp.index)])
+    elseif i == lastindex(pwlp)
+        return ((pwlp.mesh[i-1], pwlp.mesh[i]), x->pwlp.default_value)
+    else
+        return ((pwlp.mesh[i], pwlp.mesh[i+1]), x->pwlp.default_value)
+    end
+end
 @inline getmesh(pwlp::PiecewiseLaurentPolynomial, i::Int) = pwlp.mesh[i]
 @inline getfunction(pwlp::PiecewiseLaurentPolynomial, i::Int) = i ∈ pwlp.index ? pwlp.functions[findfirst(item->item == i, pwlp.index)] : x->pwlp.default_value
 
@@ -42,13 +50,11 @@ function Base.:+(p::PiecewiseLaurentPolynomial{TP}, x::T) where{TP, T}
     end
     laurent_poly = LaurentPolynomial{NewT}[]
     index = Int[]
-    for i ∈ eachindex(p)
-        if i∈ p.index        
-            fp = getfunction(p,i)
-            if !ismonomial(fp) || degmin(fp) != 0 || fp[degmin(fp)] != -x
-                push!(laurent_poly, x + fp)
-                push!(index, i)
-            end
+    for i∈ p.index        
+        fp = getfunction(p,i)
+        if !ismonomial(fp) || degmin(fp) != 0 || fp[degmin(fp)] != -x
+            push!(laurent_poly, x + fp)
+            push!(index, i)
         end
     end
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(x) + NewT(p.default_value))
@@ -150,29 +156,27 @@ function Base.:+(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomia
         @error "We can't add for the moment piecewise laurent polynomial on different meshes." 
     end
     NewT = promote_type(TP,TQ)
-    index_p = Set(p.index)
-    index_q = Set(q.index)
     laurent_poly = LaurentPolynomial{NewT}[]
     index = Int[]
-    for i ∈ index_p
-        fp = getfunction(p,i)
-        if i ∈ index_q
+    for i ∈ eachindex(p)
+        if i ∈ p.index && i ∈ q.index
+            fp = getfunction(p,i)
             fq = getfunction(q,i)
             sumfpfq = fp + fq
-            KohnShamResolution.elag!(sumfpfq)
+            elag!(sumfpfq)
             if !iszero(sumfpfq)
                 push!(laurent_poly, sumfpfq)
                 push!(index,i)
             end
-        else
-            push!(laurent_poly, q.default_value + fp)
+        elseif i ∈ p.index
+            fp = getfunction(p,i)
+            push!(laurent_poly,  fp + q.default_value)
+            push!(index,i)
+        elseif i ∈ q.index
+            fq = getfunction(q,i)
+            push!(laurent_poly , fq + p.default_value)
             push!(index,i)
         end
-    end
-    for i ∈ setdiff(index_q,index_p)
-        fq = getfunction(q,i)
-        push!(laurent_poly, p.default_value + fq)
-        push!(index,i)
     end
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(p.default_value) + NewT(q.default_value))
 end
@@ -182,35 +186,29 @@ function Base.:*(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomia
         @error "We can't multiply for the moment piecewise laurent polynomial on different meshes." 
     end
     NewT = promote_type(TP,TQ)
-    index_p = Set(p.index)
-    index_q = Set(q.index)
     laurent_poly = LaurentPolynomial{NewT}[]
     index = Int[]
-    for i ∈ index_p
-        fp = getfunction(p,i)
-        if i ∈ index_q
+    for i ∈ eachindex(p)
+        if i ∈ p.index && i ∈ q.index
+            fp = getfunction(p,i)
             fq = getfunction(q,i)
             prodfpfq = fp * fq
-            KohnShamResolution.elag!(prodfpfq)
+            elag!(prodfpfq)
             if !iszero(prodfpfq)
                 push!(laurent_poly, prodfpfq)
                 push!(index,i)
             end
-        else
-            if q.default_value ≠ 0
-                push!(laurent_poly * q.default_value, fp)
-                push!(index,i)
-            end
-        end
-    end
-    if p.default_value ≠ 0
-        for i ∈ setdiff(index_q,index_p)
+        elseif i ∈ p.index && q.default_value ≠ 0
+            fp = getfunction(p,i)
+            push!(laurent_poly, fp * q.default_value)
+            push!(index,i)
+        elseif i ∈ q.index && p.default_value ≠ 0
             fq = getfunction(q,i)
-            push!(laurent_poly * p.default_value, fq)
+            push!(laurent_poly, fq * p.default_value)
             push!(index,i)
         end
     end
-    PiecewiseLaurentPolynomial(p.mesh, laurent_poly,index, NewT(p.default_value) * NewT(q.default_value))
+    PiecewiseLaurentPolynomial(p.mesh, laurent_poly, index, NewT(p.default_value) * NewT(q.default_value))
 end
 
 ##################################################################################
@@ -265,24 +263,20 @@ end
 
 function integrate(p::PiecewiseLaurentPolynomial{T}) where T
     laurent_poly = LaurentPolynomial{T}[]
-    for i ∈ eachindex(p)
-        if i ∈ p.index
-            push!(laurent_poly, integrate(p.functions[findfirst(item->item == i, p.index)]))
-        end
+    for i ∈ p.index
+        push!(laurent_poly, integrate(p.functions[findfirst(item->item == i, p.index)]))
     end
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly, p.index, T(0))
 end
 
 function integrate!(p::PiecewiseLaurentPolynomial)
-    for i ∈ eachindex(p)
-        if i ∈ p.index
-            integrate!(p.functions[findfirst(item->item == i, p.index)])
-        end
+    for i ∈ p.index
+        integrate!(p.functions[findfirst(item->item == i, p.index)])
     end
     p
 end
 
-function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
+function integrate2(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     @assert a ≤ b
     support = get_suppport(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real)
     val = T(0)
@@ -293,24 +287,69 @@ function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
     val
 end
 
+function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
+    @assert a ≤ b
+    if a == b
+        return T(0)
+    end
+    index_a = KohnShamResolution.findindex(p.mesh, a)
+    index_b =  KohnShamResolution.findindex(p.mesh, b)
+    val = T(0)
+    if index_a + 1> index_b
+        if index_a ∈ p.index
+            pa = getfunction(p, index_a)
+            val += integrate(pa, a, b)
+        elseif p.default_value ≠ 0
+            val += (b-a) * p.default_value
+        end
+    else
+        if index_a ∈ p.index
+            pa = getfunction(p, index_a)
+            val += integrate(pa, a, p.mesh[index_a + 1])
+        elseif p.default_value ≠ 0
+            val += (p.mesh[index_a + 1]-a) * p.default_value
+        end
+        for i ∈ index_a+1:index_b-1
+            if i ∈ p.index
+                pi = getfunction(p, i)
+                val += integrate(pi, p.mesh[i], p.mesh[i+1])
+            elseif p.default_value ≠ 0
+                val += (p.mesh[i+1]- p.mesh[i]) * p.default_value
+            end
+        end
+        if index_b ∈ p.index
+            pb = getfunction(p, index_b)
+            val += integrate(pb, p.mesh[index_b], b)
+        elseif p.default_value ≠ 0
+            val += (b - p.mesh[index_b]) * p.default_value
+        end
+    end
+    val
+end
+
 function deriv(p::PiecewiseLaurentPolynomial{T}) where T
     laurent_poly = LaurentPolynomial{T}[]
-    for i ∈ eachindex(p)
-        if i ∈ p.index
-            push!(laurent_poly, deriv(p.functions[findfirst(item->item == i, p.index)]))
-        end
+    for i ∈ p.index
+        push!(laurent_poly, deriv(p.functions[findfirst(item->item == i, p.index)]))
     end
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly, p.index, T(0))
 end
 
 function deriv!(p::PiecewiseLaurentPolynomial)
-    for i ∈ eachindex(p)
-        if i ∈ p.index
-            deriv!(p.functions[findfirst(item->item == i, p.index)])
-        end
+    for i ∈ p.index
+        deriv!(p.functions[findfirst(item->item == i, p.index)])
     end
     p
 end
 
 scalar_product(p::PiecewiseLaurentPolynomial, q::PiecewiseLaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
 scalar_product(p::PiecewiseLaurentPolynomial, q::PiecewiseLaurentPolynomial, m::OneDMesh) = integrate(p*q, left(m), right(m))
+
+function normL2(p::PiecewiseLaurentPolynomial{T}, m::OneDMesh) where T
+    int = scalar_product(p,p,m)
+    if int > 0
+        return sqrt(int)
+    else
+        sqrt(-int)
+    end
+end

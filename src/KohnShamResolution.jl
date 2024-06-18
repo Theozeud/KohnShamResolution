@@ -14,7 +14,7 @@ module KohnShamResolution
 
     export LaurentPolynomial
     export Polynomial, Monomial, deg, degmax, degmin, haslog, ismonomial, iszero
-    export integrate!, integrate, deriv!, deriv, scalar_product, elag!
+    export integrate!, integrate, deriv!, deriv, scalar_product, normL2, elag!
     include("laurentpolynomial/laurentpolynomial.jl")
 
     export Legendre
