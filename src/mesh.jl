@@ -13,23 +13,23 @@ end
 
 linmesh(a, b, n) = mesh(LinRange(a,b,n))
 
-function LogRange(a,b,n, z = 1)
-    X = LinRange(a,b,n)
+function LogRange(a,b,n; z = 1, T = Float64)
+    X = T.(range(a,b,n))
     a = first(X)
     b = last(X)
     Z = zero(X)
     for i ∈ firstindex(X):lastindex(X)-1
         x = X[i]
         tmp = (b-a)/(b-x)
-        tmp = z*log(tmp)
+        tmp = T(z) * T(log(tmp))
         Z[i] = b - (b-a)/(tmp+1)
     end
     Z[end] = b
     Z
 end
 
-function logmesh(a, b, n, z =1)
-    mesh(LogRange(a,b,n, z))
+function logmesh(a, b, n; z = 1, T = Float64)
+    mesh(LogRange(a, b, n; z = z, T = T))
 end
 
 @inline Base.eltype(::OneDMesh{T}) where T = T
