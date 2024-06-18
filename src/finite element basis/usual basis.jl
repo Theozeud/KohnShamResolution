@@ -147,7 +147,7 @@ end
 # legendre polynomial rescaled on [m[i], m[i+1]]
 @memoize function IntLegendre(mesh::OneDMesh, i::Int, n::Int, T::Type = Float64)
     @assert i ≤ lastindex(mesh) - 1
-    pₙ = Legendre(mesh[i], mesh[i+1], n, T, true)
+    pₙ = Legendre(mesh[i], mesh[i+1], n, T, false)
     int_pₙ = integrate(pₙ)
     int_pₙ - int_pₙ(mesh[i])
 end

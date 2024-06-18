@@ -16,7 +16,7 @@
         coeff = normalize ? sqrt(T(2*n + 1)/T(b-a)) : T(1)
         pₙ₋₁ = Legendre(a, b, n-1, T, false)
         pₙ₋₂ = Legendre(a, b, n-2, T, false)
-        pₙ₋₁ = (2*n-1)/n * Polynomial([T(-b-a)/T(b-a), T(2)/T(b-a)]) * pₙ₋₁ - (n-1)/n * pₙ₋₂
+        pₙ₋₁ = (2*T(n)-1)/T(n) * Polynomial([T(-b-a)/T(b-a), T(2)/T(b-a)]) * pₙ₋₁ - (T(n)-1)/T(n) * pₙ₋₂
         return pₙ₋₁ * coeff
     end
 end

@@ -85,7 +85,7 @@ function performstep!(method::ODA, solver::KhonShamSolver)
 end
 
 stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev, solver.discretization.mesh)
-stopping_criteria(::ODA, D, Dprev, points) = sum([D(x)- Dprev(x) for x ∈ points])/length(points)
+stopping_criteria(::ODA, D, Dprev, points) = sqrt((points[end] - points[begin])*sum([abs(D(x)- Dprev(x))^2 for x ∈ points[begin:end-1]])/(length(points)-1))
 
 function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::KhonShamSolver)
 

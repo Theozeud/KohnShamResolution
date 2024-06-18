@@ -2,9 +2,9 @@ using KohnShamResolution
 using Plots
 
 # Test on integrated Legendre basis
-T = Float64
+T = Rational{Int}
 m = mesh(1:5)
-order = 2
+order = 3
 
 pb = IntLegendreBasis(m, T; order = order, left = false, right = false)
 
@@ -15,8 +15,4 @@ for p ∈ pb
 end
 plt
 
-
-pb_hat = P1Basis(m, T; left = false, right = false)
-
 A = mass_matrix(pb,1,5)
-Ahat = mass_matrix(pb_hat,1,5)

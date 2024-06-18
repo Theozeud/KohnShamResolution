@@ -37,6 +37,7 @@ end
 @inline Base.firstindex(m::OneDMesh) = firstindex(m.points)
 @inline Base.lastindex(m::OneDMesh) = lastindex(m.points)
 @inline Base.getindex(m::OneDMesh, n::Int) = m.points[n]
+@inline Base.getindex(m::OneDMesh, ur::UnitRange{Int64}) = m.points[ur]
 @inline Base.setindex!(m::OneDMesh{T}, val::T, n::Int) where T = m.points[n] = val
 @inline Base.first(m::OneDMesh) = m[firstindex(m)]
 @inline Base.last(m::OneDMesh) = m[lastindex(m)]

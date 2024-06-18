@@ -38,7 +38,8 @@ function build_hartree(kd::KohnShamSphericalDiscretization, Hartree, ρ)
             if j<i
                 Hartree[i,j] = Hartree[j,i]
             else
-                Hartree[i,j] = integrate(potential * basis[i] * basis[j], Rmin, Rmax)
+                #Hartree[i,j] = integrate(potential * basis[i] * basis[j], Rmin, Rmax)
+                Hartree[i,j] = approximate_integral(x -> potential(x) * basis[i](x) * basis[j](x), (Rmin, Rmax) ; method = QuadGKJL(), reltol = 1e-3, abstol = 1e-3)
             end
         end
     end
@@ -68,7 +69,7 @@ function build_eigenvector(kd::KohnShamSphericalDiscretization, U)
     for l ∈ 1:lₕ+1
         for k ∈ 1:Nₕ
             eiglk = build_on_basis(basis, U[l,:,k]) 
-            push!(eigen_vector,  1/sqrt(4π)* eiglk / sqrt(normL2(eiglk, mesh)) * Monomial(-1)) 
+            push!(eigen_vector,  1/sqrt(4π)* eiglk / normL2(eiglk, mesh) * Monomial(-1)) 
         end
     end
     reshape(eigen_vector, (Nₕ, lₕ+1))
@@ -81,7 +82,7 @@ function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)
         for k ∈ 1:Nₕ
             if n[l,k] != 0
                 eigen_vector = build_on_basis(basis, U[l,:,k]) 
-                eigen_vector = eigen_vector / sqrt(normL2(eigen_vector, mesh)) * Monomial(-1)
+                eigen_vector = eigen_vector / normL2(eigen_vector, mesh) * Monomial(-1)
                 Dstar += n[l,k] * eigen_vector * eigen_vector
             end
         end
