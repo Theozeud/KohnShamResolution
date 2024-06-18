@@ -4,12 +4,12 @@ using KohnShamResolution
 method = ODA()
 
 # Model
-z = 21
-N = 21
+z = 1
+N = 1
 KM = KohnShamExtended(z = z, N = N)
 
 # Discretization 
-lₕ = 4
+lₕ = 0
 cutting_pre = 20
 
 Rmin = 0
