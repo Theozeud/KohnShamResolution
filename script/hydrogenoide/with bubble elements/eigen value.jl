@@ -16,11 +16,12 @@ pltA = []
 
 cutting_pre = 10
 order = 3
+T = Rational{BigInt}
 
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0, Rmax, 150, 1/z)
+    m = logmesh(0, Rmax, 15; z=  1/z, T = T)
     basis = BubbleBasis(m; order = order, left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
