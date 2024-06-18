@@ -13,7 +13,7 @@ struct CacheODA <: AbstractKohnShamCache
     tmp_Hartree
     tmp_exc 
     tmp_ϵ
-    tmp_ϵ_sort
+    tmp_index_sort
     tmp_n    
     tmp_tn
 end
@@ -21,6 +21,9 @@ end
 function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDiscretization)
 
     @unpack lₕ, Nₕ, basis, mesh, Rmin, Rmax = discretization
+
+    # Set the type of number as the one of the discretization basis
+    T = bottom_type(discretization.basis)
 
     # Init base matrices
     @assert length(basis) == Nₕ
@@ -33,27 +36,26 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     M₋₂ = weight_mass_matrix(basis, -2, Rmin, Rmax)
 
     # Creation of the fix part of the hamiltonian   
-    Kin =  zeros(lₕ+1, Nₕ, Nₕ)
-    Coulomb =  zeros(lₕ+1, Nₕ, Nₕ)
+    Kin =  zeros(T, lₕ+1, Nₕ, Nₕ)
+    Coulomb =  zeros(T, lₕ+1, Nₕ, Nₕ)
     build_kinetic!(discretization, Kin, A, M₋₂)
     build_coulomb!(discretization, Coulomb, model, M₋₁)
     Hfix = Kin + Coulomb
 
     # Initialization of array for temporary stockage of computations
-    tmp_H       = zeros(Nₕ, Nₕ)
-
-    tmp_D       = zero_piecewiselaurantpolynomial(mesh)
-    tmp_Dstar   = zero_piecewiselaurantpolynomial(mesh)
-    tmp_U       = zeros(lₕ+1, Nₕ, Nₕ)
-    tmp_exc     = zeros(Nₕ, Nₕ)
-    tmp_Hartree = zeros(Nₕ, Nₕ)
-    tmp_ϵ       = zeros(lₕ+1, Nₕ)
-    tmp_ϵ_sort  = Int[]
-    tmp_n       = zeros(lₕ+1, Nₕ)
+    tmp_H       = zeros(T, Nₕ, Nₕ)
+    tmp_D       = zero_piecewiselaurantpolynomial(mesh, T)
+    tmp_Dstar   = zero_piecewiselaurantpolynomial(mesh, T)
+    tmp_U       = zeros(T, lₕ+1, Nₕ, Nₕ)
+    tmp_exc     = zeros(T, Nₕ, Nₕ)
+    tmp_Hartree = zeros(T, Nₕ, Nₕ)
+    tmp_ϵ       = zeros(T, lₕ+1, Nₕ)
+    tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
+    tmp_n       = zeros(T, lₕ+1, Nₕ)
         
-    tmp_tn      = 0.0     
+    tmp_tn      = T(0)     
 
-    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_ϵ_sort, tmp_n, tmp_tn)
+    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n, tmp_tn)
 end
 
 function performstep!(method::ODA, solver::KhonShamSolver)
@@ -113,68 +115,48 @@ function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::
 end
 
 function aufbau!(solver::KhonShamSolver)
-
     @unpack N = solver.model
-    @unpack tmp_ϵ, tmp_ϵ_sort, tmp_n, tmp_U = solver.cache
+    @unpack tmp_ϵ, tmp_index_sort, tmp_n = solver.cache
     @unpack lₕ, Nₕ = solver.discretization
+    tmp_index_sort = aufbau!(tmp_n, tmp_ϵ, N; tol = solver.opts.degen_tol)
+end
 
-    # sort tmp_ϵ to order in l
-    #sort!(tmp_ϵ; dims = 1)
-    sort_X_and_rearrange_U!(tmp_ϵ, tmp_U)
-    
-    # splat the vector of eigenvalue
-    vector_ϵ = [tmp_ϵ...]
-
-    # Create the degeneracy matrix
-    degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:lₕ] for i ∈ 1:Nₕ])
-
+function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
+    _l,_n = size(ϵ)
+    ϵ_vect = vec(ϵ)
+    index_sort = sortperm(ϵ_vect)
+    degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:_l-1] for i ∈ 1:_n])
     remain = N
     idx = 1
-    B = Int[]
-    C = collect(1:(lₕ+1)*Nₕ)
-    while remain > 0 && idx < (lₕ+1)*Nₕ
-        
-        # Find the next lowest eigenvalue(s) (may be several in case of degeneracy)
-        A = Int[]
-        a = isempty(B) ? first(vector_ϵ) : vector_ϵ[first(C)]
-        for j ∈ eachindex(vector_ϵ)
-            if j ∉ B
-                if vector_ϵ[j] < a 
-                    a = vector_ϵ[j]
-                    A = [j]
-                elseif vector_ϵ[j] == a 
-                    push!(A,j)
-                end
-            end
+    while remain > 0 && idx < length(ϵ) + 1
+        A = Int[]  #Stock all index corresponding to a degenerancy
+        ϵ_cur = ϵ_vect[index_sort[idx]]
+        push!(A, index_sort[idx])
+        idx += 1
+        while abs(ϵ[index_sort[idx]] - ϵ_cur) < tol
+            push!(A, index_sort[idx])
+            idx += 1
         end
-        
-        # Transfer to B the index of
-        push!(B, A...)
-        for i in A
-            remove!(C, i)
-        end
-
         # Count total degeneracy
         degen = sum(degen_matrix[i] for i in A)
-        
         # See what to do depending on the case
         if remain - degen ≥ 0
             for i in A
-                tmp_n[i] = 2 * degen_matrix[i]
+                n[i] = 2 * degen_matrix[i]
             end
             remain -= degen
         else
             if length(A) == 1
                 # First case, if no degeneracy
-                tmp_n[first(A)] = 2 * remain
+                n[first(A)] = 2 * remain
             else
                 # Second case, if degeneracy
                 @error "There is accidental degeneracy but no implementation for this case for the moment."
             end
             break
         end
-        idx += length(A)
     end
+    index_sort
 end
 
 function update_density!(::ODA, solver::KhonShamSolver)

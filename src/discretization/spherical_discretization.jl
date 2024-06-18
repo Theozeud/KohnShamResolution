@@ -9,10 +9,10 @@ struct KohnShamSphericalDiscretization{T} <: KohnShamDiscretization
     KohnShamSphericalDiscretization(lₕ::Int, basis::Basis, mesh::OneDMesh) = new{eltype(mesh)}(lₕ, length(basis), basis, mesh, first(mesh), last(mesh))
 end
 
-init_density_matrix(kd::KohnShamSphericalDiscretization)        = zero_piecewiselaurantpolynomial(kd.mesh), zero_piecewiselaurantpolynomial(kd.mesh) 
-init_coeffs_discretization(kd::KohnShamSphericalDiscretization) = zeros(kd.lₕ+1, kd.Nₕ, kd.Nₕ)
-init_energy(kd::KohnShamSphericalDiscretization)                = zeros(kd.lₕ+1, kd.Nₕ)
-init_occupation(kd::KohnShamSphericalDiscretization)            = zeros(kd.lₕ+1, kd.Nₕ)
+init_density_matrix(kd::KohnShamSphericalDiscretization, T::Type)        = zero_piecewiselaurantpolynomial(kd.mesh, T), zero_piecewiselaurantpolynomial(kd.mesh, T) 
+init_coeffs_discretization(kd::KohnShamSphericalDiscretization, T::Type) = zeros(T, kd.lₕ+1, kd.Nₕ, kd.Nₕ)
+init_energy(kd::KohnShamSphericalDiscretization, T::Type)                = zeros(T, kd.lₕ+1, kd.Nₕ)
+init_occupation(kd::KohnShamSphericalDiscretization, T::Type)            = zeros(T, kd.lₕ+1, kd.Nₕ)
 
 function build_kinetic!(kd::KohnShamSphericalDiscretization, Kin, A, M₋₂)
     @unpack lₕ = kd

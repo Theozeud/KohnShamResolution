@@ -11,7 +11,7 @@ end
 @inline Base.eachindex(lpb::LaurentPolynomialBasis) = eachindex(lpb.elements)
 @inline Base.iterate(lpb::LaurentPolynomialBasis, state = 1) = state > length(lpb) ? nothing : (lpb[state],state+1)
 @inline Base.first(lpb::LaurentPolynomialBasis) = first(lpb.elements)
-
+@inline bottom_type(lpb::LaurentPolynomialBasis) = eltype(first(lpb))
 
 # Mass matrix
 function mass_matrix(lpb::LaurentPolynomialBasis{TL}) where TL
