@@ -20,7 +20,7 @@ cutting_pre = 10
 for n in 2:Nmax
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0,Rmax,2^n, 1/z)
+    m = logmesh(0, Rmax, 2^n; z = 1/z)
     basis = P2Basis(m; left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
@@ -28,7 +28,7 @@ for n in 2:Nmax
 
     sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
 
-    index_ϵ = findall(x->x < 0, sol.ϵ[1,:])
+    index_ϵ = findall(x->x < 0, sol.ϵ)
 
     true_ϵ = eigvalue_theo.(index_ϵ, z)
 

@@ -46,7 +46,7 @@ for Rmax in RmaxArray
     eig1 = KohnShamResolution.build_on_basis(basis, U[1,:]) * Monomial(-1)
     fun =  eig1 / sqrt(scalar_product(eig1,eig1, m))  
 
-    push!(err_eigenvector, norm() / 98)
+    push!(err_eigenvector, sqrt(1/98 * sum(abs.(fun.(m.points) - fundamental.(z, m.points)).^2)))
     push!(err_eigenvalue, 100 * abs(ϵ[begin] - eigvalue_theo(1,z))/abs(eigvalue_theo(1,z)) )
     push!(condition_number, abs(ϵ[end]/ϵ[begin]))
 

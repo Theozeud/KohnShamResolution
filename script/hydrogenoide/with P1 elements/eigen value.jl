@@ -26,7 +26,7 @@ for z in zA
 
     KM = KohnShamExtended(z = z, N = N)
 
-    sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
+    sol = groundstate(KM, D, method; tol = 1e-4, hartree = false)
 
     plt = plot( size = (900,600), margin = 0.5Plots.cm, legend = :bottomright,
                 legendfontsize  = 14,  
@@ -38,7 +38,7 @@ for z in zA
     ylabel!("Energie")
     title!("z = "*string(z))
 
-    index_ϵ = findall(x->x < 0, sol.ϵ[1,:])
+    index_ϵ = findall(x->x < 0, sol.ϵ)
 
     scatter!(index_ϵ, eigvalue_theo.(index_ϵ,z),  label = "Théorique",
                 markershape = :circ, 
@@ -61,4 +61,4 @@ for z in zA
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-#savefig(pltfin, "image/hydrogenoide/with P1 elements/Comparaison Numérique - Théorique des valeurs premières valeurs propres")
+savefig(pltfin, "image/hydrogenoide/with P1 elements/Valeurs propres")

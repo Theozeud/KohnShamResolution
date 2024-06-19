@@ -21,7 +21,7 @@ order = 3
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0, Rmax, 100; z = 1/z, T = T)
+    m = logmesh(0, Rmax, 50; z = 1/z, T = T)
     basis = IntLegendreBasis(m; order = order, left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
@@ -39,7 +39,7 @@ for z in zA
     ylabel!("Energie")
     title!("z = "*string(z))
 
-    index_ϵ = findall(x->x < 0, sol.ϵ[1,:])
+    index_ϵ = findall(x->x < 0, sol.ϵ)
 
     scatter!(index_ϵ, eigvalue_theo.(index_ϵ,z),  label = "Théorique",
                 markershape = :circ, 

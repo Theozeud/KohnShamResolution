@@ -29,7 +29,7 @@ for z in zA
 
     sol = groundstate(KM, D, method; tol = 1e-20, hartree = false, maxiter = 1)
 
-    fun = sol.eigvect[1,1]
+    fun = sol.eigvects[1]
 
     plt = plot( size = (900,600), margin = 0.5Plots.cm, legend = :bottomright,
                 legendfontsize  = 14,  
@@ -51,4 +51,3 @@ for z in zA
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "image/hydrogenoide/with P1 elements/Comparaison Numérique - Théorique du fondamental")

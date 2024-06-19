@@ -4,6 +4,7 @@ struct KohnShamSolution
     success::String 
     occup::Vector
     E::Real
+    ϵ::Vector
     eigvects
     niter::Int
     crit::Vector
@@ -22,10 +23,10 @@ struct KohnShamSolution
         index_sort = sortperm(ϵ_full)
         new_index = index[index_sort]
         
-        occup = [(string(i[2], convert_into_l(i[1]-1)),ϵ[i], n[i]) for i ∈ new_index]
+        occup = [(string(i[2], convert_into_l(i[1]-1)), ϵ[i], n[i]) for i ∈ new_index]
         eigvects = build_eigenvector(solver.discretization, solver.U; Index =  new_index)
 
-        new(success, occup, ϵ[first(new_index)], eigvects, solver.niter, solver.values_stop_crit)
+        new(success, occup, ϵ[first(new_index)], sort(vec(ϵ)), eigvects, solver.niter, solver.values_stop_crit)
     end
 end
 
@@ -67,6 +68,16 @@ function convert_into_l(l::Int)
     end
 end 
 
+Base.length(sol::KohnShamSolution) = length(sol.occup)
+Base.eachindex(sol::KohnShamSolution) = eachindex(sol.occup)
+
+eigenvalue(sol::KohnShamSolution, i::Int) = sol.occup[i][2]
+eigenvector(sol::KohnShamSolution, i::Int) = sol.eigvects[i]
+occup(sol::KohnShamSolution, i::Int) = sol.occup[i][3]
+
+eigenvalue(sol::KohnShamSolution) = [sol.occup[i][2] for i in eachindex(sol)]
+eigenvector(sol::KohnShamSolution) = [sol.eigvects[i] for i in eachindex(sol)]
+occup(sol::KohnShamSolution) = [sol.occup[i][3] for i in eachindex(sol)]
 
 # afficher en plus le fondamentale et l'orbital correspondant, 
 # affciher les énergies ϵ seulement pour les n non nuls

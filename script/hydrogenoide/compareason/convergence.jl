@@ -16,12 +16,12 @@ Nmax = 6
 Nerror_P1 = []
 Nerror_P2 = []
 
-cutting_pre = 30
+cutting_pre = 10
 
 for n in 2:Nmax
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0,Rmax,2^n, 1/z)
+    m = logmesh(0,Rmax,2^n; z = 1/z)
 
     basis_P1 = HatBasis(m; left = false, right = false)
     DP1 = KohnShamSphericalDiscretization(lₕ, basis_P1, m)
@@ -34,8 +34,8 @@ for n in 2:Nmax
     sol_P1 = groundstate(KM, DP1, method; tol = 1e-20, hartree = false)
     sol_P2 = groundstate(KM, DP2, method; tol = 1e-20, hartree = false)
 
-    index_ϵ_P1 = findall(x->x < 0, sol_P1.ϵ[1,:])
-    index_ϵ_P2 = findall(x->x < 0, sol_P2.ϵ[1,:])
+    index_ϵ_P1 = findall(x->x < 0, sol_P1.ϵ)
+    index_ϵ_P2 = findall(x->x < 0, sol_P2.ϵ)
 
     true_ϵ_P1 = eigvalue_theo.(index_ϵ_P1, z)
     true_ϵ_P2 = eigvalue_theo.(index_ϵ_P2, z)

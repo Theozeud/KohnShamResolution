@@ -56,6 +56,8 @@ module KohnShamResolution
     export ODA
     include("methods/oda.jl")
 
+    export KohnShamSolution
+    export eigenvalue, eigenvector, occup
     include("solution.jl")
 
     export groundstate

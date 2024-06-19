@@ -69,7 +69,7 @@ end
 
 function build_eigenvector(kd::KohnShamSphericalDiscretization, U; Index = CartesianIndices((1:lₕ+1, 1:Nₕ)))
     @unpack lₕ, Nₕ, basis, mesh = kd
-    # First computation is done separately to well instiate the array of eigenvector
+    # First computation is done separately to well instantiate the array of eigenvector
     Ifirst = first(Index)
     lfirst = Ifirst[1]
     kfirst = Ifirst[2]
@@ -81,7 +81,7 @@ function build_eigenvector(kd::KohnShamSphericalDiscretization, U; Index = Carte
         eiglk = build_on_basis(basis, U[l,:,k]) 
         push!(eigenvectors,  1/sqrt(4π)* eiglk / normL2(eiglk, mesh) * Monomial(-1)) 
     end
-    nothing
+    eigenvectors
 end
 
 function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)

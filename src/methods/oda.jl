@@ -146,11 +146,11 @@ function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
         # Count total degeneracy
         degen = sum(degen_matrix[i] for i in A)
         # See what to do depending on the case
-        if remain - degen ≥ 0
+        if remain - 2 * degen ≥ 0
             for i in A
                 n[i] = 2 * degen_matrix[i]
             end
-            remain -= degen
+            remain -= 2 * degen 
         else
             if length(A) == 1
                 # First case, if no degeneracy
@@ -171,6 +171,6 @@ function update_density!(::ODA, solver::KhonShamSolver)
     @unpack tmp_D, tmp_Dstar, tmp_U, tmp_n, tmp_tn = solver.cache
 
     tmp_Dstar = build_density!(solver.discretization, tmp_Dstar, tmp_U, tmp_n)
-    tmp_tn = 1.0
+    tmp_tn = 0.5
     tmp_D = tmp_tn * tmp_Dstar + (1 - tmp_tn) * Dprev
 end
