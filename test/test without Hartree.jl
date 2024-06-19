@@ -55,5 +55,3 @@ eig1 = KohnShamResolution.build_on_basis(basis,U[:,1])
 fun =   1/sqrt(4π) * eig1 / sqrt(normL2(eig1, m))  * Monomial(-1)
 
 plot(plt, X, fun.(X), label = "Numérique", color = :blue)
-
-

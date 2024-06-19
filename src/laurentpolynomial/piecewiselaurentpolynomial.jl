@@ -311,8 +311,8 @@ function integrate(p::PiecewiseLaurentPolynomial{T}, a::Real, b::Real) where T
         end
         for i ∈ index_a+1:index_b-1
             if i ∈ p.index
-                pi = getfunction(p, i)
-                val += integrate(pi, p.mesh[i], p.mesh[i+1])
+                pᵢ = getfunction(p, i)
+                val += integrate(pᵢ, p.mesh[i], p.mesh[i+1])
             elseif p.default_value ≠ 0
                 val += (p.mesh[i+1]- p.mesh[i]) * p.default_value
             end

@@ -22,7 +22,6 @@ basis = P1Basis(m; left = false, right = false)
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
 # Solve
-#@time sol = groundstate(KM, D, method; tol = 1e-10, hartree = false)
 
 deriv_basis = deriv(basis)
  
@@ -45,8 +44,14 @@ display(ϵ)
 
 n = zeros(lₕ+1, 8)
 function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
+    ϵ_copy = copy(ϵ)
+    for i ∈ axes(ϵ,1)
+        for j ∈ 1:i-1
+            ϵ_copy[i,j] = eltype(ϵ)(Inf)
+        end
+    end
     _l,_n = size(ϵ)
-    ϵ_vect = vec(ϵ)
+    ϵ_vect = vec(ϵ_copy)
     @show index_sort = sortperm(ϵ_vect)
     degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:_l-1] for i ∈ 1:_n])
     remain = N
@@ -87,3 +92,34 @@ end
 
 aufbau!(n, ϵ, N)
 display(n)
+
+
+index = findall(x->x ≠ 0, n)
+ϵ_full = ϵ[index]
+index_sort = sortperm(ϵ_full)
+new_index = index[index_sort]
+
+T = eltype(ϵ)
+result = Tuple{String,T,T}[]
+
+function convert_into_l(l::Int)
+    if l == 0
+        return "s"
+    elseif l == 1
+        return "p"
+    elseif l == 2
+        return "d"
+    elseif l == 3
+        return "f" 
+    else
+        @error "Not implemented Car yet for l ="*string(l)
+    end
+end 
+
+for i ∈ new_index
+    _n = i[2]
+    l = convert_into_l(i[1]-1)
+    push!(result,(string(_n,l),ϵ[i], n[i]))
+end
+
+result

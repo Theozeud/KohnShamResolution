@@ -4,17 +4,17 @@ using KohnShamResolution
 method = ODA()
 
 # Model
-z = 1
-N = 1
+z = 2
+N = 2
 KM = KohnShamExtended(z = z, N = N)
 
 # Discretization 
 lₕ = 0
-cutting_pre = 20
+cutting_pre = 10
 
 Rmin = 0
 Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-m = logmesh(Rmin, Rmax, 80; z = 1/z)
+m = logmesh(Rmin, Rmax, 120; z = 1/z)
 
 # Choice of the basis
 basis = HatBasis(m; left = false, right = false)
