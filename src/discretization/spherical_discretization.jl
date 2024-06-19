@@ -28,7 +28,7 @@ function build_coulomb!(kd::KohnShamSphericalDiscretization, Coul, model, M₋�
     end 
 end
 
-function build_hartree(kd::KohnShamSphericalDiscretization, Hartree, ρ)
+function build_hartree!(kd::KohnShamSphericalDiscretization, Hartree, ρ)
     @unpack basis, Rmin, Rmax = kd
     int1 = integrate(Monomial(1) * ρ)
     int2 = integrate(Monomial(2) * ρ)

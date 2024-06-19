@@ -4,7 +4,7 @@ mutable struct LaurentPolynomial{T} <:AbstractLaurentPolynomial{T}
     coeffs::Vector{T}
     degmin::Int
     haslog::Bool
-    coeff_log::T
+    coeff_log
 end
 
 Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin, false, eltype(coeff)(0))

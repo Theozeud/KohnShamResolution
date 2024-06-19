@@ -2,13 +2,11 @@ abstract type AbstractMesh end
 
 struct OneDMesh{T} <: AbstractMesh
     points::Vector{T}
-    steps::Vector{T}
 end
 
 function mesh(points::AbstractArray{T})  where T<: Real
     _points = union(sort(points))
-    steps = [_points[i+1] - _points[i] for i in eachindex(_points)[1:end-1]]
-    OneDMesh(_points , steps)
+    OneDMesh(_points)
 end
 
 linmesh(a, b, n) = mesh(LinRange(a,b,n))
@@ -46,8 +44,6 @@ end
 @inline Base.size(m::OneDMesh) = size(m.points)
 
 @inline points(m::OneDMesh) = m.points
-@inline steps(m::OneDMesh) = m.steps
-
 
 @inline function findindex(m::OneDMesh, x)
     for i in eachindex(m)
