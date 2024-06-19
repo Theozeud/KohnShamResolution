@@ -81,7 +81,7 @@ function build_eigenvector(kd::KohnShamSphericalDiscretization, U; Index = Carte
         eiglk = build_on_basis(basis, U[l,:,k]) 
         push!(eigenvectors,  1/sqrt(4π)* eiglk / normL2(eiglk, mesh) * Monomial(-1)) 
     end
-    reshape(eigenvectors, (Nₕ, lₕ+1))
+    nothing
 end
 
 function build_density!(kd::KohnShamSphericalDiscretization, Dstar, U, n)

@@ -122,8 +122,14 @@ function aufbau!(solver::KhonShamSolver)
 end
 
 function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
-    _l,_n = size(ϵ)
-    ϵ_vect = vec(ϵ)
+    ϵ_copy = copy(ϵ)
+    for i ∈ axes(ϵ,1)
+        for j ∈ 1:i-1
+            ϵ_copy[i,j] = eltype(ϵ)(Inf)
+        end
+    end
+    _l,_n = size(ϵ_copy)
+    ϵ_vect = vec(ϵ_copy)
     index_sort = sortperm(ϵ_vect)
     degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:_l-1] for i ∈ 1:_n])
     remain = N

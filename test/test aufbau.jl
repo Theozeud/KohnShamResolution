@@ -3,8 +3,8 @@ using LinearAlgebra
 using Plots
 
 # Creation of the model
-z = 4
-N = 14
+z = 10
+N = 5
 
 KM = KohnShamExtended(z = z,N = N)
 #KM = SlaterXα(z, N)
