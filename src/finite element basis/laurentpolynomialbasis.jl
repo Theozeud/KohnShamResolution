@@ -2,7 +2,7 @@ abstract type Basis end
 
 struct LaurentPolynomialBasis{TL <: AbstractLaurentPolynomial} <: Basis
     elements::Vector{TL}
-    cross_index::CartesianIndex
+    cross_index
     function LaurentPolynomialBasis(elements)
         cross_index = CartesianIndex[]
         for i in eachindex(elements)

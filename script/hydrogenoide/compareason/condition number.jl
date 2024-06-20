@@ -8,7 +8,7 @@ method = ODA()
 # Discretization 
 lₕ = 0
 Rmin = 0
-Nmesh = 100
+Nmesh = 300
 
 # One electron model
 z = 1
@@ -41,7 +41,6 @@ for (basis_fun,i) in zip(Basis,eachindex(Basis))
     for Rmax in RmaxArray
         m = logmesh(Rmin, Rmax, Nmesh; z = 1/z)
         basis = basis_fun(m; left = false, right = false)
-        D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
         # Computation by hand
         deriv_basis = deriv(basis)

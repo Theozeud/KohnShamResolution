@@ -20,7 +20,7 @@ Rmin = 0
 Rmax = 100
 
 @timeit to "Create mesh" m = logmesh(Rmin, Rmax, Nₕ)
-@timeit to "Create basis" basis = BubbleBasis(m; order = 1, left = false, right = false)
+@timeit to "Create basis" basis = BubbleBasis(m; order = 2, left = false, right = false)
 
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 

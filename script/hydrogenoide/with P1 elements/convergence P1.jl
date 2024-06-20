@@ -1,5 +1,5 @@
 using KohnShamResolution
-
+using Plots
 # Choice of the method
 method = ODA()
 
@@ -12,7 +12,7 @@ N = 1
 eigvalue_theo(n,z) = -z^2/(2*n^2)
 
 # Plot
-Nmax = 9
+Nmax = 10
 Nerror = []
 
 cutting_pre = 30
@@ -26,13 +26,13 @@ for n in 2:Nmax
 
     KM = KohnShamExtended(z = z, N = N)
 
-    sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
+    @time sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
 
     index_ϵ = findall(x->x < 0, sol.ϵ)
 
     true_ϵ = eigvalue_theo.(index_ϵ, z)
 
-    push!(Nerror, sol.ϵ[index_ϵ] .- true_ϵ)
+    push!(Nerror, abs.(sol.ϵ[index_ϵ] .- true_ϵ))
 end
 
 plterror = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,

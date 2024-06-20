@@ -1,4 +1,5 @@
 using KohnShamResolution
+using Plots
 
 # Choice of the method
 method = ODA()
@@ -12,7 +13,7 @@ N = 1
 eigvalue_theo(n,z) = -z^2/(2*n^2)
 
 # Plot
-Nmax = 8
+Nmax = 10
 Nerror = []
 
 cutting_pre = 10
@@ -26,20 +27,20 @@ for n in 2:Nmax
 
     KM = KohnShamExtended(z = z, N = N)
 
-    sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
+    @time sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
 
     index_ϵ = findall(x->x < 0, sol.ϵ)
 
     true_ϵ = eigvalue_theo.(index_ϵ, z)
 
-    push!(Nerror, sol.ϵ[index_ϵ] .- true_ϵ)
+    push!(Nerror, abs.(sol.ϵ[index_ϵ] .- true_ϵ))
 end
 
-plterror = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
-            legendfontsize  = 12,  
-            titlefontsize   = 12,
-            guidefontsize   = 12,
-            tickfontsize    = 12)
+plterror = plot(size = (1000,800), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
+                legendfontsize  = 12,  
+                titlefontsize   = 12,
+                guidefontsize   = 12,
+                tickfontsize    = 12)
 
 xlabel!("Number of point")
 ylabel!("Error")
@@ -56,6 +57,9 @@ for i ∈ eachindex(Nerror[end])
 end
 
 for i ∈ eachindex(logerror)
+    @show logerror[i]
+    @show length(logerror[i])
+    @show length((1+Nmax-length(logerror[i]):Nmax))
     plot!(2 .^(1+Nmax-length(logerror[i]):Nmax), logerror[i], lw = 3, label = "ϵ"*string(i), 
             markershape = :x, markersize = 10)
 end
