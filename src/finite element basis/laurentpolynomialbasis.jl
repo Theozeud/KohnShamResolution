@@ -2,9 +2,16 @@ abstract type Basis end
 
 struct LaurentPolynomialBasis{TL <: AbstractLaurentPolynomial} <: Basis
     elements::Vector{TL}
-    cross_index
+    cross_index::CartesianIndex
     function LaurentPolynomialBasis(elements)
-        cross_index = [CartesianIndex(i,j) for i ∈ eachindex(elements) for j ∈ eachindex(elements) if !isempty(Set(elements[i].index) ∩ Set(elements[i].index))]
+        cross_index = CartesianIndex[]
+        for i in eachindex(elements)
+            for j in 1:i
+                if !isempty(intersect(elements[i].index, elements[j].index))
+                    push!(cross_index, CartesianIndex(i, j))
+                end
+            end
+        end
         new{eltype(elements)}(elements, cross_index)
     end
 end
@@ -27,14 +34,9 @@ end
 function mass_matrix(lpb::LaurentPolynomialBasis, a::Real, b::Real)
     T = eltype(first(lpb))
     A = zeros(T, (length(lpb), length(lpb)))
-    for i ∈ eachindex(lpb)
-        for j ∈ eachindex(lpb)
-            if i > j
-                A[i,j] = A[j,i] 
-            else
-                A[i,j] = scalar_product(lpb[i], lpb[j], a, b)
-            end
-        end
+    for I ∈ lpb.cross_index
+        @inbounds A[I[1],I[2]] = scalar_product(lpb[I[1]], lpb[I[2]], a, b)
+        @inbounds A[I[2],I[1]] = A[I[1],I[2]] 
     end
     A
 end
@@ -47,14 +49,9 @@ end
 function weight_mass_matrix(lpb::LaurentPolynomialBasis, weight::LaurentPolynomial, a::Real, b::Real)
     T = eltype(first(lpb))
     A = zeros(T, (length(lpb), length(lpb)))
-    for i ∈ eachindex(lpb)
-        for j ∈ eachindex(lpb)
-            if i > j
-                A[i,j] = A[j,i] 
-            else
-                A[i,j] = scalar_product(weight * lpb[i], lpb[j], a, b)
-            end
-        end
+    for I ∈ lpb.cross_index
+        @inbounds A[I[1],I[2]] = scalar_product(weight * lpb[I[1]], lpb[I[2]], a, b)
+        @inbounds A[I[2],I[1]] = A[I[1],I[2]] 
     end
     A
 end
