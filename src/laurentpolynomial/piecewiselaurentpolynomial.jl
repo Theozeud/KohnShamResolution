@@ -139,7 +139,7 @@ function Base.:*(p::LaurentPolynomial{TP}, q::PiecewiseLaurentPolynomial{TQ}) wh
             fq = getfunction(q,i)
             push!(laurent_poly, p * fq)
             push!(index, i)
-        else
+        elseif q.default_value ≠ 0
             push!(laurent_poly, q.default_value * p)
             push!(index, i)
         end
@@ -198,11 +198,11 @@ function Base.:*(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomia
                 push!(laurent_poly, prodfpfq)
                 push!(index,i)
             end
-        elseif i ∈ p.index && q.default_value ≠ 0
+        elseif q.default_value ≠ 0 && i ∈ p.index
             fp = getfunction(p,i)
             push!(laurent_poly, fp * q.default_value)
             push!(index,i)
-        elseif i ∈ q.index && p.default_value ≠ 0
+        elseif p.default_value ≠ 0 && i ∈ q.index 
             fq = getfunction(q,i)
             push!(laurent_poly, fq * p.default_value)
             push!(index,i)

@@ -2,6 +2,11 @@ abstract type Basis end
 
 struct LaurentPolynomialBasis{TL <: AbstractLaurentPolynomial} <: Basis
     elements::Vector{TL}
+    cross_index
+    function LaurentPolynomialBasis(elements)
+        cross_index = [CartesianIndex(i,j) for i ∈ eachindex(elements) for j ∈ eachindex(elements) if !isempty(Set(elements[i].index) ∩ Set(elements[i].index))]
+        new{eltype(elements)}(elements, cross_index)
+    end
 end
 
 @inline Base.isempty(lpb::LaurentPolynomialBasis) = isempty(lpb.elements)
