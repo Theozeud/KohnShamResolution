@@ -15,12 +15,12 @@ M = ODA()
 
 # Discretization 
 lₕ = 0
-Nₕ = 20
+Nₕ = 200
 Rmin = 0
 Rmax = 100
 
 @timeit to "Create mesh" m = logmesh(Rmin, Rmax, Nₕ)
-@timeit to "Create basis" basis = BubbleBasis(m; order = 3, left = false, right = false)
+@timeit to "Create basis" basis = BubbleBasis(m; order = 1, left = false, right = false)
 
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
