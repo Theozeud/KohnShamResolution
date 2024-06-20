@@ -1,33 +1,35 @@
 using KohnShamResolution
 
+# One electron model
+zA = [1]
+N = 1
+eigvalue_theo(n,z) = -z^2/(2*n^2)
+
 # Choice of the method
-method = ODA()
+method = ConstantODA(1.0)
 
 # Discretization 
 lₕ = 0
-
-# One electron model
-zA = [1, 4, 8, 16]
-N = 1
-eigvalue_theo(n,z) = -z^2/(2*n^2)
+Rmin = 0
+Nmesh = 100
+cutting_pre = 10
+T = Float64
+order = 4
 
 # Plot
 pltA = []
 
-T = Float64
-cutting_pre = 10
-order = 3
-
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0, Rmax, 50; z = 1/z, T = T)
+    #m = logmesh(Rmin, Rmax,  Nmesh; z = 1/z, T = T)
+    m = linmesh(Rmin, Rmax,  Nmesh)
     basis = IntLegendreBasis(m; order = order, left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
     KM = KohnShamExtended(z = z, N = N)
 
-    sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
+    @time sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
 
     plt = plot( size = (900,600), margin = 0.5Plots.cm, legend = :bottomright,
                 legendfontsize  = 14,  
@@ -61,5 +63,5 @@ for z in zA
 
 end
 
-pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "image/hydrogenoide/with IntLegendre elements/Valeurs propres Ordre "*string(order))
+pltfin = plot(pltA..., layout = (1,1), size = (1200,1000))
+savefig(pltfin, "image/hydrogenoide/with IntLegendre elements/Valeurs propres Ordre "*string(order)*" avec Nmesh = "*string(Nmesh))

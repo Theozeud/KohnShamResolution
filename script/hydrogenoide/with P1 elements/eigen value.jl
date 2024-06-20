@@ -1,26 +1,27 @@
 using KohnShamResolution
 using Plots
 
-# Choice of the method
-method = ODA()
-
-# Discretization 
-lₕ = 0
-
 # One electron model
 zA = [1, 4, 8, 16]
 N = 1
 eigvalue_theo(n,z) = -z^2/(2*n^2)
 
-# Plot
-pltA = []
+# Choice of the method
+method = ConstantODA(1.0)
 
+# Discretization 
+lₕ = 0
+Rmin = 0
 cutting_pre = 10
+Nmesh = 1000
+
+# Plots
+pltA = []
 
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0,Rmax, 100; z = 1/z)
+    m = logmesh(Rmin, Rmax, Nmesh; z = 1/z)
     basis = HatBasis(m; left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
@@ -61,4 +62,4 @@ for z in zA
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "image/hydrogenoide/with P1 elements/Valeurs propres")
+savefig(pltfin, "image/hydrogenoide/with P1 elements/Valeurs propres avec Nmesh = "*string(Nmesh))

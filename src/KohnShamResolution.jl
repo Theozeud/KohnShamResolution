@@ -53,7 +53,7 @@ module KohnShamResolution
 
     include("solver.jl")
 
-    export ODA
+    export ODA, ConstantODA
     include("methods/oda.jl")
 
     export KohnShamSolution
