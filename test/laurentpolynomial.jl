@@ -23,3 +23,7 @@ hfbasis = HatBasis(m, Float16)
 @time mass_matrix(hfbasis, m[begin], m[end])
 
 weight_mass_matrix(hfbasis, -2, m[begin], m[end])
+
+A = Polynomial([-2,3,-1,-1,1], 1)
+B = Polynomial([1,-1,1], 0)
+Q,R = diveucl(A,B)

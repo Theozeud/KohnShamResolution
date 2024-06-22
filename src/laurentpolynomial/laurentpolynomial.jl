@@ -20,6 +20,7 @@ Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,
 
 @inline Base.eachindex(p::LaurentPolynomial) = degmin(p):degmax(p)
 @inline Base.getindex(p::LaurentPolynomial, i::Int) =  i ∈ eachindex(p) ? p.coeffs[i-degmin(p)+1] : 0
+@inline Base.getindex(p::LaurentPolynomial, ur::UnitRange{Int64}) = p.points[ur .+ 1 .- degmin(p)]
 @inline Base.setindex!(p::LaurentPolynomial{T}, val::T, i::Int) where T =  p.coeffs[i-degmin(p)+1] = val   
 @inline Base.firstindex(p::LaurentPolynomial) = degmin(p)
 @inline Base.lastindex(p::LaurentPolynomial) = degmax(p)
@@ -51,9 +52,13 @@ function elag!(p::LaurentPolynomial)
         dn += 1
     end
     p.coeffs = p.coeffs[dn-degmin(p)+1:dp-degmin(p)+1]
-    p.degmin = dn
-    if p.haslog && p.coeff_log == 0
+    if p.haslog && iszero(p.coeff_log) 
         p.haslog = false
+    end
+    if dn == dp && iszero(p[dn])
+        p.degmin = 0
+    else
+        p.degmin = dn
     end
     p
 end
@@ -201,7 +206,7 @@ function Base.:+(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,T
     end
     r.coeff_log = p.coeff_log + q.coeff_log
     r.haslog = p.haslog || q.haslog
-    r
+    elag!(r)
 end
 
 function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
@@ -216,6 +221,26 @@ function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
         end
     end
     r
+end
+
+
+function diveucl(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
+    @assert !haslog(p) && !haslog(q)
+    @assert degmin(p) ≥ 0 && degmin(q) ≥ 0
+    @assert !iszero(q)
+    NewT = promote_type(TP,TQ)
+    if degmax(p) < degmax(q)
+        return (Monomial(0, NewT(0)), p)
+    end
+    Q = Laurent_zero(NewT, degmin(p) - degmin(q), degmax(p)+ degmax(q))
+    Q = Monomial(0, NewT(0))
+    R = p
+    while degmax(R) ≥ degmax(q)
+        M =  Monomial(degmax(R) - degmax(q), NewT(R[end])/NewT(q[end]))
+        Q += M
+        R -= q * M
+    end
+    (Q,R)
 end
 
 ##################################################################################
