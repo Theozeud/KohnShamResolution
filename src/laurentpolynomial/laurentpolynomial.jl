@@ -51,11 +51,12 @@ function elag!(p::LaurentPolynomial)
         end
         dn += 1
     end
+    x = p[dn]
     p.coeffs = p.coeffs[dn-degmin(p)+1:dp-degmin(p)+1]
     if p.haslog && iszero(p.coeff_log) 
         p.haslog = false
     end
-    if dn == dp && iszero(p[dn])
+    if dn == dp && iszero(x)
         p.degmin = 0
     else
         p.degmin = dn

@@ -17,7 +17,7 @@ module KohnShamResolution
     export integrate!, integrate, deriv!, deriv, scalar_product, normL2, elag!, diveucl
     include("laurentpolynomial/laurentpolynomial.jl")
 
-    export Legendre
+    export Legendre, intLegendre
     include("laurentpolynomial/legendre polynomial.jl")
 
     export OneDMesh
@@ -28,9 +28,12 @@ module KohnShamResolution
     export get_support
     include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
-    export LaurentPolynomialBasis
+    export Basis, AbstractLaurentPolynomialBasis, LaurentPolynomialBasis
     export mass_matrix, weight_mass_matrix, build_on_basis
     include("finite element basis/laurentpolynomialbasis.jl")
+
+    export IntLegendreBasis
+    include("finite element basis/integrated legendre basis.jl")
 
     export HatBasis, P1Basis, BubbleBasis, IntLegendreBasis
     export HatFunctionP1, FunctionP2_node, FunctionP2_mid, P2Basis, IntLegendre_element

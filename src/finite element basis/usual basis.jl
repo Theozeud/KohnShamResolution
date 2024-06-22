@@ -138,38 +138,3 @@ function BubbleBasis(mesh::OneDMesh{TM}, T::Type = Float64; order::Int = 1, left
     end
     LaurentPolynomialBasis(basis)
 end
-
-
-########################################################################################
-#                                   Legendre Basis
-########################################################################################
-
-# legendre polynomial rescaled on [m[i], m[i+1]]
-@memoize function IntLegendre(mesh::OneDMesh, i::Int, n::Int, T::Type = Float64)
-    @assert i ≤ lastindex(mesh) - 1
-    pₙ = Legendre(mesh[i], mesh[i+1], n, T, false)
-    int_pₙ = integrate(pₙ)
-    int_pₙ - int_pₙ(mesh[i])
-end
-
-function IntLegendre_element(mesh::OneDMesh, i::Int, n::Int, T::Type = Float64)
-    pₙ = IntLegendre(mesh, i, n, T)
-    PiecewiseLaurentPolynomial(mesh, [pₙ], [i], T(0))
-end
-
-function IntLegendreBasis(mesh::OneDMesh{TM}, T::Type = Float64; order::Int = 1, left::Bool = true, right::Bool = left) where TM
-    @assert order ≥ 1
-    basis = PiecewiseLaurentPolynomial{T,TM}[]
-    for i ∈ eachindex(mesh)[begin:end-1]
-        if i != firstindex(mesh) || left       
-            push!(basis, HatFunctionP1(mesh, i, T))
-        end
-        for p ∈ 2:order 
-            push!(basis, IntLegendre_element(mesh, i, p, T))
-        end
-    end
-    if right
-        push!(basis, HatFunctionP1(mesh, lastindex(mesh), T))
-    end
-    LaurentPolynomialBasis(basis)
-end

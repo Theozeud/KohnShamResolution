@@ -1,6 +1,8 @@
 abstract type Basis end
 
-struct LaurentPolynomialBasis{TL <: AbstractLaurentPolynomial} <: Basis
+abstract type AbstractLaurentPolynomialBasis end
+
+struct LaurentPolynomialBasis{TL <: AbstractLaurentPolynomial} <: AbstractLaurentPolynomialBasis
     elements::Vector{TL}
     cross_index
     function LaurentPolynomialBasis(elements)
