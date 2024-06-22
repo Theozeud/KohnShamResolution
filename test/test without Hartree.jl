@@ -10,7 +10,7 @@ KM = KohnShamExtended(z = z,N = N)
 #KM = SlaterXα(z, N)
 
 # Choice of the method
-method = ODA()
+method = ConstantODA(1.0)
 
 # Discretization 
 lₕ = 2

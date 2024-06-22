@@ -1,7 +1,7 @@
 using KohnShamResolution
 
 # Choice of the method
-method = ODA()
+method = ConstantODA(0.8)
 
 # Model
 z = 1
