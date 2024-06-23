@@ -28,7 +28,7 @@ end
 
 function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDiscretization)
 
-    @unpack lₕ, Nₕ, basis, mesh, Rmin, Rmax = discretization
+    @unpack lₕ, Nₕ, basis, mesh = discretization
 
     # Set the type of number as the one of the discretization basis
     T = bottom_type(discretization.basis)
@@ -38,10 +38,10 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     
     deriv_basis = deriv(basis)
 
-    A   = mass_matrix(deriv_basis, Rmin, Rmax)
-    M₀  = mass_matrix(basis, Rmin, Rmax)
-    M₋₁ = weight_mass_matrix(basis, -1, Rmin, Rmax)
-    M₋₂ = weight_mass_matrix(basis, -2, Rmin, Rmax)
+    A   = mass_matrix(deriv_basis)
+    M₀  = mass_matrix(basis)
+    M₋₁ = weight_mass_matrix(basis, -1)
+    M₋₂ = weight_mass_matrix(basis, -2)
 
     # Creation of the fix part of the hamiltonian   
     Kin =  zeros(T, lₕ+1, Nₕ, Nₕ)
