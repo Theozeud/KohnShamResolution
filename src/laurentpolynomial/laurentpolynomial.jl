@@ -224,6 +224,23 @@ function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
     r
 end
 
+function Base.:^(p::LaurentPolynomial{T}, n::Int) where T
+    if haslog(p)
+        @error "We can't power a laurent polynomial if it has a log term."
+    end
+    if n == 0
+        return LaurentPolynomial([T(1)], 0, false, T(0))
+    elseif n == 1
+        return p
+    else
+        q = p^(n÷2)
+        if iseven(n) 
+            return q * q
+        else
+            return p * q * q
+        end
+    end
+end
 
 function diveucl(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
     @assert !haslog(p) && !haslog(q)
