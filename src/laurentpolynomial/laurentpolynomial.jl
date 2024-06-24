@@ -1,6 +1,4 @@
-abstract type AbstractLaurentPolynomial{T} end
-
-mutable struct LaurentPolynomial{T} <:AbstractLaurentPolynomial{T}
+mutable struct LaurentPolynomial{T} <:AbstractPolynomial{T}
     coeffs::Vector{T}
     degmin::Int
     haslog::Bool
@@ -11,12 +9,7 @@ Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin, false, elt
 Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,0))
 
 @inline Base.eltype(::LaurentPolynomial{T}) where T = T
-
-@inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin+length(p.coeffs)-1)
-@inline degmax(p::LaurentPolynomial) = p.degmin+length(p.coeffs)-1
-@inline degmin(p::LaurentPolynomial) = p.degmin
-@inline haslog(p::LaurentPolynomial) = p.haslog
-@inline ismonomial(p::LaurentPolynomial) = degmin(p) == degmax(p) && !haslog(p)
+@inline convert(::Type{T}, p::LaurentPolynomial) where T = LaurentPolynomial(T.(p.coeffs), p.degmin, p.haslog, T(p.coeff_log))
 
 @inline Base.eachindex(p::LaurentPolynomial) = degmin(p):degmax(p)
 @inline Base.getindex(p::LaurentPolynomial, i::Int) =  i ∈ eachindex(p) ? p.coeffs[i-degmin(p)+1] : 0
@@ -26,6 +19,12 @@ Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,
 @inline Base.lastindex(p::LaurentPolynomial) = degmax(p)
 
 @inline Base.zero(p::LaurentPolynomial{T}) where T = LaurentPolynomial(zero(p.coeffs), p.degmin, false, T(0))
+
+@inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin+length(p.coeffs)-1)
+@inline degmax(p::LaurentPolynomial) = p.degmin+length(p.coeffs)-1
+@inline degmin(p::LaurentPolynomial) = p.degmin
+@inline haslog(p::LaurentPolynomial) = p.haslog
+@inline ismonomial(p::LaurentPolynomial) = degmin(p) == degmax(p) && !haslog(p)
 
 function Laurent_zero(T::Type, degmin::Int, degmax::Int)
     @assert degmax ≥ degmin
@@ -142,6 +141,10 @@ function shift!(p::LaurentPolynomial, n::Int)
     p.degmin += n
 end
 
+function shift(p::LaurentPolynomial, n::Int)
+    LaurentPolynomial(p.coeffs, p.degmin + n, haslog(p), p.coeff_log)
+end
+
 ##################################################################################
 #                            Elementary Computations
 ##################################################################################
@@ -152,11 +155,14 @@ function Base.:-( p::LaurentPolynomial)
     LaurentPolynomial(coeffs, p.degmin, haslog(p), coeff_log)
 end
 
-function Base.:*(r::Real, p::LaurentPolynomial)
+function Base.:*(r::T, p::LaurentPolynomial{TP}) where {T,TP}
+    NewT = promote_type(T,TP)
     if r == 1
-        return p
+        return convert(NewT,p)
+    elseif r == 0
+        return NewT(0)
     else
-        return elag!(LaurentPolynomial(p.coeffs .* r, p.degmin, haslog(p), p.coeff_log * r))
+        return elag!(LaurentPolynomial(NewT.(p.coeffs) .* NewT(r), p.degmin, haslog(p), NewT(p.coeff_log) * NewT(r)))
     end
 end
 
@@ -180,7 +186,7 @@ function Base.:+(p::LaurentPolynomial{TP}, x::T) where {TP,T}
     end
     r.coeff_log = p.coeff_log
     r.haslog = p.haslog
-    r
+    elag!(r)
 end
 
 function Base.:+(x, p::LaurentPolynomial) 
@@ -221,7 +227,7 @@ function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
             r[i] += p[j]*q[i-j]
         end
     end
-    r
+    elag!(r)
 end
 
 function Base.:^(p::LaurentPolynomial{T}, n::Int) where T
@@ -259,6 +265,18 @@ function diveucl(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
         R -= q * M
     end
     (Q,R)
+end
+
+##################################################################################
+#                               Composition
+##################################################################################
+function Base.:∘(p::LaurentPolynomial, q::LaurentPolynomial)
+    @assert degmin(p) ≥ 0
+    r = Laurent_zero(NewT, 0, 0)
+    for i ∈ eachindex(p)
+        r += p[i] * q ^ i 
+    end
+    r
 end
 
 ##################################################################################

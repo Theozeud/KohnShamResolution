@@ -1,4 +1,4 @@
-mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractLaurentPolynomial{T}
+mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractPolynomial{T}
     mesh::OneDMesh{TM}
     functions::Vector{LaurentPolynomial{T}}
     index::Vector{Int}

@@ -1,8 +1,4 @@
-abstract type Basis end
-
-abstract type AbstractLaurentPolynomialBasis end
-
-struct LaurentPolynomialBasis{TL <: AbstractLaurentPolynomial} <: AbstractLaurentPolynomialBasis
+struct LaurentPolynomialBasis{TL <: AbstractPolynomial} <: AbstractLaurentPolynomialBasis
     mesh::OneDMesh
     elements::Vector{TL}
     cross_index

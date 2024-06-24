@@ -2,7 +2,7 @@
 #                                  Integrated Legendre Basis
 ########################################################################################
 
-struct IntLegendreBasis{TL <: LaurentPolynomial} <: AbstractLaurentPolynomialBasis
+struct IntLegendreBasis{TL <: LaurentPolynomial} <: SpecialLaurentPolynomialBasis
     mesh::OneDMesh
     polynomial::Vector{TL}
     order::Int
@@ -95,12 +95,15 @@ function mass_matrix(ilb::IntLegendreBasis)
                     I = nbhf + n - 1
                     A[I, i]   = 2/(mesh[i + 1]-mesh[i]) * scalar_product(hf_down, Qₙ, -1, 1)
                     A[I, i+1] = 2/(mesh[i + 1]-mesh[i]) * scalar_product(hf_up, Qₙ, -1 ,1)
+                    A[i, I]   = A[I, i]
+                    A[i+1, I] = A[I, i+1]
                 end
             else
                 for n ∈ 2:order
                     Qₙ = getpolynomial(ilb, n+1)
                     I = nbhf + n - 1
                     A[I, i]   = 2/(mesh[i + 1]-mesh[i]) * scalar_product(hf_up, Qₙ, -1, 1)
+                    A[i, I]   = A[I, i]
                 end
             end
         elseif i == lastindex(mesh)-1
@@ -108,6 +111,7 @@ function mass_matrix(ilb::IntLegendreBasis)
                 Qₙ = getpolynomial(ilb, n+1)
                 I = (siz - order + 1) + n - 1
                 A[I, i] = 2/(mesh[i + 1]-mesh[i]) * scalar_product(hf_down, Qₙ, -1 ,1)
+                A[i, I]   = A[I, i]
             end
         else 
             for n ∈ 2:order
@@ -115,6 +119,8 @@ function mass_matrix(ilb::IntLegendreBasis)
                 I = nbhf  + (order - 1) * (i-1) + n - 1
                 A[I, i]   = 2/(mesh[i + 1]-mesh[i]) * scalar_product(hf_down, Qₙ, -1, 1)
                 A[I, i+1] = 2/(mesh[i + 1]-mesh[i]) * scalar_product(hf_up, Qₙ, -1 ,1)
+                A[i, I]   = A[I, i]
+                A[i+1, I] = A[I, i+1]
             end
         end
     end
@@ -133,17 +139,26 @@ function weight_mass_matrix(ilb::IntLegendreBasis, p::Int)
 
     # Block of P1 Basis
     @views AP1 = A[1:nbhf, 1:nbhf]
-
-
-    AP1[1,1] = left ? 1 : 1 
-
-    AP1[nbhf, nbhf]   = right ? 1 : 1 
-    AP1[1,2] = 1 
-    AP1[nbhf, nbhf-1] = 1
+    hf_up = getpolynomial(ilb, 1)
+    hf_down = getpolynomial(ilb, 2)
     for I ∈ 1:nbhf
-        AP1[I,I]   = 1
-        AP1[I,I+1] = 1
-        AP1[I,I-1] = AP1[I-1, I]
+        if I == 1 && !left
+            shit_weight_up = shift_power_weight(T, -1, 1, mesh[1], mesh[2], p)
+            shit_weight_down = shift_power_weight(T, -1, 1, mesh[2], mesh[3], p)
+            AP1[I,I] = weight_scalar_product(hf_up, hf_up, shit_weight_up, -1, 1) + weight_scalar_product(hf_down, hf_down, shit_weight_down, -1, 1)
+            AP1[I,I+1] = weight_scalar_product(hf_down, hf_up, shit_weight_down, -1, 1)
+        elseif I == nbhf && !right
+            shit_weight_up = shift_power_weight(T, -1, 1, mesh[end-2], mesh[end-1], p)
+            shit_weight_down = shift_power_weight(T, -1, 1, mesh[end-1], mesh[end], p)
+            AP1[I,I] = weight_scalar_product(hf_up, hf_up, shit_weight_up, -1, 1) + weight_scalar_product(hf_down, hf_down, shit_weight_down, -1, 1)
+            AP1[I,I+1] = AP1[I,I-1]
+        else 
+            shit_weight_up = shift_power_weight(T, -1, 1, mesh[I - 1 + !left], mesh[I + !left], p)
+            shit_weight_down = shift_power_weight(T, -1, 1, mesh[I + !left], mesh[I + 1 + !left], p)
+            AP1[I,I] = weight_scalar_product(hf_up, hf_up, shit_weight_up, -1, 1) + weight_scalar_product(hf_down, hf_down, shit_weight_down, -1, 1)
+            AP1[I,I+1] = weight_scalar_product(hf_down, hf_up, shit_weight_up, -1, 1)
+            AP1[I,I-1] = AP1[I-1,I]
+        end
     end
 
     # Block of integrated legendre polynomials
@@ -168,8 +183,6 @@ function weight_mass_matrix(ilb::IntLegendreBasis, p::Int)
 
     # Block of interaction P1 - integrated legendre polynomials
     @views AP1HO = A[nbfh+1:end, 1:nbhf]
-    hf_up = getpolynomial(ilb, 1)
-    hf_down = getpolynomial(ilb, 2)
     for i ∈ eachindex(mesh)[1:end-1]
         shift_weight = shift_power_weight(T, -1, 1, mesh[i + 1], mesh[i], p)
         idxm    = i*(order-1)
@@ -197,7 +210,7 @@ end
     scalar_product(Monomial(n) * p, q, a, b)
 end
 
-function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::LaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TW}
+@inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::LaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TW}
     NewT = promote_type(TP,TQ, TW)
     sum = NewT(0)
     for i ∈ eachindex(weight)
@@ -206,7 +219,7 @@ function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ
     sum
 end
 
-function shift_power_weight(T::Type, a::Real, b::Real, mᵢ::Real, mᵢ₊₁::Real, n::Int)
+@inline function shift_power_weight(T::Type, a::Real, b::Real, mᵢ::Real, mᵢ₊₁::Real, n::Int)
     @assert n≥0
     if n == 0
         return LaurentPolynomial([T(1)], 0, false, T(0))
@@ -274,7 +287,7 @@ end
 #                                  Legendre Basis
 ########################################################################################
 
-struct LegendreBasis{TL <: LaurentPolynomial} <: AbstractLaurentPolynomialBasis
+struct LegendreBasis{TL <: LaurentPolynomial} <: SpecialLaurentPolynomialBasis
     mesh::OneDMesh
     polynomial::Vector{TL}
     order::Int
@@ -302,6 +315,53 @@ end
 
 
 function mass_matrix(ilb::LegendreBasis)
+    @unpack left, right, mesh, polynomial, order = ilb
+    nbhf = nb_hat_functions(ilb)
+    T = bottom_type(ilb)
+    A = zeros(T, (size(ilb), size(ilb)))
 
+    # Block of P1 Basis
+    @views AP1 = A[1:nbhf, 1:nbhf]
+    hf_up = getpolynomial(ilb, 1)
+    hf_down = getpolynomial(ilb, 2)
+    for I ∈ 1:nbhf
+        if I == 1 && !left
+            shit_weight_up = shift_power_weight(T, -1, 1, mesh[1], mesh[2], p)
+            shit_weight_down = shift_power_weight(T, -1, 1, mesh[2], mesh[3], p)
+            AP1[I,I] = weight_scalar_product(hf_up, hf_up, shit_weight_up, -1, 1) + weight_scalar_product(hf_down, hf_down, shit_weight_down, -1, 1)
+            AP1[I,I+1] = weight_scalar_product(hf_down, hf_up, shit_weight_down, -1, 1)
+        elseif I == nbhf && !right
+            shit_weight_up = shift_power_weight(T, -1, 1, mesh[end-2], mesh[end-1], p)
+            shit_weight_down = shift_power_weight(T, -1, 1, mesh[end-1], mesh[end], p)
+            AP1[I,I] = weight_scalar_product(hf_up, hf_up, shit_weight_up, -1, 1) + weight_scalar_product(hf_down, hf_down, shit_weight_down, -1, 1)
+            AP1[I,I+1] = AP1[I,I-1]
+        else 
+            shit_weight_up = shift_power_weight(T, -1, 1, mesh[I - 1 + !left], mesh[I + !left], p)
+            shit_weight_down = shift_power_weight(T, -1, 1, mesh[I + !left], mesh[I + 1 + !left], p)
+            AP1[I,I] = weight_scalar_product(hf_up, hf_up, shit_weight_up, -1, 1) + weight_scalar_product(hf_down, hf_down, shit_weight_down, -1, 1)
+            AP1[I,I+1] = weight_scalar_product(hf_down, hf_up, shit_weight_up, -1, 1)
+            AP1[I,I-1] = AP1[I-1,I]
+        end
+    end
+
+    # Block of integrated legendre polynomials
+    @views AHO = A[nbhf+1:end, nbhf+1:end]
+    for i ∈ eachindex(mesh)[1:end-1]
+        shit_weight = shift_power_weight(T, -1, 1, mesh[i], mesh[i+1], p)
+        idxm = i*(order-1)
+        for n ∈ 2:order
+            Qₙ = getpolynomial(ilb, n+1)
+            IN = idxm + n - 1
+            for m ∈ 2:order
+                Qₘ = getpolynomial(ilb, m+1)
+                IM = idxm + m - 1
+                if m > n
+                    AHO[IN, IM] = AHO[IM, IN]
+                else
+                    AHO[IN, IM] = weight_scalar_product(Qₙ, Qₘ, shit_weight, -1, 1)
+                end
+            end
+        end
+    end
 
 end

@@ -12,10 +12,16 @@ module KohnShamResolution
     include("utils.jl")
     include("computational tools.jl")
 
+    export AbstractPolynomial
+    include("laurentpolynomial/abstract polynomial.jl")
+
     export LaurentPolynomial
     export Polynomial, Monomial, deg, degmax, degmin, haslog, ismonomial, iszero
     export integrate!, integrate, deriv!, deriv, scalar_product, normL2, elag!, diveucl
     include("laurentpolynomial/laurentpolynomial.jl")
+
+    export RationalFraction
+    include("laurentpolynomial/rationalfraction.jl")
 
     export Legendre, intLegendre
     include("laurentpolynomial/legendre polynomial.jl")
@@ -28,11 +34,14 @@ module KohnShamResolution
     export get_support
     include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
-    export Basis, AbstractLaurentPolynomialBasis, LaurentPolynomialBasis
+    export Basis, AbstractLaurentPolynomialBasis, SpecialLaurentPolynomialBasis
+    include("finite element basis/abstract polynomial basis.jl")
+    
+    export LaurentPolynomialBasis
     export mass_matrix, weight_mass_matrix, build_on_basis
     include("finite element basis/laurentpolynomialbasis.jl")
 
-    export IntLegendreBasis
+    export IntLegendreBasis, LegendreBasis
     include("finite element basis/integrated legendre basis.jl")
 
     export HatBasis, P1Basis, BubbleBasis, IntLegendreBasis
