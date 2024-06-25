@@ -6,10 +6,11 @@ abstract type AbstractShortElements{N, T} end
 @inline eltype(::AbstractShortElements{N, T}) where T = T
 @inline isnormalized(::AbstractShortElements{N, T}) where {N,T} = N
 @inline length(elem::AbstractShortElements) = elem.size
+@inline getpolynomial(elem::AbstractShortElements, n::Int) = elem[n]
 
 
 ########################################################################################
-#                                   Hat Elements
+#                                   P1 Elements
 ########################################################################################
 
 struct P1Elements{N, T} <: AbstractShortElements{N, T}
@@ -27,7 +28,7 @@ struct P1Elements{N, T} <: AbstractShortElements{N, T}
     end
 end
 
-function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
+function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, generate_shift = true, kwargs...)
     p1elements = P1Elements(T; normalize = normalize, kwargs)
     size = length(mesh) - 2 + left + right
     if normalize
@@ -44,6 +45,43 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
     else
         normalization = ones(size)
     end
+
+    shifts = Vector{Shifts}[]
+    binf = p1elements.binf
+    bsup = p1elements.bsup
+    if generate_shift
+        if left
+            push!(shifts, [generateshift(T, mesh[1], mesh[2], binf, bsup)])
+        end
+        for i ∈ eachindex(mesh)[2:end-1]
+            shifts[i] = [generateshift(T, mesh[i-1], mesh[i], binf, bsup), generateshift(T, mesh[i], mesh[i+1], binf, bsup)]
+        end
+        if right
+            push!(shifts, [generateshift(T, mesh[end-1], mesh[end], binf, bsup)])
+        end
+    else
+        if left
+            push!(shifts, [initiateshift(T, mesh[1], mesh[2], binf, bsup)])
+        end
+        for i ∈ eachindex(mesh)[2:end-1]
+            shifts[i] = [initiateshift(T, mesh[i-1], mesh[i]), generateshift(T, mesh[i], mesh[i+1])]
+        end
+        if right
+            push!(shifts, [initiateshift(T, mesh[end-1], mesh[end])])
+        end
+    end
+
+    index = Int[]
+    if left
+        push!(index, [2])
+    end
+    for _ ∈ eachindex(mesh)[2:end-1]
+        push!(index, [1,2])
+    end
+    if right
+        push!(index, [1])
+    end
+
     ShortPolynomialBasis(p1elements, mesh, size, normalization)
 end
 
