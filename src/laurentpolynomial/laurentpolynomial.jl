@@ -18,14 +18,14 @@ Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,
 @inline Base.firstindex(p::LaurentPolynomial) = degmin(p)
 @inline Base.lastindex(p::LaurentPolynomial) = degmax(p)
 
-@inline Base.zero(p::LaurentPolynomial{T}) where T = LaurentPolynomial(zero(p.coeffs), p.degmin, false, T(0))
-
 @inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin+length(p.coeffs)-1)
 @inline degmax(p::LaurentPolynomial) = p.degmin+length(p.coeffs)-1
 @inline degmin(p::LaurentPolynomial) = p.degmin
 @inline haslog(p::LaurentPolynomial) = p.haslog
 @inline ismonomial(p::LaurentPolynomial) = degmin(p) == degmax(p) && !haslog(p)
 
+@inline Base.zero(p::LaurentPolynomial{T}) where T = LaurentPolynomial(zero(p.coeffs), p.degmin, false, T(0))
+@inline Base.zero(::Type{LaurentPolynomial{T}}, args...) where T = Laurent_zero(T, 0, 0)
 function Laurent_zero(T::Type, degmin::Int, degmax::Int)
     @assert degmax ≥ degmin
     LaurentPolynomial(zeros(T, degmax-degmin+1), degmin, false, T(0))
