@@ -2,7 +2,8 @@
 #                                  Integrated Legendre Basis
 ########################################################################################
 
-struct IntLegendreBasis{TL <: LaurentPolynomial} <: SpecialLaurentPolynomialBasis
+
+struct IntLegendreBasis{TL <: LaurentPolynomial} <: AbstractLaurentPolynomialBasis
     mesh::OneDMesh
     polynomial::Vector{TL}
     order::Int
@@ -287,7 +288,7 @@ end
 #                                  Legendre Basis
 ########################################################################################
 
-struct LegendreBasis{TL <: LaurentPolynomial} <: SpecialLaurentPolynomialBasis
+struct LegendreBasis{TL <: LaurentPolynomial} <: AbstractLaurentPolynomialBasis
     mesh::OneDMesh
     polynomial::Vector{TL}
     order::Int

@@ -34,7 +34,7 @@ module KohnShamResolution
     export get_support
     include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
-    export Basis, AbstractLaurentPolynomialBasis, SpecialLaurentPolynomialBasis
+    export Basis, AbstractLaurentPolynomialBasis
     include("finite element basis/abstract polynomial basis.jl")
     
     export LaurentPolynomialBasis
@@ -46,7 +46,7 @@ module KohnShamResolution
 
     export HatBasis, P1Basis, BubbleBasis, IntLegendreBasis
     export HatFunctionP1, FunctionP2_node, FunctionP2_mid, P2Basis, IntLegendre_element
-    include("finite element basis/usual basis.jl")
+    include("finite element basis/complete basis.jl")
 
     export AbstractExchangeCorrelation, ExchangeCorrelation, NoExchangeCorrelation, KohnShamExtended
     export build_SlaterXα, exc_SlaterXα, vxc_SlaterXα
