@@ -17,38 +17,42 @@ end
 @inline getinteraction(infoblock::InfoBlock) = infoblock.interaction_index
 
 struct CombineShortPolynomialBasis
-    basisVector::Vector{ShortPolynomialBasis}
+    basisVector
     size::Int
     blocks::Vector{InfoBlock}
-    function CombineBasis(basisVector...)
-        size = length([length(basis) for basis ∈ basisVector])
-        blocks = Vector{InfloBlock}(undef, length(basisVector))
+    function CombineShortPolynomialBasis(basisVector...)
+        size = sum([length(basis) for basis ∈ basisVector])
+        blocks = Vector{InfoBlock}(undef, length(basisVector)*(length(basisVector)+1)÷2)
         size_i = 1
+        ib = 1
         for i ∈ eachindex(basisVector)
             size_j = 1
             for j ∈ 1:i
-                rangerow = size_i:size_i+size(basisVector[i])
-                rangecolumn = size_j:size_j+size(basisVector[j])
-                size_j += size(basisVector[j])
+                rangerow = size_i:size_i+length(basisVector[i])-1
+                rangecolumn = size_j:size_j+length(basisVector[j])-1
+                size_j += length(basisVector[j])
                 interaction_index = CartesianIndex{2}[]
                 for n in eachindex(basisVector[i].infos)
                     for m in eachindex(basisVector[j].infos)
-                        if !isempty(intersect(getsegment(basisVector[i].infos, n), getsegment(basisVector[j].infos[m])))
-                            push!(coupling_index, CartesianIndex(n, m))
+                        if !isempty(intersect(getsegments(basisVector[i], n), getsegments(basisVector[j], m)))
+                            push!(interaction_index, CartesianIndex(n, m))
                         end
                     end
                 end
                 block = InfoBlock(CartesianIndex(i,j), rangerow, rangecolumn, i == j, interaction_index)
-                blocks[i] = block
+                blocks[ib] = block
+                ib+=1
             end
+            size_i += length(basisVector[i])
         end
         new(basisVector, size, blocks)
     end
 end
 
-@inline getbasis(cb::CombineShortPolynomialBasis, i::Int) = cb.basis[i]
+@inline getbasis(cb::CombineShortPolynomialBasis, i::Int) = cb.basisVector[i]
 @inline Base.length(cb::CombineShortPolynomialBasis) = cb.size
-@inline getblocks(cb::CombineShortPolynomialBasis) = cb.block
+@inline getblocks(cb::CombineShortPolynomialBasis) = cb.blocks
+@inline Base.first(cb::CombineShortPolynomialBasis) = cb.basisVector[1]
 
 @inline getindex(cb::CombineShortPolynomialBasis, i::Int) =  getindex(cb.infoblock[i])
 @inline getrangerow(cb::CombineShortPolynomialBasis, i::Int) = getrangerow(cb.infoblock[i])
@@ -64,9 +68,9 @@ function mass_matrix(cb::CombineShortPolynomialBasis)
         if isdiagonal(b)
             fill_mass_matrix!(getbasis(cb, getindex(b,1)), ABlock)
         else
-            fill_mass_matrix!(getbasis(cb, getindex(b,1)), getbasis(cb, getindex(b,2)), cb.interaction_index, A)
+            fill_mass_matrix!(getbasis(cb, getindex(b,1)), getbasis(cb, getindex(b,2)), b.interaction_index, ABlock)
             @views ABlockT = A[getrangecolumn(b), getrangerow(b)]
-            @. ABlockT = ABlock
+            @. ABlockT = ABlock'
         end
     end
     A
@@ -93,10 +97,9 @@ function fill_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasi
         for (i,j) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]))
             P = getpolynomial(spb1, I[1], i)
             Q = getpolynomial(spb2, I[2], j)
-            @inbounds A[I[1], I[2]] += scalar_product(P, Q, basis.binf, basis.bsup)
+            @inbounds A[I[1], I[2]] += scalar_product(P, Q, spb1.elements.binf, spb1.elements.bsup)
         end
         @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) * getnormalization(spb2, I[2])
-        @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
 end
 
