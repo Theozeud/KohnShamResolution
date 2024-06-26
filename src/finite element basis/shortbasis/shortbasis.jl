@@ -1,3 +1,6 @@
+########################################################################################
+#                                  Info Element
+########################################################################################
 struct InfoElement{T}
     index::Vector{Int}
     segments::Vector{Int}
@@ -19,6 +22,9 @@ end
 
 @inline arecompatible(ielem1::InfoElement, ielem2::InfoElement) = !isempty(intersect(ielem1.segments, ielem2.segments))
 
+########################################################################################
+#                                     Short Basis
+########################################################################################
 struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     elements::TB
     mesh::OneDMesh

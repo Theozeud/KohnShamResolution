@@ -1,15 +1,4 @@
 ########################################################################################
-#                                  Abstract Short Elements
-########################################################################################
-abstract type AbstractShortElements{N, T} end
-
-@inline Base.eltype(::AbstractShortElements{N, T}) where T = T
-@inline isnormalized(::AbstractShortElements{N, T}) where {N,T} = N
-@inline Base.length(elem::AbstractShortElements) = elem.size
-@inline getpolynomial(elem::AbstractShortElements, n::Int) = elem[n]
-@inline Base.first(elem::AbstractShortElements) = elem[firstindex(elem)]
-
-########################################################################################
 #                                   P1 Elements
 ########################################################################################
 
@@ -28,7 +17,7 @@ struct P1Elements{N, T} <: AbstractShortElements{N, T}
     end
 end
 
-function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, generate_shift = true, kwargs...)
+function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
     p1elements = P1Elements(T; normalize = normalize, kwargs)
     size = length(mesh) - 2 + left + right
     binf = p1elements.binf
