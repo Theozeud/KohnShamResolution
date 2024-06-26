@@ -42,15 +42,19 @@ end
 ########################################################################################
 function fill_mass_matrix!(ilb::IntLegendreElements{true}, ::OneDMesh, A)
     T = eltype(ilb)
-    for I ∈ axis(A,1)
+    for I ∈ axes(A,1)
         A[I,I] = T(1)
     end
     nothing
 end
 
 function fill_mass_matrix!(ilb::IntLegendreElements{false}, mesh::OneDMesh, A)
-    for I ∈ axis(A,1)
-        A[I, I] = (T(mesh[I+1]) - T(mesh[I]))/(T(ilb.bsup) - T(ilb.binf))
+    T = eltype(ilb)
+    for i ∈ eachindex(mesh)[1:end-1]
+        for n ∈ 1:ilb.size
+            I = (i-1)*ilb.size + n
+            A[I,I] = (T(mesh[i+1]) - T(mesh[i]))/(T(ilb.bsup) - T(ilb.binf))
+        end
     end
     nothing
 end

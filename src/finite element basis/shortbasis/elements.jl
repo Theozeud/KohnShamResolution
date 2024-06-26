@@ -110,9 +110,10 @@ function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Boo
         normalization = normalize ? sqrt((intlegelement.bsup - intlegelement.binf)/ (mesh[i+1] - mesh[i])) : T(1)
         segments = [i]
         shifts = [shift(T, intlegelement.binf, intlegelement.bsup, mesh[i], mesh[i])]
+        invshifts = [shift(T, mesh[i], mesh[i], intlegelement.binf, intlegelement.bsup)]
         for n ∈ 1:intlegelement.size
             index = [n]
-            infos[(i-1) * intlegelement.size + n] = InfoElement(index, segments, shifts, normalization)
+            infos[(i-1) * intlegelement.size + n] = InfoElement(index, segments, shifts, invshifts, normalization)
         end
     end
     ShortPolynomialBasis(intlegelement, mesh, size, infos)

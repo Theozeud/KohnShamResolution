@@ -4,8 +4,8 @@ using Plots
 
 # Test with P1
 T = Float64
-m = mesh(1:10)
-normalize = true
+m = logmesh(1,10,10)
+normalize = false
 left = false
 right = true
 
