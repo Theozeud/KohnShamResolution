@@ -19,12 +19,12 @@ end
 
 @inline arecompatible(ielem1::InfoElement, ielem2::InfoElement) = !isempty(intersect(ielem1.segments, ielem2.segments))
 
-struct ShortPolynomialBasis{TB} <: Basis
+struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     elements::TB
     mesh::OneDMesh
     size::Int
     infos::Vector{InfoElement}
-    coupling_index::CartesianIndex{2}
+    coupling_index::Vector{CartesianIndex{2}}
 
     function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos::Vector{InfoElement})
         
@@ -83,11 +83,11 @@ end
 function weight_mass_matrix(spb::ShortPolynomialBasis, weight::LaurentPolynomial)
     T = bottom_type(spb)
     A = zeros(T, spb.size, spb.size)
-    fill_weight_mass_matrix!(spb, A, weight)
+    fill_weight_mass_matrix!(spb, weight, A)
     A
 end
 
-function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, A, weight::LaurentPolynomial)
+function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight::LaurentPolynomial, A)
     for I ∈ spb.coupling_index
         for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
             P = getpolynomial(spb, I[1], i)
