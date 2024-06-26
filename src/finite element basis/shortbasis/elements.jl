@@ -3,11 +3,11 @@
 ########################################################################################
 abstract type AbstractShortElements{N, T} end
 
-@inline eltype(::AbstractShortElements{N, T}) where T = T
+@inline Base.eltype(::AbstractShortElements{N, T}) where T = T
 @inline isnormalized(::AbstractShortElements{N, T}) where {N,T} = N
-@inline length(elem::AbstractShortElements) = elem.size
+@inline Base.length(elem::AbstractShortElements) = elem.size
 @inline getpolynomial(elem::AbstractShortElements, n::Int) = elem[n]
-
+@inline Base.first(elem::AbstractShortElements) = elem[1]
 
 ########################################################################################
 #                                   P1 Elements
@@ -31,58 +31,42 @@ end
 function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, generate_shift = true, kwargs...)
     p1elements = P1Elements(T; normalize = normalize, kwargs)
     size = length(mesh) - 2 + left + right
-    if normalize
-        normalization = T[]
-        if left
-            push!(normalization, √( 3 / (2 * (mesh[2] - mesh[1]) )  ) )
-        end
-        for i ∈ eachindex(mesh)[2:end-1]
-            push!(normalization, √( 3 / (mesh[i+1] - mesh[i-1])  )    )
-        end
-        if right
-            push!(normalization, √( 3 / (2 * (mesh[end] - mesh[end-1])))   )
-        end
-    else
-        normalization = ones(size)
-    end
-
-    shifts = Vector{Shifts}[]
     binf = p1elements.binf
     bsup = p1elements.bsup
-    if generate_shift
-        if left
-            push!(shifts, [generateshift(T, mesh[1], mesh[2], binf, bsup)])
-        end
-        for i ∈ eachindex(mesh)[2:end-1]
-            shifts[i] = [generateshift(T, mesh[i-1], mesh[i], binf, bsup), generateshift(T, mesh[i], mesh[i+1], binf, bsup)]
-        end
-        if right
-            push!(shifts, [generateshift(T, mesh[end-1], mesh[end], binf, bsup)])
-        end
-    else
-        if left
-            push!(shifts, [initiateshift(T, mesh[1], mesh[2], binf, bsup)])
-        end
-        for i ∈ eachindex(mesh)[2:end-1]
-            shifts[i] = [initiateshift(T, mesh[i-1], mesh[i]), generateshift(T, mesh[i], mesh[i+1])]
-        end
-        if right
-            push!(shifts, [initiateshift(T, mesh[end-1], mesh[end])])
-        end
-    end
-
-    index = Int[]
+    infos = InfoElement{T}[]
     if left
-        push!(index, [2])
+        index = [2]
+        m₁ = T(mesh[2])
+        m₂ = T(mesh[1])
+        normalization = normalize ? √( T(3) / (T(2) * (m₂ - m₁))) : T(1)
+        segments = [1]
+        shifts = [shift(T, m₁, m₂, binf, bsup)]
+        info = InfoElement(index, segments, shifts, normalization)
+        push!(infos, info)
     end
-    for _ ∈ eachindex(mesh)[2:end-1]
-        push!(index, [1,2])
+    for i ∈ eachindex(mesh)[2:end-1]
+        index = [1,2]
+        mᵢ₋₁ = T(mesh[i-1])
+        mᵢ   = T(mesh[i])
+        mᵢ₊₁ = T(mesh[i+1])
+        normalization = normalize ? √( T(3) / (mᵢ₊₁ - mᵢ₋₁) ) : T(1)
+        segments = [i-1, i]
+        shifts = [shift(T, mᵢ₋₁, mᵢ, binf, bsup), shift(T, mᵢ, mᵢ₊₁, binf, bsup)]
+        info = InfoElement(index, segments, shifts, normalization)
+        push!(infos, info)
     end
     if right
-        push!(index, [1])
+        index = [1]
+        mₑₙ₋₁ = T(mesh[end-1])
+        mₑₙ = T(mesh[end])
+        normalization = normalize ? √( 3 / (2 * (mₑₙ - mₑₙ₋₁))) : T(1)
+        segments = [length(mesh)-1]
+        shifts = [shift(T, mₑₙ₋₁, mₑₙ, binf, bsup)]
+        info = InfoElement(index, segments, shifts, normalization)
+        push!(infos, info)
     end
 
-    ShortPolynomialBasis(p1elements, mesh, size, normalization)
+    ShortPolynomialBasis(p1elements, mesh, size, infos)
 end
 
 @inline Base.eachindex(::P1Elements) = 1:2
@@ -122,3 +106,20 @@ end
 
 @inline Base.eachindex(ilb::IntLegendreElements) = eachindex(ilb.polynomials)
 @inline Base.getindex(ilb::IntLegendreElements, n::Int) =  ilb.polynomials[n] 
+
+
+function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, generate_shift = true, kwargs...)
+    intlegelement = IntLegendreElements(T; normalize = normalize, kwargs...)
+    size = intlegelement.size * (length(mesh) - 1)
+    infos = Vector{InfoElement{T}}(undef, size)
+    for i ∈ eachindex(mesh)[1:end-1]
+        normalization = normalize ? sqrt((intlegelement.bsup - intlegelement.binf)/ (mesh[i+1] - mesh[i])) : T(1)
+        segments = [i]
+        shifts = [shift(T, intlegelement.binf, intlegelement.bsup, mesh[i], mesh[i])]
+        for n ∈ 1:intlegelement.size
+            index = [n]
+            infos[(i-1) * intlegelement.size + n] = InfoElement(index, segments, shifts, normalization)
+        end
+    end
+    ShortPolynomialBasis(intlegelement, mesh, size, infos)
+end
