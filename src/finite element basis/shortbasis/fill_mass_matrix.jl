@@ -23,15 +23,16 @@ function fill_mass_matrix!(p1::P1Elements{false}, mesh::OneDMesh, A)
         @warn "Mass matrix is filled like if the bounds of P1 elements are scaled on [-1,1]!"
     end
     T = eltype(p1)
-    A[1,1] = p1.left ? (T(mesh[I+1]) - T(mesh[I]))/T(3) : T(2) * (T(mesh[I+1]) - T(mesh[I]))/T(3)
-    for I ∈ axes(A,1)[2:end]
-        A[I, I] = T(2) * (T(mesh[I+1]) - T(mesh[I]))/T(3)
-        A[I, I-1] = (T(mesh[I+1]) - T(mesh[I]))/T(6)
+    A[1,1] = p1.left ? (T(mesh[2]) - T(mesh[1]))/T(3) : (T(mesh[3]) - T(mesh[1]))/T(3)
+    for I ∈ axes(A,1)[2:end-1]
+        A[I, I] = (T(mesh[I+1+ !p1.left]) - T(mesh[I-1+ !p1.left]))/T(3)
+        A[I, I-1] = (T(mesh[I+ !p1.left]) - T(mesh[I-1+ !p1.left]))/T(6)
         A[I-1, I] = A[I, I-1]
     end
-    if p1.right
-        A[end, end] = (T(mesh[end]) - T(mesh[end-1]))/T(3)
-    end
+    A[end, end-1] = (T(mesh[end-1+p1.right]) - T(mesh[end-2+p1.right]))/T(6)
+    A[end-1, end] = A[end, end-1]
+    A[end, end] = p1.right ? (T(mesh[end]) - T(mesh[end-1]))/T(3) : (T(mesh[end]) - T(mesh[end-2]))/T(3)
+
     nothing
 end
 
