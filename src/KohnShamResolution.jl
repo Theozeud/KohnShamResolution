@@ -68,6 +68,11 @@ module KohnShamResolution
     export P1Elements, ShortP1Basis, IntLegendreElements, ShortIntLegendreBasis
     include("finite element basis/shortbasis/elements.jl")
 
+    include("finite element basis/shortbasis/fill_mass_matrix.jl")
+
+    export InfoBlock, CombineShortPolynomialBasis
+    include("finite element basis/shortbasis/combineshortbasis.jl")
+
     #################
     # KOHN-SHAM MODEL
     export AbstractExchangeCorrelation, ExchangeCorrelation, NoExchangeCorrelation, KohnShamExtended

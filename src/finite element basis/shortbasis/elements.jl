@@ -18,19 +18,20 @@ struct P1Elements{N, T} <: AbstractShortElements{N, T}
 end
 
 function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
-    p1elements = P1Elements(T; normalize = normalize, kwargs)
-    size = length(mesh) - 2 + left + right
+    p1elements = P1Elements(T; normalize = normalize, kwargs...)
+    size = length(mesh) - 2 + p1elements.left + p1elements.right
     binf = p1elements.binf
     bsup = p1elements.bsup
     infos = InfoElement{T}[]
-    if left
+    if p1elements.left
         index = [2]
-        m₁ = T(mesh[2])
-        m₂ = T(mesh[1])
+        m₁ = T(mesh[1])
+        m₂ = T(mesh[2])
         normalization = normalize ? √( T(3) / (T(2) * (m₂ - m₁))) : T(1)
         segments = [1]
         shifts = [shift(T, m₁, m₂, binf, bsup)]
-        info = InfoElement(index, segments, shifts, normalization)
+        invshifts = [shift(T, binf, bsup, m₁, m₂)]
+        info = InfoElement(index, segments, shifts, invshifts, normalization)
         push!(infos, info)
     end
     for i ∈ eachindex(mesh)[2:end-1]
@@ -41,17 +42,19 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
         normalization = normalize ? √( T(3) / (mᵢ₊₁ - mᵢ₋₁) ) : T(1)
         segments = [i-1, i]
         shifts = [shift(T, mᵢ₋₁, mᵢ, binf, bsup), shift(T, mᵢ, mᵢ₊₁, binf, bsup)]
-        info = InfoElement(index, segments, shifts, normalization)
+        invshifts = [shift(T, binf, bsup, mᵢ₋₁, mᵢ), shift(T, binf, bsup, mᵢ, mᵢ₊₁)]
+        info = InfoElement(index, segments, shifts, invshifts, normalization)
         push!(infos, info)
     end
-    if right
+    if p1elements.right
         index = [1]
         mₑₙ₋₁ = T(mesh[end-1])
         mₑₙ = T(mesh[end])
         normalization = normalize ? √( 3 / (2 * (mₑₙ - mₑₙ₋₁))) : T(1)
         segments = [length(mesh)-1]
         shifts = [shift(T, mₑₙ₋₁, mₑₙ, binf, bsup)]
-        info = InfoElement(index, segments, shifts, normalization)
+        invshifts = [shift(T, binf, bsup, mₑₙ₋₁, mₑₙ)]
+        info = InfoElement(index, segments, shifts, invshifts, normalization)
         push!(infos, info)
     end
 

@@ -32,7 +32,7 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     infos::Vector{InfoElement}
     coupling_index::Vector{CartesianIndex{2}}
 
-    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos::Vector{InfoElement})
+    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos::Vector{InfoElement{T}} where T) 
         
         # Basics checks for consistency
         @assert size == length(infos)
@@ -44,7 +44,7 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
         coupling_index = CartesianIndex{2}[]
         for i in eachindex(infos)
             for j in 1:i
-                if !isempty(intersect(getsegment(infos[i]), getsegment(infos[j])))
+                if !isempty(intersect(getsegments(infos[i]), getsegments(infos[j])))
                     push!(coupling_index, CartesianIndex(i, j))
                 end
             end
@@ -53,7 +53,7 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     end
 end
 
-@inline eltype(::ShortPolynomialBasis{TB}) where TB = TB
+@inline Base.eltype(::ShortPolynomialBasis{TB}) where TB = TB
 @inline bottom_type(spb::ShortPolynomialBasis) = eltype(spb.elements)
 @inline Base.length(spb::ShortPolynomialBasis) = spb.size
 
@@ -81,7 +81,7 @@ function mass_matrix(spb::ShortPolynomialBasis)
 end
 
 function fill_mass_matrix!(spb::ShortPolynomialBasis, A)
-    @unpack elements, mesh, infos_integrate = spb
+    @unpack elements, mesh = spb
     fill_mass_matrix!(elements, mesh, A)
     nothing
 end

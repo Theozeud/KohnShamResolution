@@ -6,13 +6,15 @@ function fill_mass_matrix!(p1::P1Elements{true}, ::OneDMesh, A)
         @warn "Mass matrix is filled like if the bounds of P1 elements are scaled on [-1,1]!"
     end
     T = eltype(p1)
-    A[1,1] = left ? T(0.5) : T(1)
-    for I ∈ 2:length(p1)
+    A[1,1] = p1.left ? T(0.5) : T(1)
+    for I ∈ axes(A,1)[2:end]
         A[I,I] = T(1)
         A[I, I-1] = T(0.25)
         A[I-1, I] = A[I, I-1]
     end
-    right && (A[end, end] = T(0.5))
+    if p1.right
+        A[end, end] = T(0.5)
+    end
     nothing
 end
 
@@ -21,13 +23,15 @@ function fill_mass_matrix!(p1::P1Elements{false}, mesh::OneDMesh, A)
         @warn "Mass matrix is filled like if the bounds of P1 elements are scaled on [-1,1]!"
     end
     T = eltype(p1)
-    A[1,1] = left ? (T(mesh[I+1]) - T(mesh[I]))/T(3) : T(2) * (T(mesh[I+1]) - T(mesh[I]))/T(3)
-    for I ∈ axis(A,1)
+    A[1,1] = p1.left ? (T(mesh[I+1]) - T(mesh[I]))/T(3) : T(2) * (T(mesh[I+1]) - T(mesh[I]))/T(3)
+    for I ∈ axes(A,1)[2:end]
         A[I, I] = T(2) * (T(mesh[I+1]) - T(mesh[I]))/T(3)
         A[I, I-1] = (T(mesh[I+1]) - T(mesh[I]))/T(6)
         A[I-1, I] = A[I, I-1]
     end
-    right && (A[end, end] = (T(mesh[I+1]) - T(mesh[I]))/T(3))
+    if p1.right
+        A[end, end] = (T(mesh[end]) - T(mesh[end-1]))/T(3)
+    end
     nothing
 end
 
@@ -39,6 +43,7 @@ function fill_mass_matrix!(ilb::IntLegendreElements{true}, ::OneDMesh, A)
     T = eltype(ilb)
     for I ∈ axis(A,1)
         A[I,I] = T(1)
+    end
     nothing
 end
 
