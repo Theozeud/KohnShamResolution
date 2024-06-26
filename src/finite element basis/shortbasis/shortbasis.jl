@@ -1,42 +1,65 @@
-mutable struct Shift{T}
-    mᵢ::T
-    mᵢ₊₁::T
-    ϕ::Union{LaurentPolynomial{T}, Nothing}
+struct InfoElement{T}
+    index::Vector{Int}
+    segments::Vector{Int}
+    ϕ::Vector{LaurentPolynomial{T}}
+    invϕ::Vector{LaurentPolynomial{T}}
+    normalization::T
 end
 
-function generateshift(T::Type, a::Real, b::Real, mᵢ::Real, mᵢ₊₁::Real)
-    Shift(T(mᵢ), T(mᵢ₊₁), shift(T, a, b, mᵢ, mᵢ₊₁))
-end
-function initiateshift(T::Type, mᵢ::Real, mᵢ₊₁::Real)
-    Shift(T(mᵢ), T(mᵢ₊₁), nothing)
-end
+@inline getindex(ielem::InfoElement) = ielem.index
+@inline getindex(ielem::InfoElement, i::Int) = ielem.index[i]
+@inline getsegments(ielem::InfoElement) = ielem.segments
+@inline getsegments(ielem::InfoElement, i::Int) = ielem.segments[i]
+@inline getshift(ielem::InfoElement, i::Int) = ielem.ϕ[i]
+@inline getinvshift(ielem::InfoElement, i::Int) = ielem.invϕ[i]
+@inline getnormalization(ielem::InfoElement) = ielem.normalization
+
+@inline Base.length(ielem::InfoElement) = length(ielem.index)
+@inline Base.iterate(ielem::InfoElement, state = 1) = state > length(ielem) ? nothing : ((getindex(ielem, i), getsegments(ielem, i), getshift(ielem, i), getinvshift(ielem, i)), state+1)
+
+@inline arecompatible(ielem1::InfoElement, ielem2::InfoElement) = !isempty(intersect(ielem1.segments, ielem2.segments))
 
 struct ShortPolynomialBasis{TB} <: Basis
     elements::TB
     mesh::OneDMesh
     size::Int
-    normalization
-    shifts
-    index::Vector{Int}
-    infos_integrate
+    infos::Vector{InfoElement}
+    coupling_index::CartesianIndex{2}
+
+    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos::Vector{InfoElement})
+        
+        # Basics checks for consistency
+        @assert size == length(infos)
+        for info ∈ infos
+            @assert getsegments(info) ⊆ eachindex(mesh)[1:end-1]
+        end 
+
+        # Creating the coupling indices
+        coupling_index = CartesianIndex{2}[]
+        for i in eachindex(infos)
+            for j in 1:i
+                if !isempty(intersect(getsegment(infos[i]), getsegment(infos[j])))
+                    push!(coupling_index, CartesianIndex(i, j))
+                end
+            end
+        end
+        new{typeof(elements)}(elements, mesh, size, infos, coupling_index)
+    end
 end
 
 @inline eltype(::ShortPolynomialBasis{TB}) where TB = TB
 @inline bottom_type(spb::ShortPolynomialBasis) = eltype(spb.elements)
 @inline Base.length(spb::ShortPolynomialBasis) = spb.size
 
-@inline function getshift(spb::ShortPolynomialBasis, i::Int, j::Int)
-    if spb.shifts[i][j].ϕ isa Nothing
-        generateshift(spb, i, j)
-    end
-    spb.shifts[i][j].ϕ
-end
+@inline getindex(spb::ShortPolynomialBasis, i::Int) = getindex(spb.infos[i])
+@inline getsegments(spb::ShortPolynomialBasis, i::Int) = getsegments(spb.infos[i])
+@inline getindex(spb::ShortPolynomialBasis, i::Int, j::Int) = getindex(spb.infos[i], j)
+@inline getsegments(spb::ShortPolynomialBasis, i::Int, j::Int) = getsegments(spb.infos[i], j)
+@inline getshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getshift(spb.infos[i], j)
+@inline getinvshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getinvshift(spb.infos[i], j)
+@inline getnormalization(spb::ShortPolynomialBasis, i::Int) = getnormalization(spb.infos[i])
 
-@inline function generateshift(spb, i, j)
-    T = bottom_type(spb)
-    spb.shifts[i][j].ϕ = shift(T, spb.basis.binf, spb.basis.bsup, spb.shifts[i].mᵢ, spb.shifts[i].mᵢ₊₁)
-    nothing
-end
+@inline getpolynomial(spb::ShortPolynomialBasis, i::Int, j::Int)= getpolynomial(spb.elements, getindex(spb, i, j))
 
 ## How to define this functions properly ?
 #@inline Base.getindex(spb::ShortPolynomialBasis, n::Int) =  spb.elements[n] 
@@ -65,15 +88,15 @@ function weight_mass_matrix(spb::ShortPolynomialBasis, weight::LaurentPolynomial
 end
 
 function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, A, weight::LaurentPolynomial)
-    @unpack elements, normalization = spb
-    for I ∈ filled_index
-        for (ip,iq, ϕ)∈ getinfo_integrate(spb, I)
-            P = getpolynomial(elements, ip)
-            Q = getpolynomial(elements, iq)
+    for I ∈ spb.coupling_index
+        for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
+            P = getpolynomial(spb, I[1], i)
+            Q = getpolynomial(spb, I[2], j)
+            ϕ = getshift(spb, I[1], i)
             weight_shift = weight ∘ ϕ
             @inbounds A[I[1], I[2]] += weight_scalar_product(P, Q, weight_shift, basis.binf, basis.bsup)
         end
-        @inbounds A[I[1], I[2]] *= normalization(I[1]) * normalization(I[2])
+        @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
     nothing
@@ -81,11 +104,10 @@ end
 
 function build_on_basis(spb::ShortPolynomialBasis, coeffs)
     @assert eachindex(coeffs) == eachindex(spb) 
-    poly = zero(first(spb.elements)) #???
+    poly = zero(first(spb.elements))
     for i ∈ eachindex(spb)
-        for j ∈ eachindex(index[i])
-            ϕ = getshift(spb, i, j)
-            poly += coeff[i] * spb.normalization[i] * getpolynomial(spb.elements, j) ∘ ϕ
+        for (j,_,_,invϕ) ∈ eachindex(spb.infos[i])
+            poly += coeff[i] * getnormalization(spb,i) * getpolynomial(spb.elements, j) ∘ invϕ
         end
     end
     poly
