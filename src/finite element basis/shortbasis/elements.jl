@@ -7,7 +7,7 @@ abstract type AbstractShortElements{N, T} end
 @inline isnormalized(::AbstractShortElements{N, T}) where {N,T} = N
 @inline Base.length(elem::AbstractShortElements) = elem.size
 @inline getpolynomial(elem::AbstractShortElements, n::Int) = elem[n]
-@inline Base.first(elem::AbstractShortElements) = elem[1]
+@inline Base.first(elem::AbstractShortElements) = elem[firstindex(elem)]
 
 ########################################################################################
 #                                   P1 Elements
@@ -70,6 +70,7 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
 end
 
 @inline Base.eachindex(::P1Elements) = 1:2
+@inline Base.firstindex(::P1Elements) = 1
 @inline function Base.getindex(p1::P1Elements, n::Int)
     if n == 1
         return p1.hfup
@@ -104,6 +105,7 @@ struct IntLegendreElements{N, T} <: AbstractShortElements{N, T}
     end
 end
 
+@inline Base.firstindex(::IntLegendreElements) = 1
 @inline Base.eachindex(ilb::IntLegendreElements) = eachindex(ilb.polynomials)
 @inline Base.getindex(ilb::IntLegendreElements, n::Int) =  ilb.polynomials[n] 
 
