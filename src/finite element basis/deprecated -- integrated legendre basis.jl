@@ -2,7 +2,6 @@
 #                                  Integrated Legendre Basis
 ########################################################################################
 
-
 struct IntLegendreBasis{TL <: LaurentPolynomial} <: AbstractLaurentPolynomialBasis
     mesh::OneDMesh
     polynomial::Vector{TL}
