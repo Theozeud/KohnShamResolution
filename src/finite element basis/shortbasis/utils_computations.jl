@@ -1,7 +1,7 @@
 @inline function shift(T::Type, a::Real, b::Real, mᵢ::Real, mᵢ₊₁::Real)
     c1 = (T(mᵢ₊₁) - T(mᵢ))/(T(b) - T(a))
     c0 = -T(a) * T(c1) + T(mᵢ)
-    LaurentPolynomial([c0, c1], 0, false, 0)
+    LaurentPolynomial([c0, c1], 0, false, T(0))
 end
 
 @memoize function fast_monom_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, n::Int, a::Real, b::Real)
