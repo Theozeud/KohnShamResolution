@@ -109,10 +109,12 @@ function integrate(rf::RationalFraction, a::Real, b::Real)
         C3 = B - A*C1
         if C2 > 0
             sqrtC2 = sqrt(C2)
-            return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
-        else
+            return integrate(rf.ent, a, b) + A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
+        elseif C2 > 0
             sqrtC2 = sqrt(-C2)
-            return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((B-a)/(A-a))) - log(abs((B+a)/(A+a))))
+            return integrate(rf.ent, a, b) + A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((b+C1-C2)/(a+C1-C2))) - log(abs((b+C1+C2)/(b+C1+C2))))
+        else
+            return integrate(rf.ent, a, b) + A/C * log( abs((b+C1) / (a+C1) ) ) + C3/C * (1/(a+C1) - 1/(b+C1))
         end
     end
 end

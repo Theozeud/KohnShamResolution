@@ -20,5 +20,5 @@ end
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::RationalFraction{TW}, a::Real, b::Real) where {TP, TQ, TW}
     @assert degmax_denom(weight) ≤ 2
-    integrate(p*q/weight.denom, a,b) + weight_scalar_product(p, q, weight.ent, a, b)
+    integrate(p*q*weight.num/weight.denom, a,b) + weight_scalar_product(p, q, weight.ent, a, b)
 end
