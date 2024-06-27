@@ -117,7 +117,7 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
             ϕ = getshift(spb1, I[1], i)
             dϕ = ϕ[1]
             weight_shift = weight ∘ ϕ
-            @inbounds A[I[1], I[2]] += dϕ * weight_scalar_product(P, Q, weight_shift, basis.binf, basis.bsup)
+            @inbounds A[I[1], I[2]] += dϕ * weight_scalar_product(P, Q, weight_shift, spb1.elements.binf, spb1.elements.bsup)
         end
         @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) * getnormalization(spb2, I[2])
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
