@@ -27,7 +27,7 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
         index = [2]
         m₁ = T(mesh[1])
         m₂ = T(mesh[2])
-        normalization = normalize ? √(T(3) * (m₂ - m₁))/ T(4) : T(1)
+        normalization = normalize ? √(T(3)/ (T(8) * (m₂ - m₁))) : T(1)
         segments = [1]
         shifts = [shift(T, m₁, m₂, binf, bsup)]
         invshifts = [shift(T, binf, bsup, m₁, m₂)]
@@ -39,7 +39,7 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
         mᵢ₋₁ = T(mesh[i-1])
         mᵢ   = T(mesh[i])
         mᵢ₊₁ = T(mesh[i+1])
-        normalization = normalize ? √(T(3) * (mᵢ₊₁ - mᵢ₋₁))/ T(4) : T(1)
+        normalization = normalize ? √(T(3)/ (T(4) *(mᵢ₊₁ - mᵢ₋₁))) : T(1)
         segments = [i-1, i]
         shifts = [shift(T, mᵢ₋₁, mᵢ, binf, bsup), shift(T, mᵢ, mᵢ₊₁, binf, bsup)]
         invshifts = [shift(T, binf, bsup, mᵢ₋₁, mᵢ), shift(T, binf, bsup, mᵢ, mᵢ₊₁)]
@@ -50,7 +50,7 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
         index = [1]
         mₑₙ₋₁ = T(mesh[end-1])
         mₑₙ = T(mesh[end])
-        normalization = normalize ? √(T(3) * (mₑₙ - mₑₙ₋₁))/ T(4) : T(1)
+        normalization = normalize ? √(T(3)/(T(8) *(mₑₙ - mₑₙ₋₁))) : T(1)
         segments = [length(mesh)-1]
         shifts = [shift(T, mₑₙ₋₁, mₑₙ, binf, bsup)]
         invshifts = [shift(T, binf, bsup, mₑₙ₋₁, mₑₙ)]
