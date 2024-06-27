@@ -101,9 +101,9 @@ function fill_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasi
         for (i,j) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]))
             P = getpolynomial(spb1, I[1], i)
             Q = getpolynomial(spb2, I[2], j)
-            ϕ = getshift(spb1, I[1], i)
-            dϕ = ϕ[1]
-            @inbounds A[I[1], I[2]] += dϕ * scalar_product(P, Q, spb1.elements.binf, spb1.elements.bsup)
+            invϕ = getshift(spb1, I[1], i)
+            dinvϕ = invϕ[1]
+            @inbounds A[I[1], I[2]] += dinvϕ * scalar_product(P, Q, spb1.elements.binf, spb1.elements.bsup)
         end
         @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) * getnormalization(spb2, I[2])
     end
@@ -114,10 +114,10 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
         for (i,j) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]))
             P = getpolynomial(spb1, I[1], i)
             Q = getpolynomial(spb2, I[2], j)
-            ϕ = getshift(spb1, I[1], i)
-            dϕ = ϕ[1]
-            weight_shift = weight ∘ ϕ
-            @inbounds A[I[1], I[2]] += dϕ * weight_scalar_product(P, Q, weight_shift, spb1.elements.binf, spb1.elements.bsup)
+            invϕ = getshift(spb1, I[1], i)
+            dinvϕ = invϕ[1]
+            weight_shift = weight ∘ invϕ
+            @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight_shift, spb1.elements.binf, spb1.elements.bsup)
         end
         @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) * getnormalization(spb2, I[2])
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]

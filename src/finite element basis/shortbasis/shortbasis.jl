@@ -18,7 +18,7 @@ end
 @inline getnormalization(ielem::InfoElement) = ielem.normalization
 
 @inline Base.length(ielem::InfoElement) = length(ielem.index)
-@inline Base.iterate(ielem::InfoElement, state = 1) = state > length(ielem) ? nothing : ((getindex(ielem, i), getsegments(ielem, i), getshift(ielem, i), getinvshift(ielem, i)), state+1)
+@inline Base.iterate(ielem::InfoElement, state = 1) = state > length(ielem) ? nothing : ((getindex(ielem, state), getsegments(ielem, state), getshift(ielem, state), getinvshift(ielem, state)), state+1)
 
 @inline arecompatible(ielem1::InfoElement, ielem2::InfoElement) = !isempty(intersect(ielem1.segments, ielem2.segments))
 
@@ -102,10 +102,10 @@ function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight::LaurentPoly
         for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
             P = getpolynomial(spb, I[1], i)
             Q = getpolynomial(spb, I[2], j)
-            ϕ = getshift(spb, I[1], i)
-            weight_shift = weight ∘ ϕ
-            dϕ = ϕ[1]
-            @inbounds A[I[1], I[2]] += dϕ * weight_scalar_product(P, Q, weight_shift, basis.binf, basis.bsup)
+            invϕ = getinvshift(spb, I[1], i)
+            weight_shift = weight ∘ invϕ
+            dinvϕ = invϕ[1]
+            @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight_shift, spb.elements.binf, spb.elements.bsup)
         end
         @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
@@ -113,13 +113,20 @@ function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight::LaurentPoly
     nothing
 end
 
+@memoize function build_basis(spb::ShortPolynomialBasis, i::Int)
+    T = bottom_type(spb)
+    polys = LaurentPolynomial{T}[]
+    for (j,_,ϕ,_) ∈ spb.infos[i]
+        push!(polys, getnormalization(spb,i) * getpolynomial(spb.elements, j) ∘ ϕ)
+    end
+    PiecewiseLaurentPolynomial(spb.mesh, polys, getsegments(spb, i), T(0))
+end
+
 function build_on_basis(spb::ShortPolynomialBasis, coeffs)
     @assert eachindex(coeffs) == eachindex(spb) 
-    poly = zero(first(spb.elements))
-    for i ∈ eachindex(spb)
-        for (j,_,_,invϕ) ∈ eachindex(spb.infos[i])
-            poly += coeff[i] * getnormalization(spb,i) * getpolynomial(spb.elements, j) ∘ invϕ
-        end
+    poly = coeff[firstindex(coeffs)] * build_basis(spb, firstindex(coeffs))
+    for i ∈ eachindex(spb)[2:end]
+        poly += coeff[i] * build_basis(spb, i)
     end
     poly
 end

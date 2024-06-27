@@ -11,8 +11,8 @@ struct P1Elements{N, T} <: AbstractShortElements{N, T}
     binf::T
     bsup::T
     function P1Elements(T::Type = Float64; left::Bool = false, right::Bool = false, normalize::Bool = false, binf::Real = -1, bsup::Real = 1)
-        hfup = LaurentPolynomial([T(1)], 1, false, T(0))
-        hfdown = LaurentPolynomial([T(-1)], 1, false, T(0))
+        hfup = LaurentPolynomial([T(1),T(1)], 0, false, T(0))
+        hfdown = LaurentPolynomial([T(1),T(-1)], 0, false, T(0))
         new{normalize, T}(hfup, hfdown, 2, left, right, binf, bsup)
     end
 end
@@ -27,7 +27,7 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
         index = [2]
         m₁ = T(mesh[1])
         m₂ = T(mesh[2])
-        normalization = normalize ? √( T(3) / (T(2) * (m₂ - m₁))) : T(1)
+        normalization = normalize ? √(T(3) * (m₂ - m₁))/ T(4) : T(1)
         segments = [1]
         shifts = [shift(T, m₁, m₂, binf, bsup)]
         invshifts = [shift(T, binf, bsup, m₁, m₂)]
@@ -39,7 +39,7 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
         mᵢ₋₁ = T(mesh[i-1])
         mᵢ   = T(mesh[i])
         mᵢ₊₁ = T(mesh[i+1])
-        normalization = normalize ? √( T(3) / (mᵢ₊₁ - mᵢ₋₁) ) : T(1)
+        normalization = normalize ? √(T(3) * (mᵢ₊₁ - mᵢ₋₁))/ T(4) : T(1)
         segments = [i-1, i]
         shifts = [shift(T, mᵢ₋₁, mᵢ, binf, bsup), shift(T, mᵢ, mᵢ₊₁, binf, bsup)]
         invshifts = [shift(T, binf, bsup, mᵢ₋₁, mᵢ), shift(T, binf, bsup, mᵢ, mᵢ₊₁)]
@@ -50,7 +50,7 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
         index = [1]
         mₑₙ₋₁ = T(mesh[end-1])
         mₑₙ = T(mesh[end])
-        normalization = normalize ? √( 3 / (2 * (mₑₙ - mₑₙ₋₁))) : T(1)
+        normalization = normalize ? √(T(3) * (mₑₙ - mₑₙ₋₁))/ T(4) : T(1)
         segments = [length(mesh)-1]
         shifts = [shift(T, mₑₙ₋₁, mₑₙ, binf, bsup)]
         invshifts = [shift(T, binf, bsup, mₑₙ₋₁, mₑₙ)]
@@ -93,7 +93,7 @@ struct IntLegendreElements{N, T} <: AbstractShortElements{N, T}
             Qₙ = intLegendre(n-1; T = T, normalize = true, a = binf, b = bsup)
             push!(polynomials, Qₙ)
         end
-        new{normalize, T}(polynomials, ordermax - ordermin + 1, ordermin, ordermax, binf, bsup, Matrix(I, ordermax - ordermin + 1, ordermax - ordermin + 1))
+        new{normalize, T}(polynomials, ordermax - ordermin + 1, ordermin, ordermax, binf, bsup, Matrix(I, (ordermax - ordermin + 1, ordermax - ordermin + 1)))
     end
 end
 
@@ -102,15 +102,15 @@ end
 @inline Base.getindex(ilb::IntLegendreElements, n::Int) =  ilb.polynomials[n] 
 
 
-function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, generate_shift = true, kwargs...)
+function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
     intlegelement = IntLegendreElements(T; normalize = normalize, kwargs...)
     size = intlegelement.size * (length(mesh) - 1)
     infos = Vector{InfoElement{T}}(undef, size)
     for i ∈ eachindex(mesh)[1:end-1]
         normalization = normalize ? sqrt((intlegelement.bsup - intlegelement.binf)/ (mesh[i+1] - mesh[i])) : T(1)
         segments = [i]
-        shifts = [shift(T, intlegelement.binf, intlegelement.bsup, mesh[i], mesh[i])]
-        invshifts = [shift(T, mesh[i], mesh[i], intlegelement.binf, intlegelement.bsup)]
+        shifts = [shift(T, mesh[i], mesh[i+1], intlegelement.binf, intlegelement.bsup)]
+        invshifts = [shift(T, intlegelement.binf, intlegelement.bsup, mesh[i], mesh[i+1])]
         for n ∈ 1:intlegelement.size
             index = [n]
             infos[(i-1) * intlegelement.size + n] = InfoElement(index, segments, shifts, invshifts, normalization)

@@ -61,7 +61,7 @@ module KohnShamResolution
     include("finite element basis/shortbasis/abstractshortelement.jl")
 
     export InfoElement
-    export ShortPolynomialBasis
+    export ShortPolynomialBasis, build_basis
     export bottom_type
     include("finite element basis/shortbasis/shortbasis.jl")
 
