@@ -4,7 +4,7 @@ mutable struct RationalFraction{T} <: AbstractPolynomial{T}
     denom::LaurentPolynomial{T}
 end
 
-function Base.:\(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, TQ}
+function Base.:/(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, TQ}
     @assert !haslog(p) && !haslog(q)
     NewT = promote_type(TP,TQ)
     if ismonomial(q)
@@ -14,7 +14,7 @@ function Base.:\(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, 
     _p = shift(p , -degm)
     _q = shift(q , -degm)
     Q,R = diveucl(_p, _q)
-    RationalFraction(Q, R, convert(NewT, q))
+    RationalFraction(Q, R/NewT(q[end]), convert(NewT, q)/NewT(q[end]))
 end
 
 @inline Base.eltype(::RationalFraction{T}) where T = T
@@ -58,6 +58,24 @@ function elag!(rf::RationalFraction{T})
 end
 =#
 
+function Base.:+(rf::RationalFraction{TR}, p::LaurentPolynomial{TP}) where {TR, TP}
+    NewT = promote_type(TR,TP)
+    rf.ent + p
+    RationalFraction(rf.ent + p, convert(NewT, rf.num), convert(NewT, rf.denom))
+end
+
+function Base.:+(p::LaurentPolynomial, rf::RationalFraction)
+    rf + p
+end
+
+function Base.:*(rf::RationalFraction, p::LaurentPolynomial)
+    (p * rf.num) / rf.denom + rf.ent * p
+end
+
+function Base.:*(p::LaurentPolynomial, rf::RationalFraction)
+    rf * p
+end
+
 ##################################################################################
 #                            Integration & Derivation
 ##################################################################################
@@ -69,8 +87,8 @@ function integrate(rf::RationalFraction, a::Real, b::Real)
         B = rf.num[0]
         D = rf.denom[1]
         E = rf.denom[0]
-        @assert -E/D > b || -E/D < a
-        return integrate(p.ent, a, b) + B/D * log((D*b + E)/(D*a + E))
+        @assert -E/D > b || -E/D < a 
+        return integrate(rf.ent, a, b) + B/D * log((D*b + E)/(D*a + E))
     elseif degmax_denom(rf) == 2
         A = rf.num[1]
         B = rf.num[0]
@@ -90,8 +108,7 @@ function integrate(rf::RationalFraction, a::Real, b::Real)
         C2 = (4*E*C - D^2)/(4*C^2)
         C3 = B - A*C1
         sqrtC2 = sqrt(C2)
-        return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (arctan((b + C1)/sqrtC2) - arctan((a + C1)/sqrtC2))
-        
+        return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
     end
 end
 
