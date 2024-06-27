@@ -107,8 +107,13 @@ function integrate(rf::RationalFraction, a::Real, b::Real)
         C1 = D/(2*C)
         C2 = (4*E*C - D^2)/(4*C^2)
         C3 = B - A*C1
-        sqrtC2 = sqrt(C2)
-        return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
+        if C2 > 0
+            sqrtC2 = sqrt(C2)
+            return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
+        else
+            sqrtC2 = sqrt(-C2)
+            return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((B-a)/(A-a))) - log(abs((B+a)/(A+a))))
+        end
     end
 end
 
