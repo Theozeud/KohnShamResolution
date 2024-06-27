@@ -9,18 +9,16 @@ end
 end
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::LaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TW}
+    @assert degmin(weight) ≥ 0
     NewT = promote_type(TP,TQ, TW)
     sum = NewT(0)
     for i ∈ eachindex(weight)
-        if i ≥ 0
-            sum += weight[i] * fast_monom_scalar_product(p, q, i, a, b)
-        elseif i == -1
-
-        elseif i == -2
-
-        else
-            @error "We cant"
-        end
+        sum += weight[i] * fast_monom_scalar_product(p, q, i, a, b)
     end
     sum
+end
+
+@inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::RationalFraction{TW}, a::Real, b::Real) where {TP, TQ, TW}
+    @assert degmax_denom(weight) ≤ 2
+    integrate(p*q/weight.denom, a,b) + weight_scalar_product(p, q, weight.ent, a, b)
 end
