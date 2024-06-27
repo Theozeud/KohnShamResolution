@@ -93,6 +93,10 @@ function weight_mass_matrix(spb::ShortPolynomialBasis, weight::LaurentPolynomial
     A
 end
 
+function weight_mass_matrix(spb::ShortPolynomialBasis, n::Int)
+    weight_mass_matrix(spb, Monomial(n))
+end
+
 function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight::LaurentPolynomial, A)
     for I ∈ spb.coupling_index
         for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
@@ -100,7 +104,8 @@ function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight::LaurentPoly
             Q = getpolynomial(spb, I[2], j)
             ϕ = getshift(spb, I[1], i)
             weight_shift = weight ∘ ϕ
-            @inbounds A[I[1], I[2]] += weight_scalar_product(P, Q, weight_shift, basis.binf, basis.bsup)
+            dϕ = ϕ[1]
+            @inbounds A[I[1], I[2]] += dϕ * weight_scalar_product(P, Q, weight_shift, basis.binf, basis.bsup)
         end
         @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]

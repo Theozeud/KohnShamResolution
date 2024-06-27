@@ -92,12 +92,18 @@ function weight_mass_matrix(cb::CombineShortPolynomialBasis, weight::LaurentPoly
     A
 end
 
+function weight_mass_matrix(cb::CombineShortPolynomialBasis, n::Int)
+    weight_mass_matrix(cb, Monomial(n))
+end
+
 function fill_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasis, interaction_index::Vector{CartesianIndex{2}}, A)
     for I ∈ interaction_index
         for (i,j) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]))
             P = getpolynomial(spb1, I[1], i)
             Q = getpolynomial(spb2, I[2], j)
-            @inbounds A[I[1], I[2]] += scalar_product(P, Q, spb1.elements.binf, spb1.elements.bsup)
+            ϕ = getshift(spb1, I[1], i)
+            dϕ = ϕ[1]
+            @inbounds A[I[1], I[2]] += dϕ * scalar_product(P, Q, spb1.elements.binf, spb1.elements.bsup)
         end
         @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) * getnormalization(spb2, I[2])
     end
@@ -109,8 +115,9 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
             P = getpolynomial(spb1, I[1], i)
             Q = getpolynomial(spb2, I[2], j)
             ϕ = getshift(spb1, I[1], i)
+            dϕ = ϕ[1]
             weight_shift = weight ∘ ϕ
-            @inbounds A[I[1], I[2]] += weight_scalar_product(P, Q, weight_shift, basis.binf, basis.bsup)
+            @inbounds A[I[1], I[2]] += dϕ * weight_scalar_product(P, Q, weight_shift, basis.binf, basis.bsup)
         end
         @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) * getnormalization(spb2, I[2])
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
