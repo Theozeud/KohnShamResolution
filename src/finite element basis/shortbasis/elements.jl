@@ -82,7 +82,7 @@ function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false
         push!(infos, info)
     end
 
-    ShortPolynomialBasis(p1elements, mesh, size, infos)
+    ShortPolynomialBasis(p1elements, mesh, size, infos, 0)
 end
 
 @inline Base.eachindex(::P1Elements) = 1:2
@@ -142,5 +142,5 @@ function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Boo
             infos[(i-1) * intlegelement.size + n] = InfoElement(index, segments, shifts, invshifts)
         end
     end
-    ShortPolynomialBasis(intlegelement, mesh, size, infos)
+    ShortPolynomialBasis(intlegelement, mesh, size, infos, 0)
 end

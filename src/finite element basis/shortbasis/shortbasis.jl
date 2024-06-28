@@ -6,7 +6,6 @@ struct InfoElement{T}
     segments::Vector{Int}
     ϕ::Vector{LaurentPolynomial{T}}
     invϕ::Vector{LaurentPolynomial{T}}
-    #normalization::T
 end
 
 @inline getindex(ielem::InfoElement) = ielem.index
@@ -32,12 +31,13 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     size::Int
     infos::Vector{InfoElement}
     coupling_index::Vector{CartesianIndex{2}}
+    deriv_order::Int
 
-    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}) 
-        new{typeof(elements)}(elements, mesh, size, infos, coupling_index)
+    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}, deriv_order::Int) 
+        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, deriv_order)
     end
 
-    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos) 
+    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, deriv_order) 
         
         # Basics checks for consistency
         @assert size == length(infos)
@@ -54,7 +54,7 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
                 end
             end
         end
-        new{typeof(elements)}(elements, mesh, size, infos, coupling_index)
+        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, deriv_order)
     end
 end
 
@@ -74,7 +74,7 @@ end
 @inline function getnormalization(spb::ShortPolynomialBasis, i::Int)
     norma = bottom_type(spb)(0)
     for j ∈ eachindex(spb.infos[i])
-        norma += getnormalization(spb.infos[i], j) * getnormalization(spb.elements, getindex(spb, i, j))
+        norma += getnormalization(spb.infos[i], j)^(1+spb.deriv_order*2) * getnormalization(spb.elements, getindex(spb, i, j))
     end
     1/sqrt(norma)
 end
@@ -168,6 +168,7 @@ function build_on_basis(spb::ShortPolynomialBasis, coeffs)
 end
 
 function deriv(spb::ShortPolynomialBasis)
-    deriv_elements = DefaultElements(isnormalized(spb.elements), eltype(spb.elements), deriv.(getpolynomial(spb.elements)), spb.elements.size, spb.elements.binf, spb.elements.bsup, spb.elements.normalization)
-    ShortPolynomialBasis(deriv_elements, spb.mesh, spb.size, spb.infos, spb.coupling_index)
+    deriv_polynomials = deriv.(getpolynomial(spb.elements))
+    deriv_elements = DefaultElements(isnormalized(spb.elements), eltype(spb.elements), deriv_polynomials, spb.elements.size, spb.elements.binf, spb.elements.bsup, spb.elements.normalization)
+    ShortPolynomialBasis(deriv_elements, spb.mesh, spb.size, spb.infos, spb.coupling_index, spb.deriv_order+1)
 end
