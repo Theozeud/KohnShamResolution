@@ -32,7 +32,11 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     infos::Vector{InfoElement}
     coupling_index::Vector{CartesianIndex{2}}
 
-    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos::Vector{InfoElement{T}} where T) 
+    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}) 
+        new{typeof(elements)}(elements, mesh, size, infos, coupling_index)
+    end
+
+    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos) 
         
         # Basics checks for consistency
         @assert size == length(infos)
@@ -82,7 +86,21 @@ end
 
 function fill_mass_matrix!(spb::ShortPolynomialBasis, A)
     @unpack elements, mesh = spb
-    fill_mass_matrix!(elements, mesh, A)
+    try 
+        fill_mass_matrix!(elements, mesh, A)
+    catch
+        for I ∈ spb.coupling_index
+            for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
+                P = getpolynomial(spb, I[1], i)
+                Q = getpolynomial(spb, I[2], j)
+                invϕ = getinvshift(spb, I[1], i)
+                dinvϕ = invϕ[1]
+                @inbounds A[I[1], I[2]] += dinvϕ * scalar_product(P, Q, spb.elements.binf, spb.elements.bsup)
+            end
+            @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
+            @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
+        end
+    end
     nothing
 end
 
@@ -129,4 +147,9 @@ function build_on_basis(spb::ShortPolynomialBasis, coeffs)
         poly += coeff[i] * build_basis(spb, i)
     end
     poly
+end
+
+function deriv(spb::ShortPolynomialBasis)
+    deriv_elements = DefaultElements(isnormalized(spb.elements), eltype(spb.elements), deriv.(getpolynomial(spb.elements)), spb.elements.size, spb.elements.binf, spb.elements.bsup)
+    ShortPolynomialBasis(deriv_elements, spb.mesh, spb.size, spb.infos, spb.coupling_index)
 end
