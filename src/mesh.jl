@@ -12,19 +12,28 @@ end
 linmesh(a, b, n) = mesh(LinRange(a,b,n))
 
 function LogRange(a,b,n; z = 1, T = Float64)
-    X = T.(range(a,b,n))
-    a = first(X)
-    b = last(X)
-    Z = zero(X)
-    for i ∈ firstindex(X):lastindex(X)-1
-        x = X[i]
-        tmp = (b-a)/(b-x)
-        tmp = T(z) * T(log(tmp))
-        Z[i] = b - (b-a)/(tmp+1)
-    end
-    Z[end] = b
-    Z
+    X = T.(range(0,n-1,n))
+    Z = exp.(z .* X)
+    x = first(Z)
+    y = last(Z)
+    @. (b-a)/(y-x) * (Z - x) + a 
 end
+
+# previous log Range function which is false but may be still interesting
+# function LogRange(a,b,n; z = 1, T = Float64)
+#     X = T.(range(a,b,n))
+#     a = first(X)
+#     b = last(X)
+#     Z = zero(X)
+#     for i ∈ firstindex(X):lastindex(X)-1
+#         x = X[i]
+#         tmp = (b-a)/(b-x)
+#         tmp = T(z) * T(log(tmp))
+#         Z[i] = b - (b-a)/(tmp+1)
+#     end
+#     Z[end] = b
+#     Z
+# end
 
 function logmesh(a, b, n; z = 1, T = Float64)
     mesh(LogRange(a, b, n; z = z, T = T))
