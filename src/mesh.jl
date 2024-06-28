@@ -12,7 +12,7 @@ end
 linmesh(a, b, n) = mesh(LinRange(a,b,n))
 
 function LogRange(a,b,n; z = 1, T = Float64)
-    X = T.(range(0,n-1,n))
+    X = T.(range(0,1,n))
     Z = exp.(z .* X)
     x = first(Z)
     y = last(Z)
