@@ -106,8 +106,9 @@ function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::
     @unpack quad_method, quad_reltol, quad_abstol, hartree = solver.opts
 
     # STEP 1 : Compute Hartree term 
-    if hartree
-        build_hartree!(discretization, tmp_Hartree, Dprev)
+    if hartree ≠ 0
+        build_hartree!(discretization, tmp_Hartree, Dprev,)
+        @. tmp_Hartree = hartree * tmp_Hartree
     end
 
     # STEP 2 : Compute Exchange Correlation term

@@ -4,10 +4,9 @@ struct SolverOptions{T}
     quad_method
     quad_reltol::T
     quad_abstol::T
-    hartree::Bool
+    hartree::T
     degen_tol::T
 end
-
 
 mutable struct KhonShamSolver{TSC}
     discretization
