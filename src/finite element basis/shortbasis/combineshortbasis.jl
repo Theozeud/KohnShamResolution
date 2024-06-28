@@ -16,7 +16,7 @@ end
 @inline isdiagonal(infoblock::InfoBlock) = infoblock.diagonal
 @inline getinteraction(infoblock::InfoBlock) = infoblock.interaction_index
 
-struct CombineShortPolynomialBasis
+struct CombineShortPolynomialBasis <: Basis
     basisVector
     size::Int
     blocks::Vector{InfoBlock}
@@ -55,6 +55,8 @@ struct CombineShortPolynomialBasis
     end
 end
 
+@inline bottom_type(cb::CombineShortPolynomialBasis)= bottom_type(first(cb))
+
 @inline getbasis(cb::CombineShortPolynomialBasis, i::Int) = cb.basisVector[i]
 @inline Base.length(cb::CombineShortPolynomialBasis) = cb.size
 @inline Base.eachindex(cb::CombineShortPolynomialBasis) = 1:cb.size
@@ -70,7 +72,7 @@ end
 function find_basis(cb::CombineShortPolynomialBasis, i::Int)
     @assert i ≤ length(cb)
     ib = 1
-    while cb.cumul_index[ib] ≥ i || cb.cumul_index[ib+1] < i
+    while (ib < length(cb.cumul_index)) && (cb.cumul_index[ib+1] ≤ i) 
         ib += 1
     end
     (ib, i-cb.cumul_index[ib]+1)
@@ -160,7 +162,7 @@ end
 function build_on_basis(cb::CombineShortPolynomialBasis, coeffs)
     @assert eachindex(coeffs) == eachindex(cb) 
     poly = coeffs[firstindex(coeffs)] * build_basis(cb, firstindex(coeffs))
-    for i ∈ eachindex(spb)[2:end]
+    for i ∈ eachindex(cb)[2:end]
         poly += coeffs[i] * build_basis(cb, i)
     end
     poly
