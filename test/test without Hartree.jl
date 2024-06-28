@@ -22,8 +22,6 @@ basis = P1Basis(m; left = false, right = false)
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
 # Solve
-#@time sol = groundstate(KM, D, method; tol = 1e-10, hartree = false)
-
 deriv_basis = deriv(basis)
  
 A   = mass_matrix(deriv_basis, Rmin, Rmax)
