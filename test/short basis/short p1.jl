@@ -35,3 +35,8 @@ display(M₋₂)
 @time "Short P1 weight Mass -2 matrix" shortM₋₂ = weight_mass_matrix(shortp1, -2)
 display(shortM₋₂)
 
+
+@time "Complete P1 deriv Mass matrix" dm = mass_matrix(deriv(p1))
+display(dm)
+@time "Short P1 deriv Mass matrix" shortdm = mass_matrix(deriv(shortp1))
+display(shortdm)
