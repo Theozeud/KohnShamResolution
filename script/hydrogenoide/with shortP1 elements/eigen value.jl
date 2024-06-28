@@ -11,9 +11,10 @@ method = ConstantODA(1.0)
 
 # Discretization 
 lₕ = 0
-Rmin = 0
+Rmin = 0.0000001
 cutting_pre = 10
 Nmesh = 1000
+T = Float64
 
 # Plots
 pltA = []
@@ -21,10 +22,9 @@ pltA = []
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(Rmin, Rmax, Nmesh; z = 1/z)
-    basis = HatBasis(m; left = false, right = false)
+    m = logmesh(Rmin, Rmax, Nmesh; z = 0.5)
+    basis = ShortP1Basis(m, T;  normalize = true, left = false, right = false)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
-
     KM = KohnShamExtended(z = z, N = N)
 
     sol = groundstate(KM, D, method; tol = 1e-4, hartree = false)

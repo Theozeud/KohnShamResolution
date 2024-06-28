@@ -3,7 +3,7 @@ using LinearAlgebra
 using Plots
 
 # Creation of the model
-z = 1
+z = 16
 N = 1
 KM = KohnShamExtended(z = z,N = N)
 

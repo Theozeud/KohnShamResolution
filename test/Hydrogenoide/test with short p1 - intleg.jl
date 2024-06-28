@@ -11,19 +11,29 @@ KM = KohnShamExtended(z = z,N = N)
 method = ConstantODA(1.0)
 
 # Discretization 
-Nmesh = 100
+Nmesh = 20
 lₕ = 0
 Rmin = 0.00000001
 cutting_pre = 10
-Rmax = 50 #(1.5 * log(z) + cutting_pre*log(10))/z
-m = logmesh(Rmin, Rmax, Nmesh; z = 0.5)
+@show (1.5 * log(z) + cutting_pre*log(10))/z
+Rmax = 100 #
+m = linmesh(Rmin, Rmax, Nmesh)
 
 T = Float64
 normalize = true
-ordermin = 2
-ordermax = 4
-basis = ShortIntLegendreBasis(m, T; normalize = normalize, ordermin = ordermin, ordermax = ordermax)
 
+# Block P1
+left = false
+right = true
+p1 = ShortP1Basis(m, T; normalize = normalize, left = left, right = right)
+
+# Block IntLegendre
+ordermin = 2
+ordermax = 5
+intleg = ShortIntLegendreBasis(m, T; normalize = normalize, ordermin = ordermin, ordermax = ordermax)
+
+# Combinaison
+basis = CombineShortPolynomialBasis(p1, intleg)
 
 # Solve
 deriv_basis = deriv(basis)

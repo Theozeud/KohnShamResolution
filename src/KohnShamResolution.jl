@@ -47,11 +47,11 @@ module KohnShamResolution
     
     export LaurentPolynomialBasis
     export mass_matrix, weight_mass_matrix, build_on_basis
-    include("finite element basis/laurentpolynomialbasis.jl")
+    include("finite element basis/completebasis/laurentpolynomialbasis.jl")
 
     export HatBasis, P1Basis, BubbleBasis, IntLegendreBasis
     export HatFunctionP1, FunctionP2_node, FunctionP2_mid, P2Basis, IntLegendre_element
-    include("finite element basis/complete basis.jl")
+    include("finite element basis/completebasis/complete basis.jl")
 
     # SHORT BASIS
     include("finite element basis/shortbasis/utils_computations.jl")

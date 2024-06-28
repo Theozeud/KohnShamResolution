@@ -160,9 +160,9 @@ end
 
 function build_on_basis(spb::ShortPolynomialBasis, coeffs)
     @assert eachindex(coeffs) == eachindex(spb) 
-    poly = coeff[firstindex(coeffs)] * build_basis(spb, firstindex(coeffs))
+    poly = coeffs[firstindex(coeffs)] * build_basis(spb, firstindex(coeffs))
     for i ∈ eachindex(spb)[2:end]
-        poly += coeff[i] * build_basis(spb, i)
+        poly += coeffs[i] * build_basis(spb, i)
     end
     poly
 end

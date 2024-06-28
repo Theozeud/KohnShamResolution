@@ -82,12 +82,12 @@ end
 
 function integrate(rf::RationalFraction, a::Real, b::Real)
     if degmax_denom(rf) ≥ 3
-        @error "No analatycal expression for integrating rational fractions with a denominator of degree higher than 2."
+        @error "No analytical expression for integrating rational fractions with a denominator of degree higher than 2."
     elseif degmax_denom(rf) == 1
         B = rf.num[0]
         D = rf.denom[1]
         E = rf.denom[0]
-        @assert -E/D > b || -E/D < a 
+        @assert B == 0 || -E/D > b || -E/D < a 
         return integrate(rf.ent, a, b) + B/D * log((D*b + E)/(D*a + E))
     elseif degmax_denom(rf) == 2
         A = rf.num[1]
@@ -99,10 +99,10 @@ function integrate(rf::RationalFraction, a::Real, b::Real)
         if Δ > 0
             r₁ = (-D - sqrt(Δ))/(2*C)
             r₂ = (-D + sqrt(Δ))/(2*C)
-            @assert (r₁ > b) || (r₂ < a) || (r₂ > b && r₁ < a)
+            @assert (r₁ > b) || (r₂ < a) || (r₂ > b && r₁ < a) || (A == 0 && B == 0)
         elseif Δ == 0
             r₀ = -D/(2*C)
-            @assert (r₀ > b) || (r₀ < a)
+            @assert (r₀ > b) || (r₀ < a)|| (A == 0 && B == 0)
         end
         C1 = D/(2*C)
         C2 = (4*E*C - D^2)/(4*C^2)
