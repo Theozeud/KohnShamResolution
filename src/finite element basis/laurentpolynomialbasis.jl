@@ -1,9 +1,9 @@
-abstract type Basis end
-
-struct LaurentPolynomialBasis{TL <: AbstractLaurentPolynomial} <: Basis
+struct LaurentPolynomialBasis{TL <: AbstractPolynomial} <: AbstractLaurentPolynomialBasis
+    mesh::OneDMesh
     elements::Vector{TL}
     cross_index
     function LaurentPolynomialBasis(elements)
+        mesh = first(elements).mesh
         cross_index = CartesianIndex[]
         for i in eachindex(elements)
             for j in 1:i
@@ -12,7 +12,7 @@ struct LaurentPolynomialBasis{TL <: AbstractLaurentPolynomial} <: Basis
                 end
             end
         end
-        new{eltype(elements)}(elements, cross_index)
+        new{eltype(elements)}(mesh, elements, cross_index)
     end
 end
 
@@ -25,42 +25,58 @@ end
 @inline Base.first(lpb::LaurentPolynomialBasis) = first(lpb.elements)
 @inline bottom_type(lpb::LaurentPolynomialBasis) = eltype(first(lpb))
 
-# Mass matrix
-function mass_matrix(lpb::LaurentPolynomialBasis{TL}) where TL
-    A = [scalar_product(lpb[i], lpb[j]) for i in eachindex(lpb) for j in eachindex(lpb)]
-    reshape(A, (size(lpb)[1],size(lpb)[1]))
-end
+"""
+    mass_matrix(lpb::LaurentPolynomialBasis)
 
-function mass_matrix(lpb::LaurentPolynomialBasis, a::Real, b::Real)
+Compute the mass matrix of the LaurentPolynomialBasis.
+
+To do that, it computes the scalar product between each elements of the basis according to
+lpb.cross_index that knows which index of the matrix this scalar_product is a priori not null. 
+"""
+function mass_matrix(lpb::LaurentPolynomialBasis)
     T = eltype(first(lpb))
     A = zeros(T, (length(lpb), length(lpb)))
     for I ∈ lpb.cross_index
-        @inbounds A[I[1],I[2]] = scalar_product(lpb[I[1]], lpb[I[2]], a, b)
+        @inbounds A[I[1],I[2]] = scalar_product(lpb[I[1]], lpb[I[2]], first(lpb.mesh), last(lpb.mesh))
         @inbounds A[I[2],I[1]] = A[I[1],I[2]] 
     end
     A
 end
 
+"""
+    weight_mass_matrix(lpb::LaurentPolynomialBasis, weight::LaurentPolynomial)
+
+Compute a weighted mass matrix of the LaurentPolynomialBasis, i.e the matrix made of 
+scalar product of the product of weight and an element of the basis with an element of the
+basis. 
+
+The computations are done according to lpb.cross_index that knows which index of the matrix 
+this scalar_product is a priori not null. 
+"""
 function weight_mass_matrix(lpb::LaurentPolynomialBasis, weight::LaurentPolynomial)
-    A = [scalar_product(weight * lpb[i], lpb[j]) for i in eachindex(lpb) for j in eachindex(lpb)]
-    reshape(A, (size(lpb)[1],size(lpb)[1]))
-end
-
-function weight_mass_matrix(lpb::LaurentPolynomialBasis, weight::LaurentPolynomial, a::Real, b::Real)
     T = eltype(first(lpb))
     A = zeros(T, (length(lpb), length(lpb)))
     for I ∈ lpb.cross_index
-        @inbounds A[I[1],I[2]] = scalar_product(weight * lpb[I[1]], lpb[I[2]], a, b)
+        @inbounds A[I[1],I[2]] = scalar_product(weight * lpb[I[1]], lpb[I[2]], first(lpb.mesh), last(lpb.mesh))
         @inbounds A[I[2],I[1]] = A[I[1],I[2]] 
     end
     A
 end
 
-function weight_mass_matrix(lpb::LaurentPolynomialBasis, n::Int, a::Real, b::Real)
-    weight_mass_matrix(lpb::LaurentPolynomialBasis, Monomial(n), a::Real, b::Real)
+"""
+    weight_mass_matrix(lpb::LaurentPolynomialBasis, , n::Int)
+
+Special case of weighted mass matrix where the weight is the monomial X^n.
+"""
+function weight_mass_matrix(lpb::LaurentPolynomialBasis, n::Int)
+    weight_mass_matrix(lpb::LaurentPolynomialBasis, Monomial(n))
 end
 
-# Deriv
+"""
+    deriv!(lpb::LaurentPolynomialBasis)
+
+Deriv each elements of the basis.
+"""
 function deriv!(lpb::LaurentPolynomialBasis)
     for i in eachindex(lpb)
         deriv!(lpb[i])
@@ -68,6 +84,11 @@ function deriv!(lpb::LaurentPolynomialBasis)
     lpb
 end
 
+"""
+    deriv(lpb::LaurentPolynomialBasis)
+
+Create an other basis made of the derivative of each elements of the basis.
+"""
 function deriv(lpb::LaurentPolynomialBasis)
     TL = eltype(lpb.elements)
     deriv_laurent = TL[]
@@ -77,7 +98,12 @@ function deriv(lpb::LaurentPolynomialBasis)
     LaurentPolynomialBasis(deriv_laurent)
 end
 
-# Build LaurentPolynomial on basis
+"""
+    build_on_basis(basis::LaurentPolynomialBasis{TL}, coeff) where TL
+
+Compute the TL type elements (laurent Polynomial or piecewise laurent polynomial) on the basis
+with respect to the coefficents.
+"""
 function build_on_basis(basis::LaurentPolynomialBasis{TL}, coeff) where TL
     if isempty(basis)
         @error "The basis is empty."

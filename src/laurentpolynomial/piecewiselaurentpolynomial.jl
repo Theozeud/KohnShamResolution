@@ -1,4 +1,4 @@
-mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractLaurentPolynomial{T}
+mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractPolynomial{T}
     mesh::OneDMesh{TM}
     functions::Vector{LaurentPolynomial{T}}
     index::Vector{Int}
@@ -7,8 +7,10 @@ end
 
 @inline Base.eltype(::PiecewiseLaurentPolynomial{T,TM}) where {T,TM} = T
 
-@inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, LaurentPolynomial{T}[], Int[], T(0))
 @inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = zero_piecewiselaurantpolynomial(pwlp.mesh, T)
+@inline Base.zero(::Type{PiecewiseLaurentPolynomial{T}}, mesh::OneDMesh) where T = zero_piecewiselaurantpolynomial(pwlp.mesh, T)
+@inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, LaurentPolynomial{T}[], Int[], T(0))
+
 @inline Base.eachindex(pwlp::PiecewiseLaurentPolynomial) = eachindex(pwlp.mesh)
 @inline Base.firstindex(pwlp::PiecewiseLaurentPolynomial) = firstindex(pwlp.mesh)
 @inline Base.lastindex(pwlp::PiecewiseLaurentPolynomial) = lastindex(pwlp.mesh)

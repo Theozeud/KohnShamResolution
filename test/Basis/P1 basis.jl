@@ -3,14 +3,16 @@ using Test
 using Plots
 
 # Test on P2 basis
-T = Float16
+T = Float64
 m = mesh(1:5)
 
-p2 = P1Basis(m, T; left = false)
+p1 = P1Basis(m, T)
 
 X = LinRange(1,5,1000)
 plt = plot()
-for p ∈ p2
+for p ∈ p1
     plot!(X,p.(X))
 end
 plt
+
+mass_matrix(p1, 1, 5)

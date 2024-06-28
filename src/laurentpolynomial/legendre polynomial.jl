@@ -1,10 +1,10 @@
 # Using the Bonnet Recurrence formula to compute the nth, normalized or not, Legendre Polynomial scaled on [a,b]
-@memoize function Legendre(a::Real, b::Real, n::Int, T::Type = Float64, normalize = false)
+@memoize function Legendre(n::Int; a::Real = -1, b::Real = 1, T::Type = Float64, normalize = false)
     if n == 0
         if normalize
-            return Polynomial([T(1)], 0) * sqrt(T(1)/T(b-a))
+            return Polynomial([T(1)]) * sqrt(T(1)/T(b-a))
         else
-            Polynomial([T(1)], 0)
+            return Polynomial([T(1)])
         end
     elseif n == 1
         if normalize
@@ -14,9 +14,21 @@
         end
     else
         coeff = normalize ? sqrt(T(2*n + 1)/T(b-a)) : T(1)
-        pₙ₋₁ = Legendre(a, b, n-1, T, false)
-        pₙ₋₂ = Legendre(a, b, n-2, T, false)
-        pₙ₋₁ = (2*T(n)-1)/T(n) * Polynomial([T(-b-a)/T(b-a), T(2)/T(b-a)]) * pₙ₋₁ - (T(n)-1)/T(n) * pₙ₋₂
-        return pₙ₋₁ * coeff
+        pₙ₋₁ = Legendre(n-1; a = a, b = b, T = T, normalize = false)
+        pₙ₋₂ = Legendre(n-2; a = a, b = b, T = T, normalize = false)
+        pₙ = (2*T(n)-1)/T(n) * Polynomial([T(-b-a)/T(b-a), T(2)/T(b-a)]) * pₙ₋₁ - (T(n)-1)/T(n) * pₙ₋₂
+        return coeff * pₙ 
+    end
+end
+
+# Integrated Legendre Polynomial
+@memoize function intLegendre(n::Int; a::Real = -1, b::Real = 1, T::Type = Float64, normalize = false)
+    pₙ = Legendre(n; a = a, b = b, T = T, normalize = false)
+    qₙ = integrate(pₙ)
+    qₙ = qₙ - qₙ(a)
+    if normalize
+        return qₙ / sqrt(scalar_product(qₙ, qₙ, a, b))
+    else
+        return qₙ
     end
 end

@@ -62,4 +62,4 @@ for z in zA
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-#savefig(pltfin, "image/hydrogenoide/with P1 elements/Valeurs propres avec Nmesh = "*string(Nmesh))
+savefig(pltfin, "image/hydrogenoide/with shortP1 elements/Valeurs propres avec Nmesh = "*string(Nmesh))
