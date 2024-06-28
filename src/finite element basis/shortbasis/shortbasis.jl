@@ -6,7 +6,7 @@ struct InfoElement{T}
     segments::Vector{Int}
     ϕ::Vector{LaurentPolynomial{T}}
     invϕ::Vector{LaurentPolynomial{T}}
-    normalization::T
+    #normalization::T
 end
 
 @inline getindex(ielem::InfoElement) = ielem.index
@@ -15,9 +15,10 @@ end
 @inline getsegments(ielem::InfoElement, i::Int) = ielem.segments[i]
 @inline getshift(ielem::InfoElement, i::Int) = ielem.ϕ[i]
 @inline getinvshift(ielem::InfoElement, i::Int) = ielem.invϕ[i]
-@inline getnormalization(ielem::InfoElement) = ielem.normalization
+@inline getnormalization(ielem::InfoElement, i::Int) = ielem.invϕ[i][1]
 
 @inline Base.length(ielem::InfoElement) = length(ielem.index)
+@inline Base.eachindex(ielem::InfoElement) = eachindex(ielem.index)
 @inline Base.iterate(ielem::InfoElement, state = 1) = state > length(ielem) ? nothing : ((getindex(ielem, state), getsegments(ielem, state), getshift(ielem, state), getinvshift(ielem, state)), state+1)
 
 @inline arecompatible(ielem1::InfoElement, ielem2::InfoElement) = !isempty(intersect(ielem1.segments, ielem2.segments))
@@ -61,13 +62,22 @@ end
 @inline bottom_type(spb::ShortPolynomialBasis) = eltype(spb.elements)
 @inline Base.length(spb::ShortPolynomialBasis) = spb.size
 
+@inline isnormalized(spb::ShortPolynomialBasis) = isnormalized(spb.elements)
+
 @inline getindex(spb::ShortPolynomialBasis, i::Int) = getindex(spb.infos[i])
 @inline getsegments(spb::ShortPolynomialBasis, i::Int) = getsegments(spb.infos[i])
 @inline getindex(spb::ShortPolynomialBasis, i::Int, j::Int) = getindex(spb.infos[i], j)
 @inline getsegments(spb::ShortPolynomialBasis, i::Int, j::Int) = getsegments(spb.infos[i], j)
 @inline getshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getshift(spb.infos[i], j)
 @inline getinvshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getinvshift(spb.infos[i], j)
-@inline getnormalization(spb::ShortPolynomialBasis, i::Int) = getnormalization(spb.infos[i])
+
+@inline function getnormalization(spb::ShortPolynomialBasis, i::Int)
+    norma = bottom_type(spb)(0)
+    for j ∈ eachindex(spb.infos[i])
+        norma += getnormalization(spb.infos[i], j) * getnormalization(spb.elements, getindex(spb, i, j))
+    end
+    1/sqrt(norma)
+end
 
 @inline getpolynomial(spb::ShortPolynomialBasis, i::Int, j::Int)= getpolynomial(spb.elements, getindex(spb, i, j))
 
@@ -97,7 +107,9 @@ function fill_mass_matrix!(spb::ShortPolynomialBasis, A)
                 dinvϕ = invϕ[1]
                 @inbounds A[I[1], I[2]] += dinvϕ * scalar_product(P, Q, spb.elements.binf, spb.elements.bsup)
             end
-            @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
+            if isnormalized(spb)
+                @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
+            end
             @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
         end
     end
@@ -125,7 +137,9 @@ function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight::LaurentPoly
             dinvϕ = invϕ[1]
             @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight_shift, spb.elements.binf, spb.elements.bsup)
         end
-        @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
+        if isnormalized(spb)
+            @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
+        end
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
     nothing
@@ -135,7 +149,11 @@ end
     T = bottom_type(spb)
     polys = LaurentPolynomial{T}[]
     for (j,_,ϕ,_) ∈ spb.infos[i]
-        push!(polys, getnormalization(spb,i) * getpolynomial(spb.elements, j) ∘ ϕ)
+        if isnormalized(spb)
+            push!(polys, getnormalization(spb,i) * getpolynomial(spb.elements, j) ∘ ϕ)
+        else
+            push!(polys, getpolynomial(spb.elements, j) ∘ ϕ)
+        end
     end
     PiecewiseLaurentPolynomial(spb.mesh, polys, getsegments(spb, i), T(0))
 end
@@ -150,6 +168,6 @@ function build_on_basis(spb::ShortPolynomialBasis, coeffs)
 end
 
 function deriv(spb::ShortPolynomialBasis)
-    deriv_elements = DefaultElements(isnormalized(spb.elements), eltype(spb.elements), deriv.(getpolynomial(spb.elements)), spb.elements.size, spb.elements.binf, spb.elements.bsup)
+    deriv_elements = DefaultElements(isnormalized(spb.elements), eltype(spb.elements), deriv.(getpolynomial(spb.elements)), spb.elements.size, spb.elements.binf, spb.elements.bsup, spb.elements.normalization)
     ShortPolynomialBasis(deriv_elements, spb.mesh, spb.size, spb.infos, spb.coupling_index)
 end

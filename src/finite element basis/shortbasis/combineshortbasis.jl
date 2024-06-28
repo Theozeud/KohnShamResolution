@@ -105,7 +105,12 @@ function fill_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasi
             dinvϕ = invϕ[1]
             @inbounds A[I[1], I[2]] += dinvϕ * scalar_product(P, Q, spb1.elements.binf, spb1.elements.bsup)
         end
-        @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) * getnormalization(spb2, I[2])
+        if isnormalized(spb1)
+            @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
+        end
+        if isnormalized(spb2)
+            @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2])
+        end
     end
 end
 
@@ -119,7 +124,12 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
             weight_shift = weight ∘ invϕ
             @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight_shift, spb1.elements.binf, spb1.elements.bsup)
         end
-        @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) * getnormalization(spb2, I[2])
+        if isnormalized(spb1)
+            @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
+        end
+        if isnormalized(spb2)
+            @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2])
+        end
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
 end
