@@ -65,7 +65,7 @@ module KohnShamResolution
     export bottom_type
     include("finite element basis/shortbasis/shortbasis.jl")
 
-    export P1Elements, ShortP1Basis, IntLegendreElements, ShortIntLegendreBasis
+    export DefaultElements, P1Elements, ShortP1Basis, IntLegendreElements, ShortIntLegendreBasis
     include("finite element basis/shortbasis/elements.jl")
 
     include("finite element basis/shortbasis/fill_mass_matrix.jl")
