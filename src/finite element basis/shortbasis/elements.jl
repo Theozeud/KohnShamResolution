@@ -1,4 +1,25 @@
 ########################################################################################
+#                                  Default Elements
+########################################################################################
+struct DefaultElements{N, T} <: AbstractShortElements{N, T}
+    polynomials::Vector{LaurentPolynomial{T}}
+    size::Int
+    binf::T
+    bsup::T
+    function DefaultElements(N, T, polynomials, size, binf, bsup)
+        new{N,T}(polynomials, size, binf, bsup)
+    end
+end
+
+@inline Base.firstindex(::DefaultElements) = 1
+@inline Base.lastindex(delem::DefaultElements) = delem.size
+@inline Base.eachindex(delem::DefaultElements) = eachindex(delem.polynomials)
+@inline Base.getindex(delem::DefaultElements, n::Int) =  delem.polynomials[n] 
+@inline Base.first(delem::DefaultElements) = delem.polynomials[firstindex(delem)]
+@inline Base.last(delem::DefaultElements) = delem.polynomials[lastindex(delem)]
+@inline getpolynomial(delem::DefaultElements) = delem.polynomials
+
+########################################################################################
 #                                   P1 Elements
 ########################################################################################
 
@@ -72,6 +93,7 @@ end
         throw(BoundsError(p1, n))
     end
 end
+@inline getpolynomial(p1::P1Elements) = [p1.hfup,p1.hfdown]
 
 ########################################################################################
 #                                  Integrated Legendre Elements
@@ -100,7 +122,7 @@ end
 @inline Base.firstindex(::IntLegendreElements) = 1
 @inline Base.eachindex(ilb::IntLegendreElements) = eachindex(ilb.polynomials)
 @inline Base.getindex(ilb::IntLegendreElements, n::Int) =  ilb.polynomials[n] 
-
+@inline getpolynomial(ilb::IntLegendreElements) = ilb.polynomials
 
 function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
     intlegelement = IntLegendreElements(T; normalize = normalize, kwargs...)
