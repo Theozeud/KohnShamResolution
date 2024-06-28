@@ -4,7 +4,7 @@ using Plots
 
 # Test with P1
 T = Float64
-m = linmesh(1,5,5)
+m = logmesh(1,5,20; z = 0.1)
 normalize = true
 left = false
 right = false
@@ -34,7 +34,6 @@ display(shortM₋₁)
 display(M₋₂)
 @time "Short P1 weight Mass -2 matrix" shortM₋₂ = weight_mass_matrix(shortp1, -2)
 display(shortM₋₂)
-
 
 @time "Complete P1 deriv Mass matrix" dm = mass_matrix(deriv(p1))
 display(dm)

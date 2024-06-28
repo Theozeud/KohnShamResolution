@@ -11,12 +11,12 @@ KM = KohnShamExtended(z = z,N = N)
 method = ConstantODA(1.0)
 
 # Discretization 
-Nmesh = 10
+Nmesh = 200
 lₕ = 0
-Rmin = 0.000001
+Rmin = 0.00000001
 cutting_pre = 10
 Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-m = logmesh(Rmin, Rmax, Nmesh; z = 1/z)
+m = logmesh(Rmin, Rmax, Nmesh; z = 0.5)
 
 
 T = Float64
@@ -34,7 +34,7 @@ M₀ = mass_matrix(basis)
 M₋₁ = weight_mass_matrix(basis, -1)
 M₋₂ = weight_mass_matrix(basis, -2)
 
-H = 1/2 * A#(A + lₕ*(lₕ+1)*M₋₂) - z .* M₋₁
+H = 1/2 * (A + lₕ*(lₕ+1)*M₋₂) - z .* M₋₁
 ϵ, U = eigen(H,M₀)
 
 shortderiv_basis = deriv(shortbasis)
@@ -43,7 +43,7 @@ M₀ = mass_matrix(shortbasis)
 M₋₁ = weight_mass_matrix(shortbasis, -1)
 M₋₂ = weight_mass_matrix(shortbasis, -2)
 
-H = 1/2 * A #(A + lₕ*(lₕ+1)*M₋₂) - z .* M₋₁
+H = 1/2 * (A + lₕ*(lₕ+1)*M₋₂) - z .* M₋₁
 ϵshort, Ushort = eigen(H,M₀)
 
 
