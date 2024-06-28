@@ -118,7 +118,7 @@ struct IntLegendreElements{N, T} <: AbstractShortElements{N, T}
         for n ∈ ordermin:ordermax
             Qₙ = intLegendre(n-1; T = T, a = binf, b = bsup)
             push!(polynomials, Qₙ)
-            push!(normalization, scalar_product(Qₙ, Qₙ, bing, bsup))
+            push!(normalization, scalar_product(Qₙ, Qₙ, binf, bsup))
         end
         new{normalize, T}(polynomials, ordermax - ordermin + 1, ordermin, ordermax, binf, bsup, normalization)
     end

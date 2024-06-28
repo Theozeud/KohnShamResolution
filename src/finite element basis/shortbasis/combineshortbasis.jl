@@ -20,12 +20,18 @@ struct CombineShortPolynomialBasis
     basisVector
     size::Int
     blocks::Vector{InfoBlock}
+    cumul_index::Vector{Int}
+    function CombineShortPolynomialBasis(basisVector, size, blocks, cumul_index)
+        new(basisVector, size, blocks, cumul_index)
+    end
     function CombineShortPolynomialBasis(basisVector...)
         size = sum([length(basis) for basis ∈ basisVector])
         blocks = Vector{InfoBlock}(undef, length(basisVector)*(length(basisVector)+1)÷2)
         size_i = 1
         ib = 1
+        cumul_index = zeros(Int, length(basisVector))
         for i ∈ eachindex(basisVector)
+            cumul_index[i] = size_i
             size_j = 1
             for j ∈ 1:i
                 rangerow = size_i:size_i+length(basisVector[i])-1
@@ -45,12 +51,13 @@ struct CombineShortPolynomialBasis
             end
             size_i += length(basisVector[i])
         end
-        new(basisVector, size, blocks)
+        new(basisVector, size, blocks, cumul_index)
     end
 end
 
 @inline getbasis(cb::CombineShortPolynomialBasis, i::Int) = cb.basisVector[i]
 @inline Base.length(cb::CombineShortPolynomialBasis) = cb.size
+@inline Base.eachindex(cb::CombineShortPolynomialBasis) = 1:cb.size
 @inline getblocks(cb::CombineShortPolynomialBasis) = cb.blocks
 @inline Base.first(cb::CombineShortPolynomialBasis) = cb.basisVector[1]
 
@@ -59,6 +66,16 @@ end
 @inline getrangecolumn(cb::CombineShortPolynomialBasis, i::Int) = getrangecolumn(cb.infoblock[i])
 @inline isdiagonal(cb::CombineShortPolynomialBasis, i::Int) = isdiagonal(cb.infoblock[i])
 @inline getinteraction(cb::CombineShortPolynomialBasis, i::Int) = getinteraction(cb.infoblock[i])
+
+function find_basis(cb::CombineShortPolynomialBasis, i::Int)
+    @assert i ≤ length(cb)
+    ib = 1
+    while cb.cumul_index[ib] ≥ i || cb.cumul_index[ib+1] < i
+        ib += 1
+    end
+    (ib, i-cb.cumul_index[ib]+1)
+end
+
 
 function mass_matrix(cb::CombineShortPolynomialBasis)
     T = bottom_type(first(cb))
@@ -79,14 +96,14 @@ end
 function weight_mass_matrix(cb::CombineShortPolynomialBasis, weight::LaurentPolynomial)
     T = bottom_type(first(cb))
     A = zeros(T, (length(cb), length(cb)))
-    for b ∈ enumerate(cb.blocks)
+    for b ∈ cb.blocks
         @views ABlock = A[getrangerow(b), getrangecolumn(b)]
         if isdiagonal(b)
             fill_weight_mass_matrix!(getbasis(cb, getindex(b,1)), weight, ABlock)
         else
-            fill_weight_mass_matrix!(getbasis(cb, getindex(b,1)), getbasis(cb, getindex(b,2)), weight, cb.interaction_index, A)
+            fill_weight_mass_matrix!(getbasis(cb, getindex(b,1)), getbasis(cb, getindex(b,2)), weight, b.interaction_index, A)
             @views ABlockT = A[getrangecolumn(b), getrangerow(b)]
-            @. ABlockT = ABlock
+            @. ABlockT = ABlock'
         end
     end
     A
@@ -132,4 +149,27 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
         end
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
+end
+
+@memoize function build_basis(cb::CombineShortPolynomialBasis, i::Int)
+    (ib, iib) = find_basis(cb, i)
+    spb = getbasis(cb, ib)
+    build_basis(spb, iib)
+end
+
+function build_on_basis(cb::CombineShortPolynomialBasis, coeffs)
+    @assert eachindex(coeffs) == eachindex(cb) 
+    poly = coeff[firstindex(coeffs)] * build_basis(cb, firstindex(coeffs))
+    for i ∈ eachindex(spb)[2:end]
+        poly += coeff[i] * build_basis(cb, i)
+    end
+    poly
+end
+
+function deriv(cb::CombineShortPolynomialBasis)
+    derivBasisVector = [deriv(first(cb))]
+    for i ∈ eachindex(cb.basisVector)[2:end]
+        push!(derivBasisVector, deriv(getbasis(cb, i)))
+    end
+    CombineShortPolynomialBasis(derivBasisVector, cb.size, cb.blocks, cb.cumul_index)
 end
