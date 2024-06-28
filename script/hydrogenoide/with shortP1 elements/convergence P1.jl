@@ -1,7 +1,7 @@
 using KohnShamResolution
 using Plots
 # Choice of the method
-method = ODA()
+method = ConstantODA(1.0)
 
 # Discretization 
 lₕ = 0
@@ -20,8 +20,8 @@ cutting_pre = 30
 for n in 2:Nmax
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0,Rmax,2^n; z =  1/z)
-    basis = HatBasis(m; left = false, right = false)
+    m = logmesh(Rmin, Rmax, 2^n; z =  0.5)
+    basis = ShortP1Basis(m; left = false, right = false, normalize = true)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
     KM = KohnShamExtended(z = z, N = N)
@@ -60,4 +60,4 @@ for i ∈ eachindex(logerror)
             markershape = :x, markersize = 10)
 end
 
-savefig(plterror, "image/hydrogenoide/with P1 elements/Convergence P1")
+savefig(plterror, "image/hydrogenoide/with shortP1 elements/Convergence P1")

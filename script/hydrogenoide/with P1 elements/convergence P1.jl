@@ -1,7 +1,7 @@
 using KohnShamResolution
 using Plots
 # Choice of the method
-method = ODA()
+method = ConstantODA(1.0)
 
 # Discretization 
 lₕ = 0

@@ -2,10 +2,12 @@ using KohnShamResolution
 using Plots
 
 # Choice of the method
-method = ODA()
+method = ConstantODA(1.0)
 
 # Discretization 
 lₕ = 0
+Nmesh = 100
+Rmin = 0.00001
 
 # One electron model
 zA = [1, 2, 3, 4]
@@ -21,8 +23,8 @@ cutting_pre = 5
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0,Rmax,100)
-    basis = HatBasis(m; left = false, right = false)
+    m = logmesh(Rmin, Rmax, Nmesh, z = 0.5)
+    basis = ShortP1Basis(m; left = false, right = false, normalize = true)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
     KM = KohnShamExtended(z = z, N = N)
@@ -41,14 +43,14 @@ for z in zA
     ylabel!("Fundamental")
     title!("z = "*string(z))
 
-    X = logmesh(0,Rmax,1000).points
+    X = logmesh(Rmin, Rmax,1000).points
 
     plot!(X, fundamental.(z,X),  label = "Théorique", color = :red, lw = 3)
 
-    plot!(plt, X, fun.(X), label = "Numérique", color = :blue)
+    plot!(plt, X, -fun.(X), label = "Numérique", color = :blue)
 
     push!(pltA, plt)
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "image/hydrogenoide/with P1 elements/Vecteurs propres")
+savefig(pltfin, "image/hydrogenoide/with shortP1 elements/Vecteurs propres avec Nmesh ="*string(Nmesh))
