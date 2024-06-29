@@ -41,7 +41,7 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     A   = mass_matrix(deriv_basis)
     M₀  = mass_matrix(basis)
     M₋₁ = weight_mass_matrix(basis, -1)
-    M₋₂ = weight_mass_matrix(basis, -2)
+    M₋₂ = lₕ == 0 ? zeros(length(basis), length(basis)) : weight_mass_matrix(basis, -2)
 
     # Creation of the fix part of the hamiltonian   
     Kin =  zeros(T, lₕ+1, Nₕ, Nₕ)
