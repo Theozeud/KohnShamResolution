@@ -147,6 +147,7 @@ end
 
 ########################################################################################
 #                                Difference Legendre Elements
+# https://repositorio.ufba.br/bitstream/ri/13632/1/Marc%C3%ADlio%20N%20Guimar%C3%A3es.pdf
 ########################################################################################
 
 struct DiffLegendreElements{N, T} <: AbstractShortElements{N, T}
