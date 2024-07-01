@@ -159,7 +159,6 @@ struct DiffLegendreElements{N, T} <: AbstractShortElements{N, T}
     normalization::Vector{T}
 
     function DiffLegendreElements(T::Type = Float64; ordermax = 2, normalize::Bool = false, binf::Real = -1, bsup::Real = 1)
-        @assert ordermin ≥ 1
         polynomials = LaurentPolynomial{T}[]  
         normalization = T[]  
         for n ∈ 1:ordermax
@@ -167,7 +166,7 @@ struct DiffLegendreElements{N, T} <: AbstractShortElements{N, T}
             push!(polynomials, Qₙ)
             push!(normalization, scalar_product(Qₙ, Qₙ, binf, bsup))
         end
-        new{normalize, T}(polynomials, ordermax - ordermin + 1, ordermin, ordermax, binf, bsup, normalization)
+        new{normalize, T}(polynomials, ordermax, ordermax, binf, bsup, normalization)
     end
 end
 

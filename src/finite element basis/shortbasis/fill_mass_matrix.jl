@@ -59,3 +59,21 @@ function fill_mass_matrix!(ilb::IntLegendreElements{false}, mesh::OneDMesh, A)
     nothing
 end
 
+
+########################################################################################
+#                    Difference Legendre Polynomials mass matrix
+########################################################################################
+function fill_mass_matrix!(dlb::DiffLegendreElements{true}, ::OneDMesh, A)
+    T = eltype(dlb)
+    C(j) = 1/sqrt(2) * sqrt((2j+3)*(2j-1)/(4j+2))
+    for I ∈ axes(A,1)
+        A[I,I] = T(1)
+        if I ≥ 2
+            A[I-2, I] = A[I, I-2]
+        end
+        if I ≤ axes(A,1) - 2
+            A[I, I+2] = -T(2)/T(2*I+3) * C(I) * C(I+2)
+        end
+    end
+    nothing
+end
