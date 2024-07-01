@@ -50,7 +50,7 @@ for z in zA
     ylabel!("Fundamental")
     title!("z = "*string(z))
 
-    X = logmesh(Rmin, Rmax,1000).points
+    X = logmesh(Rmin, Rmax-0.000001,1000).points
 
     plot!(X, fundamental.(z,X),  label = "Théorique", color = :red, lw = 3)
 

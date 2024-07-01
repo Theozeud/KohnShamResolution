@@ -13,7 +13,7 @@ method = ConstantODA(1.0)
 lₕ = 0
 Rmin = 0.0000001
 cutting_pre = 10
-Nmesh = 30
+Nmesh = 50
 T = Float64
 ordermin = 2
 ordermax = 4
@@ -23,7 +23,7 @@ pltA = []
 
 for z in zA
 
-    Rmax = 100#(1.5 * log(z) + cutting_pre*log(10))/z
+    Rmax = 50#(1.5 * log(z) + cutting_pre*log(10))/z
     m = logmesh(Rmin, Rmax, Nmesh; z = 0.5)
 
     p1 = ShortP1Basis(m, T;  normalize = true, left = false, right = false)
