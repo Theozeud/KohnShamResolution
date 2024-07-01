@@ -60,4 +60,4 @@ for z in zA
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "image/hydrogenoide/with short IntLeg elements/Vecteurs propres avec Nmesh = "*string(Nmesh)*" et ordres = "*string(ordermax))
+savefig(pltfin, "image/hydrogenoide/with short IntLeg - P1 elements/Vecteurs propres avec Nmesh = "*string(Nmesh)*" et ordres = "*string(ordermax))

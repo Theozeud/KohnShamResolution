@@ -167,4 +167,4 @@ end
 pltfin = plot(plt_Rmax, plt_z, plt_Nmesh, layout = (2,2), size = (2400,1000), margin = 1.2Plots.cm)
 pltfin
 
-savefig(pltfin, "image/hydrogenoide/with short IntLeg - p1 elements/Condition number pour ordremax = "*string(ordermax))
+savefig(pltfin, "image/hydrogenoide/with short IntLeg elements/Condition number pour ordremax = "*string(ordermax))
