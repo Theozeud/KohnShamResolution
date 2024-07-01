@@ -144,3 +144,50 @@ function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Boo
     end
     ShortPolynomialBasis(intlegelement, mesh, size, infos, 0)
 end
+
+########################################################################################
+#                                Difference Legendre Elements
+########################################################################################
+
+struct DiffLegendreElements{N, T} <: AbstractShortElements{N, T}
+    polynomials::Vector{LaurentPolynomial{T}}
+    size::Int
+    ordermax::Int
+    binf::T
+    bsup::T
+    normalization::Vector{T}
+
+    function DiffLegendreElements(T::Type = Float64; ordermax = 2, normalize::Bool = false, binf::Real = -1, bsup::Real = 1)
+        @assert ordermin ≥ 1
+        polynomials = LaurentPolynomial{T}[]  
+        normalization = T[]  
+        for n ∈ 1:ordermax
+            Qₙ = Legendre(n+1; T = T, a = binf, b = bsup) - Legendre(n-1; T = T, a = binf, b = bsup)
+            push!(polynomials, Qₙ)
+            push!(normalization, scalar_product(Qₙ, Qₙ, binf, bsup))
+        end
+        new{normalize, T}(polynomials, ordermax - ordermin + 1, ordermin, ordermax, binf, bsup, normalization)
+    end
+end
+
+@inline Base.firstindex(::DiffLegendreElements) = 1
+@inline Base.eachindex(dlb::DiffLegendreElements) = eachindex(dlb.polynomials)
+@inline Base.getindex(dlb::DiffLegendreElements, n::Int) =  dlb.polynomials[n] 
+@inline getpolynomial(dlb::DiffLegendreElements) = dlb.polynomials
+
+function ShortDiffLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
+    difflegelement = DiffLegendreElements(T; normalize = normalize, kwargs...)
+    size = difflegelement.size * (length(mesh) - 1)
+    infos = Vector{InfoElement{T}}(undef, size)
+    for i ∈ eachindex(mesh)[1:end-1]
+        segments = [i]
+        shifts = [shift(T, mesh[i], mesh[i+1], difflegelement.binf, difflegelement.bsup)]
+        invshifts = [shift(T, difflegelement.binf, difflegelement.bsup, mesh[i], mesh[i+1])]
+        for n ∈ 1:difflegelement.size
+            index = [n]
+            infos[(i-1) * difflegelement.size + n] = InfoElement(index, segments, shifts, invshifts)
+        end
+    end
+    ShortPolynomialBasis(difflegelement, mesh, size, infos, 0)
+end
+
