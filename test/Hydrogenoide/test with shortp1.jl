@@ -18,14 +18,10 @@ cutting_pre = 10
 Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
 m = logmesh(Rmin, Rmax, Nmesh; z = 0.5)
 
-
 T = Float64
 basis = P1Basis(m, T; left = false, right = false)
 normalize = true
 shortbasis = ShortP1Basis(m, T;  normalize = normalize, left = false, right = false)
-#ordermin = 2
-#ordermax = 3
-#basis = ShortIntLegendreBasis(m, T; normalize = normalize, ordermin = ordermin, ordermax = ordermax)
 
 # Solve
 deriv_basis = deriv(basis)
@@ -45,8 +41,6 @@ M₋₂ = weight_mass_matrix(shortbasis, -2)
 
 H = 1/2 * (A + lₕ*(lₕ+1)*M₋₂) - z .* M₋₁
 ϵshort, Ushort = eigen(H,M₀)
-
-
 
 X = LinRange(Rmin,Rmax,1000)
 plt = plot()

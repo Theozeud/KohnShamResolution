@@ -11,7 +11,7 @@ cutting_pre = 10
 Nmesh = 30
 T = Float64
 ordermin = 2
-ordermax = 4
+ordermax = 3
 
 # One electron model
 zA = [1, 2, 3, 4]
@@ -26,7 +26,7 @@ cutting_pre = 5
 
 for z in zA
 
-    Rmax = 100#(1.5 * log(z) + cutting_pre*log(10))/z
+    Rmax = 25#(1.5 * log(z) + cutting_pre*log(10))/z
     m = logmesh(Rmin, Rmax, Nmesh; z = 0.5)
 
     p1 = ShortP1Basis(m, T;  normalize = true, left = false, right = false)

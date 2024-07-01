@@ -4,9 +4,9 @@ using Plots
 
 # Test with P1
 T = Float64
-Rmin = 0.00001
+Rmin = 0
 Rmax = 100
-Nmesh = 40
+Nmesh = 50
 m = logmesh(Rmin,Rmax,Nmesh)
 normalize = true
 ordermin = 2

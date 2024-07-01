@@ -2,10 +2,16 @@ using KohnShamResolution
 using Plots
 
 # Choice of the method
-method = ODA()
+method = ConstantODA(1.0)
 
 # Discretization 
 lₕ = 0
+Rmin = 0.0000001
+cutting_pre = 10
+Nmesh = 30
+T = Float64
+ordermin = 2
+ordermax = 3
 
 # One electron model
 zA = [1, 2, 3, 4]
@@ -16,16 +22,16 @@ fundamental(z, x)     = z^(3/2)/sqrt(π)*exp(-z*abs(x))
 # Plot
 pltA = []
 
-# Parameter
-cutting_pre = 10
-T = Float64
-order = 3
+cutting_pre = 5
 
 for z in zA
 
-    Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-    m = logmesh(0, Rmax, 100; z = 1/z, T = T)
-    basis = IntLegendreBasis(m; order = order, left = false, right = false)
+    Rmax = 25#(1.5 * log(z) + cutting_pre*log(10))/z
+    m = logmesh(Rmin, Rmax, Nmesh; z = 0.5)
+
+    p1 = ShortP1Basis(m, T;  normalize = true, left = false, right = false)
+    intleg = ShortDiffLegendreBasis(m, T; normalize = true,  ordermax = ordermax)
+    basis = CombineShortPolynomialBasis(p1, intleg)
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
     KM = KohnShamExtended(z = z, N = N)
@@ -44,14 +50,14 @@ for z in zA
     ylabel!("Fundamental")
     title!("z = "*string(z))
 
-    X = logmesh(0,Rmax,1000).points
+    X = logmesh(Rmin, Rmax-0.000001,1000).points
 
     plot!(X, fundamental.(z,X),  label = "Théorique", color = :red, lw = 3)
 
-    plot!(plt, X, fun.(X), label = "Numérique", color = :blue)
+    plot!(plt, X, -fun.(X), label = "Numérique", color = :blue)
 
     push!(pltA, plt)
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "image/hydrogenoide/with IntLegendre elements/Vecteurs propres Ordre "*string(order))
+savefig(pltfin, "image/hydrogenoide/with short diff leg/Vecteurs propres avec Nmesh = "*string(Nmesh)*" et ordres = "*string(ordermax))
