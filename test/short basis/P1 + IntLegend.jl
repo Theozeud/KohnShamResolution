@@ -4,7 +4,10 @@ using Plots
 
 # Test with P1
 T = Float64
-m = logmesh(1,10,5)
+Rmin = 0.00001
+Rmax = 100
+Nmesh = 40
+m = logmesh(Rmin,Rmax,Nmesh)
 normalize = true
 ordermin = 2
 ordermax = 3
@@ -16,9 +19,6 @@ right = true
 
 p1 = ShortP1Basis(m, T; normalize = normalize, left = left, right = right)
 
-
-intlegp1 = CombineShortPolynomialBasis(intleg, p1)
+intlegp1 = CombineShortPolynomialBasis(p1, intleg)
 
 mass_matrix(intlegp1)
-
-
