@@ -73,6 +73,9 @@ module KohnShamResolution
     export InfoBlock, CombineShortPolynomialBasis
     include("finite element basis/shortbasis/combineshortbasis.jl")
 
+    export ShortP1IntLegendreBasis
+    include("finite element basis/shortbasis/combine elements.jl")
+
     #################
     # KOHN-SHAM MODEL
     export AbstractExchangeCorrelation, ExchangeCorrelation, NoExchangeCorrelation, KohnShamExtended
