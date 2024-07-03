@@ -14,5 +14,3 @@ for p ∈ p1
     plot!(X,p.(X))
 end
 plt
-
-mass_matrix(p1, 1, 5)

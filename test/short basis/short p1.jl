@@ -4,7 +4,10 @@ using Plots
 
 # Test with P1
 T = Float64
-m = logmesh(0,5,20; z = 0.1)
+Rmin = 0
+Rmax = 5
+Nmesh = 5
+m = linmesh(Rmin, Rmax, Nmesh)
 normalize = true
 left = false
 right = false
@@ -32,10 +35,21 @@ display(dm)
 @time "Short P1 deriv Mass matrix" shortdm = mass_matrix(deriv(shortp1))
 display(shortdm)
 
-X = LinRange(0,5,1000)
-plt = plot()
+# Plot Basis
+X = LinRange(Rmin, Rmax, Nmesh * 100)
+plt_basis = plot()
 for i ∈ 1:length(shortp1)
     p = build_basis(shortp1, i)
-    plot!(X, p.(X))
+    plot!(plt_basis, X, p.(X))
 end
-plt
+plt_basis
+
+# Plot Derivative of the Basis
+deriv_basis = deriv(shortp1)
+X = LinRange(Rmin, Rmax, Nmesh * 100)
+plt_derivbasis = plot()
+for i ∈ 1:length(deriv_basis)
+    p = build_basis(deriv_basis, i)
+    plot!(plt_derivbasis, X, p.(X))
+end
+plt_derivbasis

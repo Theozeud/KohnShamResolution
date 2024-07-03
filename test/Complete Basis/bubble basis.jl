@@ -16,5 +16,3 @@ for p ∈ pb
     plot!(X,p.(X))
 end
 plt
-
-#A = mass_matrix(pb,1,5)
