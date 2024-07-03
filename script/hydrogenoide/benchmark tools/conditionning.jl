@@ -28,8 +28,8 @@ function conditionning(Rmax::Real, Nmesh::Int, vecz::AbstractArray, Basis, typem
 end
 
 function conditionning(Rmax::Real, Nmesh::Int, z::Real, Basis, typemesh; opts_mesh = NamedTuple(), opts_basis = NamedTuple(), T = Float64)
-    # Default parameters (should be set to 0 but set up to this due to problemin the code)
-    Rmin = 0.00001
+    # Default parameters
+    Rmin = 0
     # Creation of the mesh
     m = typemesh(Rmin, Rmax, Nmesh; opts_mesh...)
     # Creation of the basis

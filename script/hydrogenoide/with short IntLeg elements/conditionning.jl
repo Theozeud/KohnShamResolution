@@ -6,7 +6,7 @@ include("../benchmark tools/include.jl")
 T = Float64
 typemesh = logmesh
 basis = ShortIntLegendreBasis
-ordermax = 4
+ordermax = 3
 opts_basis = (normalize = true, ordermin = 1, ordermax = ordermax)
 
 # Default parameters
