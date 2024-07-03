@@ -32,7 +32,7 @@ vals_p1, eigs_p1 = eigen(AP1, M₀)
 # With P1-Integrated Legendre Polynomials ordre 2
 ordermin = 2
 ordermax = 4
-basis = ShortP1IntLegendreBasis(m, T; ordermin = ordermin, ordermax = ordermax,  normalize = normalize)
+basis = ShortP1IntLegendreBasis(m, T; ordermin = ordermin, ordermax = ordermax,  normalize = normalize, left = left, right = right)
 M₀  = mass_matrix(basis)
 AIntleg2   = mass_matrix(deriv(basis))
 vals_il2, eigs_il2 = eigen(AIntleg2, M₀)
