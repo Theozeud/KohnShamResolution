@@ -81,14 +81,16 @@ end
 ##################################################################################
 
 function integrate(rf::RationalFraction, a::Real, b::Real)
-    if degmax_denom(rf) ≥ 3
+    if degmax_num(rf) == 0
+        return integrate(rf.ent, a, b)
+    elseif degmax_denom(rf) ≥ 3
         @error "No analytical expression for integrating rational fractions with a denominator of degree higher than 2."
     elseif degmax_denom(rf) == 1
         B = rf.num[0]
         D = rf.denom[1]
         E = rf.denom[0]
         msg = "You want to integrate "*string(B)*" / ("*string(D)*" X + "*string(E)*") over ("*string(a)*","*string(b)*")" 
-        @assert B == 0 || -E/D > b || -E/D < a msg
+        @assert -E/D > b || -E/D < a msg
         return integrate(rf.ent, a, b) + B/D * log((D*b + E)/(D*a + E))
     elseif degmax_denom(rf) == 2
         A = rf.num[1]
