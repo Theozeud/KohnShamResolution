@@ -66,7 +66,7 @@ function hydrogenoide_test_eigenvalue(D::KohnShamDiscretization, z::Real, T = Fl
 
     xlabel!("n")
     ylabel!("Energie")
-    title!("z = "*string(z)*", Nmesh = "*string(length(m))*", Rmax ="*string(Rmax))
+    title!("z = "*string(z)*", Nmesh = "*string(length(D.mesh))*", Rmax ="*string(Rmax))
 
     index_ϵ = findall(x->x < 0, sol.ϵ)
 
