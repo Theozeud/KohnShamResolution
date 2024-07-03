@@ -87,8 +87,8 @@ module KohnShamResolution
     ##########################
     # KOHN-SHAM DISCRETIZATION
     export KohnShamDiscretization, KohnShamSphericalDiscretization
-    include("discretization/abstract_discretization.jl")
-    include("discretization/spherical_discretization.jl")
+    include("model discretization/abstract_discretization.jl")
+    include("model discretization/spherical_discretization.jl")
 
     ###################
     # KOHN-SHAM METHODS
