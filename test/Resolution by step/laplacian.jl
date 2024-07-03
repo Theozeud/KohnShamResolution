@@ -5,8 +5,8 @@ using LinearAlgebra
 # General Discretization Parameters
 T = Float64
 Rmin = 0
-Rmax = 1000
-Nmesh = 500
+Rmax = 100
+Nmesh = 101
 m = linmesh(Rmin,Rmax,Nmesh)
 normalize = true
 
@@ -16,7 +16,6 @@ val_theo(n)  = (π/Rmax)^2 * n^2
 
 
 # With finite difference
-Nmesh = 100
 A = SymTridiagonal(2*ones(Nmesh), -ones(Nmesh-1)) .* ((Nmesh - 1)/ Rmax)^2
 vals_diff, eigs_diff = eigen(A)
 
@@ -25,27 +24,39 @@ vals_diff, eigs_diff = eigen(A)
 left = false
 right = false
 basis = ShortP1Basis(m, T; left = left, right = right, normalize = normalize)
+M₀  = mass_matrix(basis)
 AP1   = mass_matrix(deriv(basis))
-vals_p1, eigs_p1 = eigen(AP1)
+vals_p1, eigs_p1 = eigen(AP1, M₀)
 
 
-# With P1-Integrated Legendre Polynomials
+# With P1-Integrated Legendre Polynomials ordre 2
 ordermin = 2
-ordermax = 3
+ordermax = 4
 basis = ShortP1IntLegendreBasis(m, T; ordermin = ordermin, ordermax = ordermax,  normalize = normalize)
-AIntleg   = mass_matrix(deriv(basis))
-vals_il, eigs_il = eigen(AIntleg)
+M₀  = mass_matrix(basis)
+AIntleg2   = mass_matrix(deriv(basis))
+vals_il2, eigs_il2 = eigen(AIntleg2, M₀)
+
+# With P1-Integrated Legendre Polynomials ordre 3
+ordermin = 2
+ordermax = 5
+basis = ShortP1IntLegendreBasis(m, T; ordermin = ordermin, ordermax = ordermax,  normalize = normalize)
+M₀  = mass_matrix(basis)
+AIntleg3   = mass_matrix(deriv(basis))
+vals_il3, eigs_i3 = eigen(AIntleg3, M₀)
 
 # Plot Eigenvalue
 plt_eigenvalue = plot(size= (1000, 500))
-plot!(vals_diff[1:Nmesh], label = "Finite Difference", lw = 2)
-plot!(vals_p1[1:Nmesh], label = "P1", lw = 2)
-plot!(vals_il[1:Nmesh], label = "P1 + Integrated Legendre", lw = 2)
-plot!(val_theo.(1:Nmesh), label = "Theoretical", lw = 2)
+plot!(vals_diff[1:Nmesh-2], label = "Finite Difference", lw = 2)
+plot!(vals_p1[1:Nmesh-2], label = "P1", lw = 2)
+plot!(vals_il2[1:Nmesh-2], label = "P1 + Integrated Legendre ordre 4", lw = 2)
+plot!(vals_il3[1:Nmesh-2], label = "P1 + Integrated Legendre ordre 5", lw = 2)
+scatter!(val_theo.(1:Nmesh-2), label = "Theoretical", lw = 2, marker =:x)
 
 plt_eigenvalue_intleg = plot(size= (1000, 500))
-plot!(vals_il, label = "P1 + Integrated Legendre", lw = 2)
-plot!(val_theo, label = "Theoretical", lw = 2)
+plot!(vals_il2, label = "P1 + Integrated Legendre ordre 4 ", lw = 2)
+plot!(vals_il3, label = "P1 + Integrated Legendre ordre 5", lw = 2)
+plot!(val_theo, label = "Theoretical", lw = 2, marker =:x)
 
 plot(plt_eigenvalue, plt_eigenvalue_intleg, layout = (1,2))
 
