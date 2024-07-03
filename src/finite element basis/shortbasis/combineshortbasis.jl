@@ -98,12 +98,12 @@ end
 function weight_mass_matrix(cb::CombineShortPolynomialBasis, weight::LaurentPolynomial)
     T = bottom_type(first(cb))
     A = zeros(T, (length(cb), length(cb)))
-    for b ∈ cb.blocks
+    for b ∈ getblocks(cb)
         @views ABlock = A[getrangerow(b), getrangecolumn(b)]
         if isdiagonal(b)
             fill_weight_mass_matrix!(getbasis(cb, getindex(b,1)), weight, ABlock)
         else
-            fill_weight_mass_matrix!(getbasis(cb, getindex(b,1)), getbasis(cb, getindex(b,2)), weight, b.interaction_index, A)
+            fill_weight_mass_matrix!(getbasis(cb, getindex(b,1)), getbasis(cb, getindex(b,2)), weight, b.interaction_index, ABlock)
             @views ABlockT = A[getrangecolumn(b), getrangerow(b)]
             @. ABlockT = ABlock'
         end
@@ -149,7 +149,6 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
         if isnormalized(spb2)
             @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2])
         end
-        @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
 end
 
