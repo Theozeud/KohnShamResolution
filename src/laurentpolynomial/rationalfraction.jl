@@ -103,10 +103,10 @@ function integrate(rf::RationalFraction, a::Real, b::Real)
             r₁ = (-D - sqrt(Δ))/(2*C)
             r₂ = (-D + sqrt(Δ))/(2*C)
             msg = "You want to integrate "*string(A)*" X + "*string(B)*"/ ("*string(C)* "X^2 + "*string(D)*" X + "*string(E)*") over ("*string(a)*","*string(b)*")" 
-            @assert (r₁ > b) || (r₂ < a) || (r₂ > b && r₁ < a) || (A == 0 && B == 0)
+            @assert (r₁ > b) || (r₂ < a) || (r₂ > b && r₁ < a) msg
         elseif Δ == 0
             r₀ = -D/(2*C)
-            @assert (r₀ > b) || (r₀ < a)|| (A == 0 && B == 0)
+            @assert (r₀ > b) || (r₀ < a) msg
         end
         C1 = D/(2*C)
         C2 = (4*E*C - D^2)/(4*C^2)

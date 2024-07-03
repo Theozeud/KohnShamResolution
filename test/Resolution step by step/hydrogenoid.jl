@@ -7,9 +7,9 @@ z = 4
 
 # Discretization 
 Rmin = 0
-Rmax = 10
-Nmesh = 5
-m = linmesh(Rmin, Rmax, Nmesh)
+Rmax = 100
+Nmesh = 40
+m = logmesh(Rmin, Rmax, Nmesh)
 basis = ShortP1IntLegendreBasis(m; left = false, right = false, normalize = true, ordermin = 2, ordermax = 2)
 
 # Solve

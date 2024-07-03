@@ -2,26 +2,16 @@ using KohnShamResolution
 using LinearAlgebra
 using Plots
 
-# Creation of the model
-z = 10
-N = 5
-KM = KohnShamExtended(z = z,N = N)
-
-# Choice of the method
-method = ODA()
-
 # Discretization 
-Nₕ = 2000
-lₕ = 2
+Nmesh = 11
 Rmin = 0
-cutting_pre = 10
-Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-m = logmesh(Rmin, Rmax, Nₕ)
-basis = P1Basis(m; left = false, right = false)
+Rmax = 10
+m = linmesh(Rmin, Rmax, Nmesh)
+basis = ShortP1Basis(m; left = false, right = false, normalize = true)
 
 # Solve
 
-#deriv_basis = deriv(basis)
+deriv_basis = deriv(basis)
 
 @time mass_matrix(deriv_basis)
 @time mass_matrix(basis)
