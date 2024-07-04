@@ -81,7 +81,7 @@ end
 ##################################################################################
 
 function integrate(rf::RationalFraction, a::Real, b::Real)
-    if iszero(rf.num)
+    if iszero(rf.num) || (degmax_num(rf) == 0 && rf.denom[end] + rf.num[0] ≈ rf.denom[end])
         return integrate(rf.ent, a, b)
     elseif degmax_denom(rf) ≥ 3
         @error "No analytical expression for integrating rational fractions with a denominator of degree higher than 2."
