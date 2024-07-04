@@ -13,12 +13,12 @@ method = ConstantODA(1.0)
 lₕ = 0
 Rmin = 0.0000001
 cutting_pre = 10
-Nmesh = 1000
+Nmesh = 100
 T = Float64
 
 # Plots
 pltA = []
-
+sol = 0
 for z in zA
 
     Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
@@ -27,7 +27,7 @@ for z in zA
     D = KohnShamSphericalDiscretization(lₕ, basis, m)
     KM = KohnShamExtended(z = z, N = N)
 
-    sol = groundstate(KM, D, method; tol = 1e-4, hartree = false)
+    global sol = groundstate(KM, D, method; tol = 1e-4, hartree = false)
 
     plt = plot( size = (900,600), margin = 0.5Plots.cm, legend = :bottomright,
                 legendfontsize  = 14,  
