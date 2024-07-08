@@ -9,11 +9,23 @@ Nmesh = 6
 m = linmesh(Rmin,Rmax,Nmesh)
 normalize = true
 ordermin = 2
-ordermax = 3
+ordermax = 5
 left = false
 right = false
 
 basis = ShortP1IntLegendreBasis(m, T; ordermin = ordermin, ordermax = ordermax, left = left, right = right, normalize = normalize)
+
+
+# Plots elements of the basis
+X = LinRange(-1, 1, 1000)
+plt_elements = plot()
+for b ∈ basis.basisVector
+    for i ∈ eachindex(b.elements)
+        plot!(plt_elements, X, b.elements[i].(X))
+    end
+end
+plt_elements
+
 
 # Plots of basis
 X = LinRange(Rmin, Rmax, Nmesh * 100)
@@ -23,7 +35,6 @@ for i ∈ 1:length(basis)
     plot!(plt_basis, X, p.(X))
 end
 plt_basis
-
 
 
 # Plots of the derivatives of the basis

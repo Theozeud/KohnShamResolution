@@ -58,7 +58,6 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
     for (i,Nmesh) ∈ enumerate(vecNmesh)
         # Creation of the discretization
         m = typemesh(Rmin, Rmax, Nmesh; opts_mesh...)
-        #@show opts_basis
         basis = Basis(m, T; opts_basis...)
         D = KohnShamSphericalDiscretization(lₕ, basis, m)
         # Solving the problem
