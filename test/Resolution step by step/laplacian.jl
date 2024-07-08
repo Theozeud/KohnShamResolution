@@ -187,7 +187,7 @@ function compute_error_eigenvalue(vecNmesh, Rmax, num)
 end
 
 
-vecNmesh = 2 .^(4:9)
+vecNmesh = 2 .^(3:10)
 
 plt_eigenvalue = plot_eigenvalue(100,10, [2,3])
 savefig(plt_eigenvalue, "test/image_tests/Laplacien - Valeurs Propres 1-2-3")
@@ -202,5 +202,5 @@ savefig(plt_eigenvector, "test/image_tests/Laplacien - Vecteur Propre 199 - ordr
 plt_eigenvector = plot_eigenvector(100,10, 200, 3)
 savefig(plt_eigenvector, "test/image_tests/Laplacien - Vecteur Propre 200 - ordre 3")
 
-plt_eigenvalue_error = compute_error_eigenvalue(vecNmesh, 10, 5)
+plt_eigenvalue_error = compute_error_eigenvalue(vecNmesh, 10, 1)
 savefig(plt_eigenvalue_error, "test/image_tests/Laplacien - Erreurs valeurs propres")
