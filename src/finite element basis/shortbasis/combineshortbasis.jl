@@ -57,11 +57,11 @@ end
 
 @inline bottom_type(cb::CombineShortPolynomialBasis)= bottom_type(first(cb))
 
-@inline getbasis(cb::CombineShortPolynomialBasis, i::Int) = cb.basisVector[i]
 @inline Base.length(cb::CombineShortPolynomialBasis) = cb.size
 @inline Base.eachindex(cb::CombineShortPolynomialBasis) = 1:cb.size
-@inline getblocks(cb::CombineShortPolynomialBasis) = cb.blocks
 @inline Base.first(cb::CombineShortPolynomialBasis) = cb.basisVector[1]
+@inline getbasis(cb::CombineShortPolynomialBasis, i::Int) = cb.basisVector[i]
+@inline getblocks(cb::CombineShortPolynomialBasis) = cb.blocks
 
 @inline getindex(cb::CombineShortPolynomialBasis, i::Int) =  getindex(cb.infoblock[i])
 @inline getrangerow(cb::CombineShortPolynomialBasis, i::Int) = getrangerow(cb.infoblock[i])

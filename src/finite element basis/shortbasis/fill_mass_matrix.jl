@@ -40,6 +40,7 @@ end
 ########################################################################################
 #                    Integrated Legendre Polynomials mass matrix
 ########################################################################################
+#=
 function fill_mass_matrix!(ilb::IntLegendreElements{true}, ::OneDMesh, A)
     T = eltype(ilb)
     for I ∈ axes(A,1)
@@ -58,7 +59,7 @@ function fill_mass_matrix!(ilb::IntLegendreElements{false}, mesh::OneDMesh, A)
     end
     nothing
 end
-
+=#
 
 ########################################################################################
 #                    Difference Legendre Polynomials mass matrix

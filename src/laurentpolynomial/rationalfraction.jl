@@ -81,7 +81,7 @@ end
 ##################################################################################
 
 function integrate(rf::RationalFraction, a::Real, b::Real)
-    if iszero(rf.num) || (degmax_num(rf) == 0 && rf.denom[end] + rf.num[0] ≈ rf.denom[end])
+    if iszero(rf.num) || (degmax_num(rf) == 0 && rf.num[0] ≈ 0)
         return integrate(rf.ent, a, b)
     elseif degmax_denom(rf) ≥ 3
         @error "No analytical expression for integrating rational fractions with a denominator of degree higher than 2."
@@ -106,6 +106,7 @@ function integrate(rf::RationalFraction, a::Real, b::Real)
             @assert (r₁ > b) || (r₂ < a) || (r₂ > b && r₁ < a) msg
         elseif Δ == 0
             r₀ = -D/(2*C)
+            msg = "You want to integrate "*string(A)*" X + "*string(B)*"/ ("*string(C)* "X^2 + "*string(D)*" X + "*string(E)*") over ("*string(a)*","*string(b)*")" 
             @assert (r₀ > b) || (r₀ < a) msg
         end
         C1 = D/(2*C)
@@ -116,7 +117,7 @@ function integrate(rf::RationalFraction, a::Real, b::Real)
             return integrate(rf.ent, a, b) + A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
         elseif C2 > 0
             sqrtC2 = sqrt(-C2)
-            return integrate(rf.ent, a, b) + A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((b+C1-C2)/(a+C1-C2))) - log(abs((b+C1+C2)/(b+C1+C2))))
+            return integrate(rf.ent, a, b) + A/(2*C) * log( abs( ((b+C1)^2 - C2) / ((a+C1)^2 - C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((b+C1-sqrtC2)/(a+C1-sqrtC2))) - log(abs((b+C1+sqrtC2)/(b+C1+sqrtC2))))
         else
             return integrate(rf.ent, a, b) + A/C * log( abs((b+C1) / (a+C1) ) ) + C3/C * (1/(a+C1) - 1/(b+C1))
         end
