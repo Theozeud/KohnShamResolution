@@ -68,7 +68,7 @@ function plot_conditionning(Cond::Matrix, X::AbstractVector, Xlabel::String, tit
     ylabel!(plt, "Condition number") 
     title!(plt, title)
     for i ∈ 1:4
-        plot!(plt, X, Cond[:,i], lw = 3, markershape = :x, markersize = 8, label = label[i], yaxis=:log)
+        plot!(plt, X, Cond[:,i], lw = 4, markershape = :x, markersize = 8, label = label[i], yaxis=:log)
     end
     plt
 end
