@@ -12,7 +12,7 @@ function hydrogenoide_test_eigenvector(n::Int, vecRmax::AbstractVector, Nmesh::I
         push!(eigs, eig)
         push!(plts, plt)
     end
-    plot(plts, layout = (length(plts)÷2+1, 2), size = (1200,1000))
+    plot(plts..., layout = (length(plts)÷2, 2), size = (1200, 500 * length(plts)÷2))
 end
 
 function hydrogenoide_test_eigenvector(n::Int, Rmax::Real, vecNmesh::AbstractVector, z::Real, Basis, typemesh; opts_mesh = NamedTuple(), opts_basis = NamedTuple(), T = Float64, lₕ = 0)
@@ -23,7 +23,7 @@ function hydrogenoide_test_eigenvector(n::Int, Rmax::Real, vecNmesh::AbstractVec
         push!(eigs, eig)
         push!(plts, plt)
     end
-    plot(plts, layout = (length(plts)÷2+1, 2), size = (1200,1000))
+    plot(plts..., layout = (length(plts)÷2, 2), size = (1200,500 * length(plts)÷2))
 end
 
 function hydrogenoide_test_eigenvector(n::Int, Rmax::Real, Nmesh::Int, vecz::AbstractVector, Basis, typemesh; opts_mesh = NamedTuple(), opts_basis = NamedTuple(), T = Float64, lₕ = 0)
@@ -34,7 +34,7 @@ function hydrogenoide_test_eigenvector(n::Int, Rmax::Real, Nmesh::Int, vecz::Abs
         push!(eigs, eig)
         push!(plts, plt)
     end
-    plot(plts..., layout = (length(plts)÷2, 2), size = (1200,1000)), eigs
+    plot(plts..., layout = (length(plts)÷2, 2), size = (1200,500 * length(plts)÷2)), eigs
 end
 
 function hydrogenoide_test_eigenvector(n::Int, Rmax::Real, Nmesh::Int, z::Real, Basis, typemesh; opts_mesh = NamedTuple(), opts_basis = NamedTuple(), T = Float64, lₕ = 0)
@@ -60,7 +60,7 @@ function hydrogenoide_test_eigenvector(n::Int, D::KohnShamDiscretization, z::Rea
 
     fun = sol.eigvects[n]
 
-    plt = plot( size = (900,600), margin = 0.5Plots.cm, legend = :bottomright,
+    plt = plot( size = (900,600), margin = 0.5Plots.cm, legend = :topright,
                 legendfontsize  = 14,  
                 titlefontsize   = 14,
                 guidefontsize   = 14,
@@ -68,9 +68,9 @@ function hydrogenoide_test_eigenvector(n::Int, D::KohnShamDiscretization, z::Rea
             
     xlabel!("r")
     ylabel!("Fundamental")
-    title!("z = "*string(z)*", Nmesh = "*string(length(D.mesh))*", Rmax ="*string(Rmax))
-            
-    X = range(Rmin, Rmax-0.0000001, 1000)
+    title!("z = "*string(z)*", Nmesh = "*string(length(D.mesh))*", Rmax ="*string(last(D.mesh)))
+    Rmin = 0
+    X = range(Rmin, last(D.mesh)-0.0000001, 1000)
     
     if n == 1
         plot!(X, fundamental.(z,X),  label = "Théorique", color = :red, lw = 3)

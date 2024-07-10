@@ -17,7 +17,7 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
                         guidefontsize   = 12,
                         tickfontsize    = 12)
     xlabel!(plt_ϵ_error, "Nmesh")
-    ylabel!(plt_ϵ_error, "Error on the first "*string(nb_eigval)*"-th eigenvalues")
+    ylabel!(plt_ϵ_error, "Error on the "*string(nb_eigval)*"-th eigenvalues")
     title!(plt_ϵ_error, "Rmax = "*string(Rmax)*" and z = "*string(z))
 
     plt_u_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
@@ -30,16 +30,14 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
     title!(plt_u_error, "Rmax = "*string(Rmax)*" and z = "*string(z))
 
     Uerror = zeros(length(vecBasis), length(vecNmesh))
-    ϵerror = zeros(length(vecBasis), length(vecNmesh), nb_eigval)
+    ϵerror = zeros(length(vecBasis), length(vecNmesh))
     for (i,Basis) ∈ enumerate(vecBasis)
         println("Basis "*string(keys(vecBasis)[i]))
         (_, _, ϵ_error, u_error) = test_convergence_withNmesh(vecNmesh, Rmax, z, Basis, typemesh; opts_mesh = opts_mesh, opts_basis = opts_basis[i], T = T, lₕ = lₕ, nb_eigval = nb_eigval)
-        for j ∈ 1:nb_eigval
-            plot!(plt_ϵ_error, vecNmesh, ϵ_error[:, j], lw = 3, label = "Basis "*string(keys(vecBasis)[i])*", ϵ"*string(j), markershape = :x, markersize = 10)
-        end
+        plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 3, label = "Basis "*string(keys(vecBasis)[i])*", ϵ"*string(nb_eigval), markershape = :x, markersize = 10)
         plot!(plt_u_error, vecNmesh, u_error, lw = 3, label = "Basis "*string(keys(vecBasis)[i]), markershape = :x, markersize = 10)
         Uerror[i, :] = u_error
-        ϵerror[i, : , :] = ϵ_error
+        ϵerror[i, : ] = ϵ_error
     end
     (plt_ϵ_error, plt_u_error, ϵerror, Uerror)
 end
@@ -53,7 +51,7 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
     # Setup the method
     method = ConstantODA(one(T))
     # Computation of the errors
-    ϵ_error = zeros(T, length(vecNmesh), nb_eigval)
+    ϵ_error = zeros(T, length(vecNmesh))
     u_error = zeros(T, length(vecNmesh))
     for (i,Nmesh) ∈ enumerate(vecNmesh)
         # Creation of the discretization
@@ -64,7 +62,7 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
         @time "Nmesh = "*string(Nmesh) sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
         funda = sol.eigvects[1]
         # Compute the error for eigenvalues and the fundamental
-        ϵ_error[i,:] = abs.(sol.ϵ[1:nb_eigval] .- eigval_theo.(1:nb_eigval, z))
+        ϵ_error[i] = abs(sol.ϵ[nb_eigval] - eigval_theo(nb_eigval, z))
         u_error[i]   = sqrt(1/(Nmesh - 1) * sum((funda.(m.points[1:end-1]) .- fundamental.(z, m.points[1:end-1])).^2))
     end
     # Creation of the plot for eigenvalue
@@ -74,11 +72,9 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
                                  guidefontsize   = 12,
                                  tickfontsize    = 12)
     xlabel!(plt_ϵ_error, "Nmesh")
-    ylabel!(plt_ϵ_error, "Error on the first "*string(nb_eigval)*"-th eigenvalues")
+    ylabel!(plt_ϵ_error, "Error on the "*string(nb_eigval)*"-th eigenvalues")
     title!(plt_ϵ_error, "Rmax = "*string(Rmax)*" and z = "*string(z))
-    for i ∈ 1:nb_eigval
-        plot!(plt_ϵ_error, vecNmesh, ϵ_error[:, i], lw = 3, label = "ϵ"*string(i), markershape = :x, markersize = 10)
-    end
+    plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 3, label = "ϵ"*string(nb_eigval), markershape = :x, markersize = 10)
     # Creation of the plot for the fundamental
     plt_u_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
                                  legendfontsize  = 12,  
