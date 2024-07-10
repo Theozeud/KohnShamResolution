@@ -8,6 +8,8 @@ end
 Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin, false, eltype(coeff)(0))
 Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,0))
 
+randPolynomial(degmax::Int, degmin::Int = 0, T = Float64) = Polynomial(rand(T, degmax - degmin +1), degmin)
+
 @inline Base.eltype(::LaurentPolynomial{T}) where T = T
 @inline convert(::Type{T}, p::LaurentPolynomial) where T = LaurentPolynomial(T.(p.coeffs), p.degmin, p.haslog, T(p.coeff_log))
 
