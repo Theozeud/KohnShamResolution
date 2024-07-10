@@ -129,11 +129,12 @@ end
 @inline Base.getindex(ilb::IntLegendreElements, n::Int) =  ilb.polynomials[n] 
 @inline getpolynomial(ilb::IntLegendreElements) = ilb.polynomials
 
-function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
+function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; Rcut::Real = last(mesh), normalize::Bool = false, kwargs...)
     intlegelement = IntLegendreElements(T; normalize = normalize, kwargs...)
-    size = intlegelement.size * (length(mesh) - 1)
+    Ncut = min(findindex(mesh, Rcut), lastindex(mesh))
+    size = intlegelement.size * (Ncut - 1)
     infos = Vector{InfoElement{T}}(undef, size)
-    for i ∈ eachindex(mesh)[1:end-1]
+    for i ∈ eachindex(mesh)[1:Ncut-1]
         segments = [i]
         shifts = [shift(T, mesh[i], mesh[i+1], intlegelement.binf, intlegelement.bsup)]
         invshifts = [shift(T, intlegelement.binf, intlegelement.bsup, mesh[i], mesh[i+1])]
