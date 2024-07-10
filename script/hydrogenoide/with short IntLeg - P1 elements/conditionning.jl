@@ -6,7 +6,7 @@ include("../benchmark tools/include.jl")
 T = Float64
 typemesh = logmesh
 basis = ShortIntLegendreBasis
-ordermax = 3
+ordermax = 2
 opts_basis = (normalize = true, ordermin = 2, ordermax = ordermax)
 
 # Default parameters
@@ -26,6 +26,6 @@ plt_z, _     = conditionning(Rmax, Nmesh, vecz, basis, typemesh; opts_basis = op
 
 ## Save Plots
 
-pltfin = plot(plt_Rmax, plt_Nmesh, plt_z, layout = (2,2), size = (2400,1000), margin = 1.2Plots.cm)
+pltfin = plot(plt_Rmax, plt_Nmesh, plt_z, layout = (3,1), size = (1200, 1500), margin = 1.2Plots.cm)
 
 savefig(pltfin, "image/hydrogenoide/with short IntLeg - P1 elements/Conditionnement pour ordremax = "*string(ordermax))

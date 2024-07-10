@@ -11,12 +11,12 @@ method = ConstantODA(1.0)
 
 # Discretization 
 lₕ = 0
-Rmin = 0.00001
-Rmax = 1000
+Rmin = 0
+Rmax = 100
 cutting_pre = 100
-Nmesh = 100
+Nmesh = 50
 T = Float64
-ordermax = 2
+ordermax = 3
 
 # Plots
 pltA = []
@@ -68,4 +68,4 @@ for z in zA
 end
 
 pltfin = plot(pltA..., layout = (2,2), size = (1200,1000))
-savefig(pltfin, "image/hydrogenoide/with short diff leg/Valeurs propres avec Nmesh = "*string(Nmesh)*" et ordres = "*string(ordermax)*" et Rmax = "*string(Rmax))
+#savefig(pltfin, "image/hydrogenoide/with short diff leg/Valeurs propres avec Nmesh = "*string(Nmesh)*" et ordres = "*string(ordermax)*" et Rmax = "*string(Rmax))
