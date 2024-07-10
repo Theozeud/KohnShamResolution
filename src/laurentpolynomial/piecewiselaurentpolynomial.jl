@@ -14,19 +14,12 @@ end
 @inline Base.eachindex(pwlp::PiecewiseLaurentPolynomial) = eachindex(pwlp.mesh)
 @inline Base.firstindex(pwlp::PiecewiseLaurentPolynomial) = firstindex(pwlp.mesh)
 @inline Base.lastindex(pwlp::PiecewiseLaurentPolynomial) = lastindex(pwlp.mesh)
-@inline function Base.getindex(pwlp::PiecewiseLaurentPolynomial, i::Int) 
-    if i ∈ pwlp.index && i != lastindex(pwlp)
-        return ((pwlp.mesh[i], pwlp.mesh[i+1]), pwlp.functions[findfirst(item->item == i, pwlp.index)])
-    elseif i == lastindex(pwlp)
-        return ((pwlp.mesh[i-1], pwlp.mesh[i]), x->pwlp.default_value)
-    else
-        return ((pwlp.mesh[i], pwlp.mesh[i+1]), x->pwlp.default_value)
-    end
-end
+@inline Base.getindex(pwlp::PiecewiseLaurentPolynomial, i::Int) = i ∈ pwlp.index ? pwlp.functions[findfirst(item->item == i, pwlp.index)] : x->pwlp.default_value
+
 @inline getmesh(pwlp::PiecewiseLaurentPolynomial, i::Int) = pwlp.mesh[i]
 @inline getfunction(pwlp::PiecewiseLaurentPolynomial, i::Int) = i ∈ pwlp.index ? pwlp.functions[findfirst(item->item == i, pwlp.index)] : x->pwlp.default_value
 
-(pwlp::PiecewiseLaurentPolynomial)(x) = pwlp[KohnShamResolution.findindex(pwlp.mesh, x)][2](x) 
+(pwlp::PiecewiseLaurentPolynomial)(x) = pwlp[KohnShamResolution.findindex(pwlp.mesh, x)](x) 
 
 
 function elag!(p::PiecewiseLaurentPolynomial)
