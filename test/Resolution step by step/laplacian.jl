@@ -1,9 +1,11 @@
 using KohnShamResolution
 using Plots
 using LinearAlgebra
+using GenericLinearAlgebra
+using Quadmath
 
 # General Discretization Parameters
-T = Float64
+T = Float128
 Rmin = zero(T)
 
 # Theoretical Eigenvalue and Eigenvectors
@@ -16,7 +18,7 @@ val_theo(n, Rmax)  = (T(π)/T(Rmax))^2 * n^2
 # With finite difference
 function eigen_with_finite_diff(Nmesh, Rmax)
     A = SymTridiagonal(2*ones(T, Nmesh), -ones(T, Nmesh-1)) .* ((Nmesh - 1)/ T(Rmax))^2
-    eigen(A)
+    eigvals(A)
 end
 
 # With P1
@@ -26,8 +28,8 @@ function eigen_with_P1(mesh)
     right = false
     basis = ShortP1Basis(mesh, T; left = left, right = right, normalize = normalize)
     M₀  = mass_matrix(basis)
-    AP1   = mass_matrix(deriv(basis))
-    eigen(AP1, M₀)
+    AP1   = Symmetric(mass_matrix(deriv(basis)))
+    eigvals(inv(M₀) * AP1)
 end
 
 # With P1-Integrated Legendre Polynomials
@@ -38,8 +40,8 @@ function eigen_with_P1IntLeg(mesh, ordermax)
     right = false
     basis = ShortP1IntLegendreBasis(mesh, T; ordermin = ordermin, ordermax = ordermax,  normalize = normalize, left = left, right = right)
     M₀  = mass_matrix(basis)
-    AIntleg2   = mass_matrix(deriv(basis))
-    eigen(AIntleg2, M₀)
+    AIntleg2   = Symmetric(mass_matrix(deriv(basis)))
+    eigvals(inv(M₀) * AIntleg2)
 end
 
 # With P1
@@ -49,8 +51,8 @@ function eigen_with_P1(mesh, n)
     right = false
     Rmax = mesh[end]
     basis = ShortP1Basis(mesh, T; left = left, right = right, normalize = normalize)
-    M₀  = mass_matrix(basis)
-    AP1   = mass_matrix(deriv(basis))
+    M₀  = Symmetric(mass_matrix(basis))
+    AP1   = Symmetric(mass_matrix(deriv(basis)))
     eign = build_on_basis(basis, eigen(AP1, M₀).vectors[:,n])
     eign/ sqrt(integrate(eign*eign, Rmin, Rmax))
 end
@@ -63,8 +65,8 @@ function eigen_with_P1IntLeg(mesh, ordermax, n)
     right = false
     Rmax = last(mesh)
     basis = ShortP1IntLegendreBasis(mesh, T; ordermin = ordermin, ordermax = ordermax,  normalize = normalize, left = left, right = right)
-    M₀  = mass_matrix(basis)
-    AIntleg2   = mass_matrix(deriv(basis))
+    M₀  = Symmetric(mass_matrix(basis))
+    AIntleg2   = Symmetric(mass_matrix(deriv(basis)))
     eign = build_on_basis(basis, eigen(AIntleg2, M₀).vectors[:,n])
     eign/ sqrt(integrate(eign*eign, Rmin, Rmax))
 end
@@ -77,13 +79,13 @@ function plot_eigenvalue(Nmesh, Rmax, order = [2,3])
     m = linmesh(Rmin, Rmax, Nmesh)
     
     # With finite difference
-    #vals_diff, _ = eigen_with_finite_diff(Nmesh, Rmax)
+    #vals_diff = eigen_with_finite_diff(Nmesh, Rmax)
     # With P1
-    vals_p1, _ = eigen_with_P1(m)
+    vals_p1 = eigen_with_P1(m)
     # With P1-Integrated Legendre Polynomials
     vals_il = []
     for o ∈ order
-        vals_ilo, _ = eigen_with_P1IntLeg(m, o)
+        vals_ilo = eigen_with_P1IntLeg(m, o)
         push!(vals_il, vals_ilo)
     end
 
@@ -141,27 +143,28 @@ function compute_error_eigenvalue(vecNmesh, Rmax, num)
     label = ["Différence finie", "P1", "IntLeg 2", "IntLeg 3", "IntLeg 4"]
     ϵerror = zeros(T, length(vecNmesh), length(label))
     for (i, Nmesh) ∈ enumerate(vecNmesh)
-
         # Creation of the mesh
         m = linmesh(Rmin, Rmax, Nmesh)
         
         # True eigenvalue
+        @time "Nmesh = "*string(Nmesh) begin
         true_val = val_theo.(T.(1:Nmesh), T(Rmax))
 
         # With finite difference
-        vals_diff, _ = eigen_with_finite_diff(Nmesh, Rmax)
+        vals_diff = eigen_with_finite_diff(Nmesh, Rmax)
 
         # With P1
-        vals_p1, _ = eigen_with_P1(m)
+        vals_p1 = eigen_with_P1(m)
 
         # With P1-Integrated Legendre Polynomials ordre 2
-        vals_il2, _ = eigen_with_P1IntLeg(m, 2)
+        vals_il2 = eigen_with_P1IntLeg(m, 2)
 
         # With P1-Integrated Legendre Polynomials ordre 3
-        vals_il3, _ = eigen_with_P1IntLeg(m, 3)
+        vals_il3 = eigen_with_P1IntLeg(m, 3)
 
         # With P1-Integrated Legendre Polynomials ordre 4
-        vals_il4, _ = eigen_with_P1IntLeg(m, 4)
+        vals_il4 = eigen_with_P1IntLeg(m, 4)
+        end
 
         # Compute the error for eigenvalues and the fundamental
         ϵerror[i,1] = abs(vals_diff[num] - true_val[num])
@@ -187,9 +190,11 @@ function compute_error_eigenvalue(vecNmesh, Rmax, num)
 end
 
 
-vecNmesh = 2 .^(3:10)
+vecNmesh = 2 .^(3:8)
 
-plt_eigenvalue = plot_eigenvalue(100,10, [2,3])
+#=
+plt_eigenvalue = plot_eigenvalue(100, 10, [2,3])
+
 savefig(plt_eigenvalue, "test/image_tests/Laplacien - Valeurs Propres 1-2-3")
 plt_eigenvalue = plot_eigenvalue(100,10, [2,3,4,5])
 savefig(plt_eigenvalue, "test/image_tests/Laplacien - Valeurs Propres 1-2-3-4-5")
@@ -204,3 +209,5 @@ savefig(plt_eigenvector, "test/image_tests/Laplacien - Vecteur Propre 200 - ordr
 
 plt_eigenvalue_error = compute_error_eigenvalue(vecNmesh, 10, 1)
 savefig(plt_eigenvalue_error, "test/image_tests/Laplacien - Erreurs valeurs propres")
+=#
+compute_error_eigenvalue(vecNmesh, 10, 5)
