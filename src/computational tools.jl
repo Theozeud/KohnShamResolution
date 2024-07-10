@@ -10,7 +10,7 @@ end
 
 # Solve Generalized Eigenvalue problem
 function solve_generalized_eigenvalue_problem(A,B)
-    eigen(A,B)
+    eigen(inv(B) * A)
 end
 
 # Optimisation
