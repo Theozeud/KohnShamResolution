@@ -26,7 +26,8 @@ module KohnShamResolution
     include("laurentpolynomial/abstract polynomial.jl")
 
     export LaurentPolynomial
-    export Polynomial, Monomial, randPolynomial, deg, degmax, degmin, haslog, ismonomial, iszero
+    export Polynomial, Monomial, RandMonomial, RandPolynomial, RootsPolynomial
+    export deg, degmax, degmin, haslog, ismonomial, iszero
     export integrate!, integrate, deriv!, deriv, scalar_product, normL2, elag!, diveucl
     include("laurentpolynomial/laurentpolynomial.jl")
 

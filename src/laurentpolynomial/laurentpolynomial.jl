@@ -2,13 +2,17 @@ mutable struct LaurentPolynomial{T} <:AbstractPolynomial{T}
     coeffs::Vector{T}
     degmin::Int
     haslog::Bool
-    coeff_log
+    coeff_log # should be of type T
 end
 
+Monomial(deg::Int, coeff = 1) = LaurentPolynomial([coeff], deg, false, oftype(coeff, 0))
 Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin, false, eltype(coeff)(0))
-Monomial(n::Int, coeff = 1) = LaurentPolynomial([coeff], n, false, oftype(coeff,0))
+RootsPolynomial(roots::AbstractVector) = length(roots) == 1 ?  (Monomial(1) - first(roots) :((Monomial(1) - first(roots)) * RootsPolynomial(roots[2:end])
 
-randPolynomial(degmax::Int, degmin::Int = 0, T = Float64) = Polynomial(rand(T, degmax - degmin +1), degmin)
+RandMonomial(deg::Int) = Monomial(deg)
+RandMonomial(T::Type, deg::Int) = Monomial(deg, rand(T))
+RandPolynomial(degmax::Int, degmin::Int = 0) = Polynomial(rand(degmax - degmin +1), degmin)
+RandPolynomial(T::Type, degmax::Int, degmin::Int = 0) = Polynomial(rand(T, degmax - degmin +1), degmin)
 
 @inline Base.eltype(::LaurentPolynomial{T}) where T = T
 @inline convert(::Type{T}, p::LaurentPolynomial) where T = LaurentPolynomial(T.(p.coeffs), p.degmin, p.haslog, T(p.coeff_log))
@@ -20,8 +24,8 @@ randPolynomial(degmax::Int, degmin::Int = 0, T = Float64) = Polynomial(rand(T, d
 @inline Base.firstindex(p::LaurentPolynomial) = degmin(p)
 @inline Base.lastindex(p::LaurentPolynomial) = degmax(p)
 
-@inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin+length(p.coeffs)-1)
-@inline degmax(p::LaurentPolynomial) = p.degmin+length(p.coeffs)-1
+@inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin + length(p.coeffs) - 1)
+@inline degmax(p::LaurentPolynomial) = p.degmin + length(p.coeffs) - 1
 @inline degmin(p::LaurentPolynomial) = p.degmin
 @inline haslog(p::LaurentPolynomial) = p.haslog
 @inline ismonomial(p::LaurentPolynomial) = degmin(p) == degmax(p) && !haslog(p)
@@ -32,7 +36,6 @@ function Laurent_zero(T::Type, degmin::Int, degmax::Int)
     @assert degmax ≥ degmin
     LaurentPolynomial(zeros(T, degmax-degmin+1), degmin, false, T(0))
 end
-
 function Base.iszero(p::LaurentPolynomial)
     elag!(p)
     p.coeffs == [0] && p.degmin == 0 && !haslog(p)
@@ -125,11 +128,12 @@ function (p::LaurentPolynomial)(x)
             y = y*x + p[i]
         end
     end
-    z= 0
+    z = 0
+    invx = inv(x)
     if degmin(p) < 0
-        z = p[begin]/x
+        z = p[begin] * invx
         for i ∈ degmin(p)+1:-1
-            z = (z + p[i])/x
+            z = (z + p[i]) * invx
         end
     end
     if haslog(p)
