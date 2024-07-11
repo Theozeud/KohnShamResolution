@@ -157,7 +157,7 @@ end
 
 function Base.:-( p::LaurentPolynomial)
     coeffs = - p.coeffs
-    coeff_log = -p.coeff_log
+    coeff_log = - p.coeff_log
     LaurentPolynomial(coeffs, p.degmin, haslog(p), coeff_log)
 end
 
