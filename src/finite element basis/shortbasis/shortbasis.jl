@@ -71,6 +71,12 @@ end
 @inline getshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getshift(spb.infos[i], j)
 @inline getinvshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getinvshift(spb.infos[i], j)
 
+@inline getbasis(spb::ShortPolynomialBasis, ::Int) = spb
+function find_basis(spb::ShortPolynomialBasis, i::Int)
+    @assert i ≤ length(spb)
+    (1,i)
+end
+
 @inline function getnormalization(spb::ShortPolynomialBasis, i::Int)
     norma = bottom_type(spb)(0)
     for j ∈ eachindex(spb.infos[i])
