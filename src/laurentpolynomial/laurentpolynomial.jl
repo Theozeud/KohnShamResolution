@@ -7,7 +7,7 @@ end
 
 Monomial(deg::Int, coeff = 1) = LaurentPolynomial([coeff], deg, false, oftype(coeff, 0))
 Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin, false, eltype(coeff)(0))
-RootsPolynomial(roots::AbstractVector) = length(roots) == 1 ?  (Monomial(1) - first(roots) :((Monomial(1) - first(roots)) * RootsPolynomial(roots[2:end])
+RootsPolynomial(roots::AbstractVector) = length(roots) == 1 ?  Monomial(1) - first(roots) : (Monomial(1) - first(roots)) * RootsPolynomial(roots[2:end])
 
 RandMonomial(deg::Int) = Monomial(deg)
 RandMonomial(T::Type, deg::Int) = Monomial(deg, rand(T))
@@ -262,7 +262,6 @@ function diveucl(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
     if degmax(p) < degmax(q)
         return (Monomial(0, NewT(0)), p)
     end
-    Q = Laurent_zero(NewT, degmin(p) - degmin(q), degmax(p)+ degmax(q))
     Q = Monomial(0, NewT(0))
     R = p
     while degmax(R) ≥ degmax(q)
