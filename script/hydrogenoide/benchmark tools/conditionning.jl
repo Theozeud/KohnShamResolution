@@ -42,7 +42,7 @@ function conditionning(basis::Basis, z::Real)
     M₀  = mass_matrix(basis)
     A   = mass_matrix(deriv(basis))
     M₋₁ = weight_mass_matrix(basis, -1)
-    H   = 1/2 * A - z .* M₋₁
+    H   = 1/2 * A - z * M₋₁
 
     cond_M₀  = conditionning(M₀)
     cond_A   = conditionning(A)
@@ -53,8 +53,7 @@ function conditionning(basis::Basis, z::Real)
 end
 
 function conditionning(M::Matrix)
-    pinvM = pinv(M)
-    opnorm(M)*opnorm(pinvM)
+    cond(M)
 end
 
 function plot_conditionning(Cond::Matrix, X::AbstractVector, Xlabel::String, title::String)
