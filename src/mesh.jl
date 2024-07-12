@@ -9,14 +9,14 @@ function mesh(points::AbstractArray{T})  where T<: Real
     OneDMesh(_points)
 end
 
-linmesh(a, b, n) = mesh(LinRange(a,b,n))
+linmesh(a, b, n, T = Float64) = mesh(T.(LinRange(a,b,n)))
 
 function LogRange(a,b,n; z = 1, T = Float64)
     X = T.(range(0,1,n))
-    Z = exp.(z .* X)
+    Z = exp.(T(z) .* X)
     x = first(Z)
     y = last(Z)
-    @. (b-a)/(y-x) * (Z - x) + a 
+    @. (T(b)-T(a))/(y-x) * (Z - x) + T(a) 
 end
 
 # previous log Range function which is false but may be still interesting
