@@ -55,7 +55,7 @@ end
 # Compute Error
 
 function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, vecBasis::NamedTuple, typemesh; opts_mesh = NamedTuple(), opts_basis = [NamedTuple() for i ∈ eachindex(vecBasis)], T = Float64, nb_eigval = 1)
-    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
+    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
                         legendfontsize  = 12,  
                         titlefontsize   = 12,
                         guidefontsize   = 12,
@@ -70,7 +70,26 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, vecBas
         plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 3, label = "Basis "*string(keys(vecBasis)[i])*", ϵ"*string(nb_eigval), markershape = :x, markersize = 10)
         ϵerror[i, : ] = ϵ_error
     end
-    (plt_ϵ_error, ϵerror, )
+    (plt_ϵ_error, ϵerror)
+end
+
+function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, Basis, vectypemesh::NamedTuple; opts_mesh = [NamedTuple() for i ∈ eachindex(vectypemesh)], opts_basis = NamedTuple(), T = Float64, nb_eigval = 1)
+    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
+                        legendfontsize  = 12,  
+                        titlefontsize   = 12,
+                        guidefontsize   = 12,
+                        tickfontsize    = 12)
+    xlabel!(plt_ϵ_error, "Nmesh")
+    ylabel!(plt_ϵ_error, "Error on the "*string(nb_eigval)*"-th eigenvalues")
+    title!(plt_ϵ_error, "Rmax = "*string(Rmax)*" and z = 1")
+    ϵerror = zeros(T, length(vectypemesh), length(vecNmesh))
+    for (i, typemesh) ∈ enumerate(vectypemesh)
+        println("mesh "*string(keys(vectypemesh)[i]))
+        (_, ϵ_error) = test_convergence_withNmesh(vecNmesh, Rmax, Basis, typemesh; opts_mesh = opts_mesh[i], opts_basis = opts_basis, T = T, nb_eigval = nb_eigval)
+        plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 3, label = "mesh "*string(keys(vectypemesh)[i])*", ϵ"*string(nb_eigval), markershape = :x, markersize = 10)
+        ϵerror[i, : ] = ϵ_error
+    end
+    (plt_ϵ_error, ϵerror)
 end
 
 
@@ -84,7 +103,7 @@ function test_convergence_withNmesh(vecNmesh, Rmax::Real, Basis, typemesh; opts_
         ϵ_error[i] = abs(ϵ[nb_eigval] - eigval_theo(T, nb_eigval, 1))
     end
     # Creation of the plot for eigenvalue
-    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
+    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
                                  legendfontsize  = 12,  
                                  titlefontsize   = 12,
                                  guidefontsize   = 12,
