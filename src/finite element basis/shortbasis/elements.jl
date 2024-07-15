@@ -111,16 +111,16 @@ struct IntLegendreElements{N, T} <: AbstractShortElements{N, T}
     bsup::T
     normalization::Vector{T}
 
-    function IntLegendreElements(T::Type = Float64; ordermin::Int = 2, ordermax = 2, normalize::Bool = false, binf::Real = -1, bsup::Real = 1)
+    function IntLegendreElements(T::Type = Float64; ordermin::Int = 2, ordermax = 2, normalize::Bool = false, binf::Real = -T(1), bsup::Real = T(1))
         @assert ordermin ≥ 1
         polynomials = LaurentPolynomial{T}[]  
         normalization = T[]  
         for n ∈ ordermin:ordermax
-            Qₙ = intLegendre(n-1; T = T, a = binf, b = bsup)
+            Qₙ = intLegendre(n-1; T = T, a = T(binf), b = T(bsup))
             push!(polynomials, Qₙ)
-            push!(normalization, scalar_product(Qₙ, Qₙ, binf, bsup))
+            push!(normalization, scalar_product(Qₙ, Qₙ, T(binf), T(bsup)))
         end
-        new{normalize, T}(polynomials, ordermax - ordermin + 1, ordermin, ordermax, binf, bsup, normalization)
+        new{normalize, T}(polynomials, ordermax - ordermin + 1, ordermin, ordermax, T(binf), T(bsup), normalization)
     end
 end
 
