@@ -1,11 +1,12 @@
 module KohnShamResolution
 
     using LinearAlgebra
-    using SparseArrays
     using UnPack
     using Integrals
     using Memoize
+    using LambertW
 
+    using SparseArrays
     using TimerOutputs
     using ProgressMeter
 
@@ -17,7 +18,7 @@ module KohnShamResolution
     ######
     # MESH
     export OneDMesh
-    export mesh, find_index, linmesh, LogRange, logmesh
+    export mesh, find_index, linmesh, LogRange, logmesh, LinearExpRange, linearexpmesh
     include("mesh.jl")
 
     ####################
