@@ -5,6 +5,7 @@ module KohnShamResolution
     using Integrals
     using Memoize
     using LambertW
+    using HypergeometricFunctions
 
     using SparseArrays
     using TimerOutputs
