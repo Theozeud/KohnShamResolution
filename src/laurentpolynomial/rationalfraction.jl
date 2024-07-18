@@ -16,7 +16,7 @@ struct RationalFraction{T} <: AbstractPolynomial{T}
 end
 
 @inline Base.eltype(::RationalFraction{T}) where T = T
-@inline convert(T::Type{T}, rf::RationalFraction) = RationalFraction(convert(T, rf.num), convert(T, rf.denom))
+@inline convert(::Type{T}, rf::RationalFraction) where T  = RationalFraction(convert(T, rf.num), convert(T, rf.denom))
 
 function (rf::RationalFraction)(x)
     rf.num(x)/rf.denom(x)
@@ -26,14 +26,14 @@ function Base.:/(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, 
     if ismonomial(q) && !haslog(p)
         return shift(p, -degmin(q))/q[begin]
     else
-        return RationalFraction(num, denom)
+        return RationalFraction(p, q)
     end
 end
 
 struct SommeRationalFraction{T} <: AbstractPolynomial{T}
     ent::LaurentPolynomial
     ratiofrac::Vector{RationalFraction}
-    function SommeRationalFraction(ent, rationfrac)
+    function SommeRationalFraction(ent, ratiofrac)
         T = promote_type(eltype(ent), eltype.(ratiofrac)...)
         new{T}(ent, ratiofrac)
     end
@@ -102,7 +102,9 @@ function integrate(rf::RationalFraction{T}, a::Real, b::Real; geomfun = false) w
     if iszero(rf.num) || (degmax(rf.num) == 0 && abs(rf.num[0]) < sqrt(eps(typeof(rf.num[0]))))
         NewT = promote_type(T, typeof(a), typeof(b))
         return zero(NewT)
-    elseif geomfun
+    end
+    simplification = iszero(diveucl(rf.num, rf.denom)[2])
+    if geomfun && !simplification
         if degmax(rf.denom) > 2
             @error "Impossibility to integrate a rational fraction with geometric functions for denominator of degree more than three."
         elseif degmax(rf.denom) == 2
@@ -145,7 +147,7 @@ function integrate(rf::RationalFraction{T}, a::Real, b::Real; geomfun = false) w
     end
 end
 
-function integrate(srf::RationalFraction, a::Real, b::Real; geomfun = false)
+function integrate(srf::SommeRationalFraction, a::Real, b::Real; geomfun = false)
     val = integrate(srf.ent, a, b)
     for i ∈ eachindex(srf)
         val += integrate(srf[i], a, b; geomfun = geomfun)
