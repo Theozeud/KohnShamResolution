@@ -76,7 +76,7 @@ function plot_sol(mesh, f, T, power = -1)
     plot!(plt, X, solve_intleg(mesh, 2, f, T, power).(X), label = "Integrated Legendre ordre 2", lw = 3)
     plot!(plt, X, solve_intleg(mesh, 3, f, T, power).(X), label = "Integrated Legendre ordre 3", lw = 3)
     plot!(plt, X, f_true.(X), label = "Theoretical", lw = 2, color = :black, ls = :dash)
-    title!("Nmesh = $Nmesh")
+    title!("Nmesh = $(length(mesh))")
     xlabel!("r")
     plt
 end
