@@ -262,12 +262,13 @@ function diveucl(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
     if degmax(p) < degmax(q)
         return (Monomial(0, NewT(0)), p)
     end
+    _q = q/q[end]
     Q = Monomial(0, NewT(0))
-    R = p
+    R = p/q[end]
     while degmax(R) ≥ degmax(q)
-        M =  Monomial(degmax(R) - degmax(q), NewT(R[end])/NewT(q[end]))
+        M =  Monomial(degmax(R) - degmax(q), NewT(R[end])/NewT(_q[end]))
         Q += M
-        R -= q * M
+        R -= _q * M
     end
     (Q,R)
 end
