@@ -1,67 +1,82 @@
-mutable struct RationalFraction{T} <: AbstractPolynomial{T}
-    ent::LaurentPolynomial{T}
+struct RationalFraction{T} <: AbstractPolynomial{T}
     num::LaurentPolynomial{T}
     denom::LaurentPolynomial{T}
-end
-
-function Base.:/(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, TQ}
-    @assert !haslog(p) && !haslog(q)
-    NewT = promote_type(TP,TQ)
-    if ismonomial(q)
-        return shift(p, -degmin(q))/q[begin]
+    function RationalFraction(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, TQ}
+        @assert !iszero(q)
+        NewT = promote_type(TP,TQ)
+        if haslog(p) || haslog(q)
+            return new{NewT}(p, q)
+        else
+            degm = min(degmin(p), degmin(q))
+            num = convert(NewT, shift(p , -degm))
+            denom = convert(NewT, shift(q , -degm))
+            return new{NewT}(num, denom)
+        end
     end
-    degm = min(degmin(p), degmin(q))
-    _p = shift(p , -degm)
-    _q = shift(q , -degm)
-    Q,R = diveucl(_p, _q)
-    RationalFraction(Q, R/NewT(q[end]), convert(NewT, q)/NewT(q[end]))
 end
 
 @inline Base.eltype(::RationalFraction{T}) where T = T
-
-@inline deg_ent(rf::RationalFraction) = deg(rf.ent)
-@inline degmax_ent(rf::RationalFraction) = degmax(rf.ent)
-@inline degmin_ent(rf::RationalFraction) = degmin(rf.ent)
-@inline deg_num(rf::RationalFraction) = deg(rf.num)
-@inline degmax_num(rf::RationalFraction) = degmax(rf.num)
-@inline degmin_num(rf::RationalFraction) = degmin(rf.num)
-@inline deg_denom(rf::RationalFraction) = deg(rf.denom)
-@inline degmax_denom(rf::RationalFraction) = degmax(rf.denom)
-@inline degmin_denom(rf::RationalFraction) = degmin(rf.denom)
+@inline convert(T::Type{T}, rf::RationalFraction) = RationalFraction(convert(T, rf.num), convert(T, rf.denom))
 
 function (rf::RationalFraction)(x)
-    rf.ent(x) + rf.num(x)/rf.denom(x)
+    rf.num(x)/rf.denom(x)
 end
 
+function Base.:/(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, TQ}
+    if ismonomial(q) && !haslog(p)
+        return shift(p, -degmin(q))/q[begin]
+    else
+        return RationalFraction(num, denom)
+    end
+end
+
+struct SommeRationalFraction{T} <: AbstractPolynomial{T}
+    ent::LaurentPolynomial
+    ratiofrac::Vector{RationalFraction}
+    function SommeRationalFraction(ent, rationfrac)
+        T = promote_type(eltype(ent), eltype.(ratiofrac)...)
+        new{T}(ent, ratiofrac)
+    end
+end
+
+@inline Base.eltype(::SommeRationalFraction{T}) where T = T
+
+@inline Base.length(srf::SommeRationalFraction) = length(srf.ratiofrac)
+@inline Base.firstindex(srf::SommeRationalFraction) = firstindex(srf.ratiofrac)
+@inline Base.lastindex(srf::SommeRationalFraction) = lastindex(srf.ratiofrac)
+@inline Base.eachindex(srf::SommeRationalFraction) = eachindex(srf.ratiofrac)
+@inline Base.getindex(srf::SommeRationalFraction, i::Int) = srf.ratiofrac[i]
+
+function (srf::SommeRationalFraction)(x)
+    val = srf.ent(x)
+    for i ∈ eachindex(srf)
+        val += srf[i](x)
+    end
+    val
+end
+
+function inEntpart(rf::RationalFraction)
+    @assert !haslog(rf.num) && !haslog(rf.denom)
+    Q,R = diveucl(rf.num, rf.denom)
+    newrf = RationalFraction(R, rf.denom)
+    SommeRationalFraction(Q, [newrf])
+end
+
+function inEntpart(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, TQ}
+    inEntpart(RationalFraction(p, q))
+end
 
 ##################################################################################
 #                            Elementary Computations
 ##################################################################################
 
-#=
-function elag!(rf::RationalFraction{T})
-    elag!(rf.num)
-    if iszero(rf.num)
-        @warn "Numerator is null but the object is still a rational fraction."
-    end
-    elag!(rf.denom)
-    Q, R = diveucl(rf.num, rf.denom)
-    if degmax(R) == 0
-        rf.ent += Q + rf.num/R[0]
-        elag!(ent)
-        rf.num = zero(rf.num)
-    else
-        rf.denom = R
-        rf.ent += Q
-        elag!(ent)
-    end
+function fraction_decomp(rf::RationalFraction)
+    @error "The partial fraction decomposition has not be coded."
 end
-=#
 
-function Base.:+(rf::RationalFraction{TR}, p::LaurentPolynomial{TP}) where {TR, TP}
-    NewT = promote_type(TR,TP)
-    rf.ent + p
-    RationalFraction(rf.ent + p, convert(NewT, rf.num), convert(NewT, rf.denom))
+#=
+function Base.:+(rf::RationalFraction, p::LaurentPolynomial)
+    SommeRationalFraction(p, [rf])
 end
 
 function Base.:+(p::LaurentPolynomial, rf::RationalFraction)
@@ -75,52 +90,65 @@ end
 function Base.:*(p::LaurentPolynomial, rf::RationalFraction)
     rf * p
 end
+=#
+
 
 ##################################################################################
 #                            Integration & Derivation
 ##################################################################################
 
-function integrate(rf::RationalFraction, a::Real, b::Real)
-    if iszero(rf.num) || (degmax_num(rf) == 0 && abs(rf.num[0]) < sqrt(eps(typeof(rf.num[0]))))
-        return integrate(rf.ent, a, b)
-    elseif degmax_denom(rf) ≥ 3
-        @error "No analytical expression for integrating rational fractions with a denominator of degree higher than 2."
-    elseif degmax_denom(rf) == 1
-        B = rf.num[0]
-        D = rf.denom[1]
-        E = rf.denom[0]
-        msg = "You want to integrate "*string(B)*" / ("*string(D)*" X + "*string(E)*") over ("*string(a)*","*string(b)*")" 
-        @assert -E/D > b || -E/D < a msg
-        return integrate(rf.ent, a, b) + B/D * log((D*b + E)/(D*a + E))
-    elseif degmax_denom(rf) == 2
-        A = rf.num[1]
-        B = rf.num[0]
-        C = rf.denom[2]
-        D = rf.denom[1]
-        E = rf.denom[0]
-        Δ = D^2 - 4*E*C
-        if Δ > 0
-            r₁ = (-D - sqrt(Δ))/(2*C)
-            r₂ = (-D + sqrt(Δ))/(2*C)
-            msg = "You want to integrate "*string(A)*" X + "*string(B)*"/ ("*string(C)* "X^2 + "*string(D)*" X + "*string(E)*") over ("*string(a)*","*string(b)*")" 
-            @assert (r₁ > b) || (r₂ < a) || (r₂ > b && r₁ < a) msg
-        elseif Δ == 0
-            r₀ = -D/(2*C)
-            msg = "You want to integrate "*string(A)*" X + "*string(B)*"/ ("*string(C)* "X^2 + "*string(D)*" X + "*string(E)*") over ("*string(a)*","*string(b)*")" 
-            @assert (r₀ > b) || (r₀ < a) msg
+function integrate(rf::RationalFraction{T}, a::Real, b::Real; geomfun = false) where T
+    @assert !haslog(rf.num) && !haslog(rf.denom)
+    if iszero(rf.num) || (degmax(rf.num) == 0 && abs(rf.num[0]) < sqrt(eps(typeof(rf.num[0]))))
+        NewT = promote_type(T, typeof(a), typeof(b))
+        return zero(NewT)
+    elseif geomfun
+        if degmax(rf.denom) > 2
+            @error "Impossibility to integrate a rational fraction with geometric functions for denominator of degree more than three."
+        elseif degmax(rf.denom) == 2
+            NewT = promote_type(T, typeof(a), typeof(b))
+            val = zero(NewT)
+            for k ∈ eachindex(rf.num)
+                val += rf.num[k] * _integration_monome_over_deg2(k, rf.denom[2], rf.denom[1], rf.denom[0], a, b)
+            end 
+            return val
+        elseif degmax(rf.denom) == 1
+            NewT = promote_type(T, typeof(a), typeof(b))
+            val = zero(NewT)
+            for k ∈ eachindex(rf.num)
+                val += rf.num[k] * _integration_monome_over_deg1(k, rf.denom[1],rf.denom[0], a, b)
+            end 
+            return val
+        elseif degmax(rf.denom) == 0
+            return integrate(rf.num, a, b)/rf.denom[0]
         end
-        C1 = D/(2*C)
-        C2 = (4*E*C - D^2)/(4*C^2)
-        C3 = B - A*C1
-        if C2 > 0
-            sqrtC2 = sqrt(C2)
-            return integrate(rf.ent, a, b) + A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
-        elseif C2 > 0
-            sqrtC2 = sqrt(-C2)
-            return integrate(rf.ent, a, b) + A/(2*C) * log( abs( ((b+C1)^2 - C2) / ((a+C1)^2 - C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((b+C1-sqrtC2)/(a+C1-sqrtC2))) - log(abs((b+C1+sqrtC2)/(b+C1+sqrtC2))))
+    else
+        if degmax(rf.num) ≥ degmax(rf.denom) 
+            return integrate(inEntpart(rf), a, b)
         else
-            return integrate(rf.ent, a, b) + A/C * log( abs((b+C1) / (a+C1) ) ) + C3/C * (1/(a+C1) - 1/(b+C1))
+            if degmax(rf.denom) > 2
+                return integrate(fraction_decomp(rf), a, b)
+            elseif degmax(rf.denom) == 2
+                A = rf.num[1]
+                B = rf.num[0]
+                C = rf.denom[2]
+                D = rf.denom[1]
+                E = rf.denom[0]
+                return _integrate_partial12(A, B, C, D, E, a, b) 
+            elseif degmax(rf.denom) == 1
+                A = rf.num[0]
+                B = rf.denom[1]
+                C = rf.denom[0]
+                return _integrate_partial01(A, B, C, a, b)
+            end
         end
     end
 end
 
+function integrate(srf::RationalFraction, a::Real, b::Real; geomfun = false)
+    val = integrate(srf.ent, a, b)
+    for i ∈ eachindex(srf)
+        val += integrate(srf[i], a, b; geomfun = geomfun)
+    end
+    val
+end
