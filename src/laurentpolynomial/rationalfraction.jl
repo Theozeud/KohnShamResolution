@@ -97,7 +97,7 @@ end
 #                            Integration & Derivation
 ##################################################################################
 
-function integrate(rf::RationalFraction{T}, a::Real, b::Real; geomfun = false) where T
+function integrate(rf::RationalFraction{T}, a::Real, b::Real; geomfun = false, enforceNullDelta = false) where T
     @assert !haslog(rf.num) && !haslog(rf.denom)
     if iszero(rf.num) || (degmax(rf.num) == 0 && abs(rf.num[0]) < sqrt(eps(typeof(rf.num[0]))))
         NewT = promote_type(T, typeof(a), typeof(b))
@@ -111,7 +111,7 @@ function integrate(rf::RationalFraction{T}, a::Real, b::Real; geomfun = false) w
             NewT = promote_type(T, typeof(a), typeof(b))
             val = zero(NewT)
             for k ∈ eachindex(rf.num)
-                val += rf.num[k] * _integration_monome_over_deg2(k, rf.denom[2], rf.denom[1], rf.denom[0], a, b)
+                val += rf.num[k] * _integration_monome_over_deg2(k, rf.denom[2], rf.denom[1], rf.denom[0], a, b; enforceNullDelta = enforceNullDelta)
             end 
             return val
         elseif degmax(rf.denom) == 1

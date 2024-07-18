@@ -21,9 +21,9 @@ end
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::RationalFraction{TW}, a::Real, b::Real) where {TP, TQ, TW}
     if degmax(weight.denom) > 2
-        return integrate((p*q*weight.num)/weight.denom, a, b; geomfun = false)
+        return integrate((p*q*weight.num)/weight.denom, a, b; geomfun = false, enforceNullDelta = false)
     else
-        return integrate((p*q*weight.num)/weight.denom, a, b; geomfun = true)
+        return integrate((p*q*weight.num)/weight.denom, a, b; geomfun = true, enforceNullDelta = true)
     end
 end
 
