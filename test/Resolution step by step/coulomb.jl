@@ -15,7 +15,7 @@ function compute_second_membre(f, basis)
             Pelement = KohnShamResolution.getnormalization(spb,iib) * getpolynomial(spb.elements, j)
             g(x) = f(invϕ(x)) * Pelement(x)
             prob = IntegralProblem((x,p) -> g(x), -T(1), T(1))
-            val += invϕ[1] * solve(prob, QuadGKJL(); abstol = 1e-25).u
+            val += invϕ[1] * solve(prob, QuadGKJL(); abstol = 1e-13).u
         end
         b[i] = val
     end
@@ -23,25 +23,25 @@ function compute_second_membre(f, basis)
 end
 
 # With P1
-function solve_p1(mesh, f, T)
+function solve_p1(mesh, f, T, power = -1)
     left = false
     right = false
     normalize = true
     basis = ShortP1Basis(mesh, T; left = left, right = right, normalize = normalize)
-    CP1   = weight_mass_matrix(basis, -1)
+    CP1   = weight_mass_matrix(basis, power)
     #F = [integrate(f * build_basis(basis, i), Rmin, Rmax) for i ∈ eachindex(basis)]
     F = compute_second_membre(f, basis)
     build_on_basis(basis, CP1\F)
 end
 
 # With P1-Integrated Legendre Polynomials
-function solve_intleg(mesh, ordermax, f, T)
+function solve_intleg(mesh, ordermax, f, T, power = -1)
     left = false
     right = false
     ordermin = 2
     normalize = true
     basis = ShortP1IntLegendreBasis(mesh, T; ordermin = ordermin, ordermax = ordermax,  normalize = normalize, left = left, right = right)
-    CIL   = weight_mass_matrix(basis, -1)
+    CIL   = weight_mass_matrix(basis, power)
     #F = [integrate(f * build_basis(basis, i), Rmin, Rmax) for i ∈ eachindex(basis)]
     F = compute_second_membre(f, basis)
     build_on_basis(basis, CIL\F)
@@ -68,13 +68,13 @@ end
 
 
 # Plot solutions
-function plot_sol(mesh, f, T)
-    f_true = Monomial(1, T(1)) * f
+function plot_sol(mesh, f, T, power = -1)
+    f_true = Monomial(-power, T(1)) * f
     X = LinRange(Rmin, Rmax, 1000)
     plt = plot(size = (1000, 800), margin = 0.5Plots.cm)
-    plot!(plt, X, solve_p1(mesh, f, T).(X),  label = "p1", lw = 3)
-    plot!(plt, X, solve_intleg(mesh, 2, f, T).(X), label = "Integrated Legendre ordre 2", lw = 3)
-    plot!(plt, X, solve_intleg(mesh, 3, f, T).(X), label = "Integrated Legendre ordre 3", lw = 3)
+    plot!(plt, X, solve_p1(mesh, f, T, power).(X),  label = "p1", lw = 3)
+    plot!(plt, X, solve_intleg(mesh, 2, f, T, power).(X), label = "Integrated Legendre ordre 2", lw = 3)
+    plot!(plt, X, solve_intleg(mesh, 3, f, T, power).(X), label = "Integrated Legendre ordre 3", lw = 3)
     plot!(plt, X, f_true.(X), label = "Theoretical", lw = 2, color = :black, ls = :dash)
     title!("Nmesh = $Nmesh")
     xlabel!("r")
@@ -82,29 +82,29 @@ function plot_sol(mesh, f, T)
 end
 
 # Compute error
-function plot_error(vecNmesh, f, Rmin, Rmax, T = Float64)
-    f_true = Monomial(1, T(1)) * f
+function plot_error(vecNmesh, f, Rmin, Rmax, T = Float64, power = -1)
+    f_true = Monomial(-power, T(1)) * f
     label = ["P1", "IntLeg 2", "IntLeg 3", "IntLeg4", "IntLeg5"]
     ϵerror = zeros(T, length(vecNmesh), length(label))
     for (i, Nmesh) ∈ enumerate(vecNmesh)
 
         # Creation of the mesh
-        m = linmesh(Rmin, Rmax, Nmesh, T)
+        m = linmesh(Rmin, Rmax, Nmesh; T = T)
         
         # With P1
-        sol_p1 = solve_p1(m, f, T)
+        sol_p1 = solve_p1(m, f, T, power)
 
         # With P1-Integrated Legendre Polynomials ordre 2
-        sol_il2 = solve_intleg(m, 2, f, T)
+        sol_il2 = solve_intleg(m, 2, f, T, power)
 
         # With P1-Integrated Legendre Polynomials ordre 3
-        sol_il3 = solve_intleg(m, 3, f, T)
+        sol_il3 = solve_intleg(m, 3, f, T, power)
 
         # With P1-Integrated Legendre Polynomials ordre 4
-        sol_il4 = solve_intleg(m, 4, f, T)
+        sol_il4 = solve_intleg(m, 4, f, T, power)
 
         # With P1-Integrated Legendre Polynomials ordre 5
-        sol_il5 = solve_intleg(m, 5, f, T)
+        sol_il5 = solve_intleg(m, 5, f, T, power)
 
         # Compute the error for eigenvalues and the fundamental
         c = (T(Rmax)-T(Rmin))/(Nmesh - 1)
