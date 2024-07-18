@@ -47,7 +47,7 @@ function _integrate_partial02(A, B, C, D, a, b)
 end
 
 # Integrate (AX+B)/(CX² + DX + E) between a and b
-function _integrate_partial12(A, B, C, D, E, a, b)
+function _integrate_partial12(A, B, C, D, E, a, b; enforceNullDelta = false )
     @assert !iszero(C) || !iszero(D) || !iszero(E)
     NewT = promote_type(typeof(A), typeof(B), typeof(C), typeof(D), typeof(E), typeof(a), typeof(b)) 
     if iszero(A) && iszero(B)
@@ -57,7 +57,7 @@ function _integrate_partial12(A, B, C, D, E, a, b)
     elseif iszero(C)
         return _integrate_partial11(A, B, D, E, a, b)
     else
-        Δ = D^2 - 4*E*C
+        Δ = enforceNullDelta ? zero(NewT) : D^2 - 4*E*C
         if Δ > 0
             r₁ = (-D - sqrt(Δ))/(2*C)
             r₂ = (-D + sqrt(Δ))/(2*C)
@@ -69,14 +69,14 @@ function _integrate_partial12(A, B, C, D, E, a, b)
         C1 = D/(2*C)
         C2 = -Δ/(4*C^2)
         C3 = B - A*C1
-        if C2 > 0
+        if enforceNullDelta || C2 == 0
+            return A/C * log( abs((b+C1) / (a+C1) ) ) + C3/C * (1/(a+C1) - 1/(b+C1))
+        elseif C2 > 0
             sqrtC2 = sqrt(C2)
             return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
         elseif C2 < 0
             sqrtC2 = sqrt(-C2)
-            return A/(2*C) * log( abs( ((b+C1)^2 - C2) / ((a+C1)^2 - C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((b+C1-sqrtC2)/(b+C1+sqrtC2))) - log(abs((a+C1-sqrtC2)/(a+C1+sqrtC2))))
-        else
-            return A/C * log( abs((b+C1) / (a+C1) ) ) + C3/C * (1/(a+C1) - 1/(b+C1))
+            return A/(2*C) * log( abs( ((b+C1)^2 - C2) / ((a+C1)^2 - C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((b+C1-sqrtC2)/(b+C1+sqrtC2))) - log(abs((a+C1-sqrtC2)/(a+C1+sqrtC2))))      
         end
     end
 end
@@ -108,7 +108,7 @@ end
     if iszero(A)
         return _integration_monome_over_deg1(k, B, C, a, b)
     elseif k == 0
-        return _integrate_partial12(0, 1, A, B, C, a, b)
+        return _integrate_partial12(0, 1, A, B, C, a, b; enforceNullDelta = enforceNullDelta)
     elseif iszero(C)
         return _integration_monome_over_deg1(k-1, A, B, a, b)
     else
