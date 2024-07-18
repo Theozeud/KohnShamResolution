@@ -41,6 +41,8 @@ function Base.iszero(p::LaurentPolynomial)
     p.coeffs == [0] && p.degmin == 0 && !haslog(p)
 end
 
+Base.round(p::LaurentPolynomial; digits = 14) = LaurentPolynomial(round.(p.coeffs; digits = digits), degmin(p), haslog(p), p.coeff_log)
+
 function elag!(p::LaurentPolynomial)
     (dn,dp) = deg(p)
     while p[dp] == 0
@@ -262,15 +264,17 @@ function diveucl(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
     if degmax(p) < degmax(q)
         return (Monomial(0, NewT(0)), p)
     end
+    _q = q/q[end]
+    _q = _q /_q[end] #To enforce the dominant coefficient to be one if it is 0.99999999...
     Q = Monomial(0, NewT(0))
-    R = p
+    R = KohnShamResolution.convert(NewT, p)
     while degmax(R) ≥ degmax(q)
-        M =  Monomial(degmax(R) - degmax(q), NewT(R[end])/NewT(q[end]))
-        Q += M
-        R -= q * M
+        Q += Monomial(degmax(R) - degmax(q), NewT(R[end]))
+        R -= _q * Monomial(degmax(R) - degmax(q), R[end])
     end
-    (Q,R)
+    return (round(Q/NewT(q[end])), R)
 end
+
 
 ##################################################################################
 #                               Composition

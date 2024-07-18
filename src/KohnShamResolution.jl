@@ -33,7 +33,10 @@ module KohnShamResolution
     export integrate!, integrate, deriv!, deriv, scalar_product, normL2, elag!, diveucl
     include("laurentpolynomial/laurentpolynomial.jl")
 
-    export RationalFraction
+    include("laurentpolynomial/integration_tools.jl")
+
+    export RationalFraction, SommeRationalFraction
+    export fraction_decomp, inEntpart
     include("laurentpolynomial/rationalfraction.jl")
 
     export Legendre, intLegendre
