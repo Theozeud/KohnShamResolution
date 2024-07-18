@@ -67,14 +67,14 @@ function _integrate_partial12(A, B, C, D, E, a, b)
             @assert (r₀ > b) || (r₀ < a) "You want to integrate $A X + $B/ ($C X^2 + $D X + $E) over ($a, $b)"
         end
         C1 = D/(2*C)
-        C2 = (4*E*C - D^2)/(4*C^2)
+        C2 = -Δ/(4*C^2)
         C3 = B - A*C1
         if C2 > 0
             sqrtC2 = sqrt(C2)
             return A/(2*C) * log( abs( ((b+C1)^2 + C2) / ((a+C1)^2 + C2) ) ) + C3/(C*sqrtC2) * (atan((b + C1)/sqrtC2) - atan((a + C1)/sqrtC2))
         elseif C2 < 0
             sqrtC2 = sqrt(-C2)
-            return A/(2*C) * log( abs( ((b+C1)^2 - C2) / ((a+C1)^2 - C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((b+C1-sqrtC2)/(a+C1-sqrtC2))) - log(abs((b+C1+sqrtC2)/(b+C1+sqrtC2))))
+            return A/(2*C) * log( abs( ((b+C1)^2 - C2) / ((a+C1)^2 - C2) ) ) + C3/(C*2*sqrtC2) * (log(abs((b+C1-sqrtC2)/(b+C1+sqrtC2))) - log(abs((a+C1-sqrtC2)/(a+C1+sqrtC2))))
         else
             return A/C * log( abs((b+C1) / (a+C1) ) ) + C3/C * (1/(a+C1) - 1/(b+C1))
         end
@@ -102,30 +102,37 @@ end
 end
 
 # Integrate X^k/(AX² + BX + C) between a and b for k≥0 
-@inline function _integration_monome_over_deg2(k, A, B, C, a, b)
+@inline function _integration_monome_over_deg2(k, A, B, C, a, b; enforceNullDelta = false)
     @assert !iszero(A) || !iszero(B) || !iszero(C)
     @assert k ≥ 0
     if iszero(A)
         return _integration_monome_over_deg1(k, B, C, a, b)
     elseif k == 0
-        return _integrate_partial02(1, A, B, C, a, b)
+        return _integrate_partial12(0, 1, A, B, C, a, b)
     elseif iszero(C)
         return _integration_monome_over_deg1(k-1, A, B, a, b)
     else
         Δ = B^2 - 4*A*C
-        @assert Δ ≥ 0
-        if Δ > 0
-            sqrtΔ = sqrt(Δ)
-            var1 = sqrtΔ + B
-            var2 = sqrtΔ - B
-            right = b^(k+1) * (var1 * pFq((1,k+1),(k+2,), 2*A*b/var2) + var2 * F((1,k+1),(k+2,), -2*A*b/var1))
-            left  = a^(k+1) * (var1 * pFq((1,k+1),(k+2,), 2*A*a/var2) + var2 * F((1,k+1),(k+2,), -2*A*a/var1))
-            return (right - left)/(2*C*(k+1)*sqrtΔ)
-        elseif Δ == 0
+        if enforceNullDelta || Δ == 0
             rac = -B/(2*A)
             right = b^(k+1)*pFq((2,k+1),(k+2,), b/rac) 
             left  = a^(k+1)*pFq((2,k+1),(k+2,), a/rac) 
-            return 1/(C * (k+1)) * (right - left) 
+            return 1/(C * (k+1)) * (right - left)
+        elseif Δ > 0
+            sqrtΔ = sqrt(Δ)
+            var1 = sqrtΔ + B
+            var2 = sqrtΔ - B
+            right = b^(k+1) * (var1 * pFq((1,k+1),(k+2,), 2*A*b/var2) + var2 * pFq((1,k+1),(k+2,), -2*A*b/var1))
+            left  = a^(k+1) * (var1 * pFq((1,k+1),(k+2,), 2*A*a/var2) + var2 * pFq((1,k+1),(k+2,), -2*A*a/var1))
+            return (right - left)/(2*C*(k+1)*sqrtΔ)
+         
+        elseif Δ <0
+            sqrtΔ = sqrt(-Δ)
+            var1 = sqrtΔ + B*im
+            var2 = sqrtΔ - B*im
+            right = b^(k+1) * (var1 * pFq((1,k+1),(k+2,), 2*A*b*im/var2) + var2 * pFq((1,k+1),(k+2,), -2*A*b*im/var1))
+            left  = a^(k+1) * (var1 * pFq((1,k+1),(k+2,), 2*A*a*im/var2) + var2 * pFq((1,k+1),(k+2,), -2*A*a*im/var1))
+            return (right - left)/(2*C*(k+1)*sqrtΔ)
         end
     end
 end
