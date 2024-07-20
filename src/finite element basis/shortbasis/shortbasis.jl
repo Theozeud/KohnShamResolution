@@ -8,8 +8,8 @@ struct InfoElement{T}
     invϕ::Vector{LaurentPolynomial{T}}
 end
 
-@inline getindex(ielem::InfoElement) = ielem.index
-@inline getindex(ielem::InfoElement, i::Int) = ielem.index[i]
+@inline _getindex(ielem::InfoElement) = ielem.index
+@inline _getindex(ielem::InfoElement, i::Int) = ielem.index[i]
 @inline getsegments(ielem::InfoElement) = ielem.segments
 @inline getsegments(ielem::InfoElement, i::Int) = ielem.segments[i]
 @inline getshift(ielem::InfoElement, i::Int) = ielem.ϕ[i]
@@ -18,7 +18,7 @@ end
 
 @inline Base.length(ielem::InfoElement) = length(ielem.index)
 @inline Base.eachindex(ielem::InfoElement) = eachindex(ielem.index)
-@inline Base.iterate(ielem::InfoElement, state = 1) = state > length(ielem) ? nothing : ((getindex(ielem, state), getsegments(ielem, state), getshift(ielem, state), getinvshift(ielem, state)), state+1)
+@inline Base.iterate(ielem::InfoElement, state = 1) = state > length(ielem) ? nothing : ((_getindex(ielem, state), getsegments(ielem, state), getshift(ielem, state), getinvshift(ielem, state)), state+1)
 
 @inline arecompatible(ielem1::InfoElement, ielem2::InfoElement) = !isempty(intersect(ielem1.segments, ielem2.segments))
 
@@ -64,9 +64,9 @@ end
 
 @inline isnormalized(spb::ShortPolynomialBasis) = isnormalized(spb.elements)
 
-@inline getindex(spb::ShortPolynomialBasis, i::Int) = getindex(spb.infos[i])
+@inline _getindex(spb::ShortPolynomialBasis, i::Int) = _getindex(spb.infos[i])
 @inline getsegments(spb::ShortPolynomialBasis, i::Int) = getsegments(spb.infos[i])
-@inline getindex(spb::ShortPolynomialBasis, i::Int, j::Int) = getindex(spb.infos[i], j)
+@inline _getindex(spb::ShortPolynomialBasis, i::Int, j::Int) = _getindex(spb.infos[i], j)
 @inline getsegments(spb::ShortPolynomialBasis, i::Int, j::Int) = getsegments(spb.infos[i], j)
 @inline getshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getshift(spb.infos[i], j)
 @inline getinvshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getinvshift(spb.infos[i], j)
@@ -80,15 +80,15 @@ end
 @inline function getnormalization(spb::ShortPolynomialBasis, i::Int)
     norma = bottom_type(spb)(0)
     for j ∈ eachindex(spb.infos[i])
-        norma += getnormalization(spb.infos[i], j)^(1+spb.deriv_order*2) * getnormalization(spb.elements, getindex(spb, i, j))
+        norma += getnormalization(spb.infos[i], j)^(1+spb.deriv_order*2) * getnormalization(spb.elements, _getindex(spb, i, j))
     end
     1/sqrt(norma)
 end
 
-@inline getpolynomial(spb::ShortPolynomialBasis, i::Int, j::Int)= getpolynomial(spb.elements, getindex(spb, i, j))
+@inline getpolynomial(spb::ShortPolynomialBasis, i::Int, j::Int)= getpolynomial(spb.elements, _getindex(spb, i, j))
 
 ## How to define this functions properly ?
-#@inline Base.getindex(spb::ShortPolynomialBasis, n::Int) =  spb.elements[n] 
+#@inline Base._getindex(spb::ShortPolynomialBasis, n::Int) =  spb.elements[n] 
 #@inline Base.iterate(spb::ShortPolynomialBasis, state = 1) = state > length(spb) ? nothing : (spb[state], state+1)
 @inline Base.eachindex(spb::ShortPolynomialBasis) = 1:spb.size
 

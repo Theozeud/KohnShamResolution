@@ -9,8 +9,8 @@ struct InfoBlock
     interaction_index::Vector{CartesianIndex{2}}
 end
 
-@inline getindex(infoblock::InfoBlock) = infoblock.index
-@inline getindex(infoblock::InfoBlock, i::Int) = infoblock.index[i]
+@inline _getindex(infoblock::InfoBlock) = infoblock.index
+@inline _getindex(infoblock::InfoBlock, i::Int) = infoblock.index[i]
 @inline getrangerow(infoblock::InfoBlock) = infoblock.rangerow
 @inline getrangecolumn(infoblock::InfoBlock) = infoblock.rangecolumn
 @inline isdiagonal(infoblock::InfoBlock) = infoblock.diagonal
@@ -63,7 +63,7 @@ end
 @inline getbasis(cb::CombineShortPolynomialBasis, i::Int) = cb.basisVector[i]
 @inline getblocks(cb::CombineShortPolynomialBasis) = cb.blocks
 
-@inline getindex(cb::CombineShortPolynomialBasis, i::Int) =  getindex(cb.infoblock[i])
+@inline _getindex(cb::CombineShortPolynomialBasis, i::Int) =  _getindex(cb.infoblock[i])
 @inline getrangerow(cb::CombineShortPolynomialBasis, i::Int) = getrangerow(cb.infoblock[i])
 @inline getrangecolumn(cb::CombineShortPolynomialBasis, i::Int) = getrangecolumn(cb.infoblock[i])
 @inline isdiagonal(cb::CombineShortPolynomialBasis, i::Int) = isdiagonal(cb.infoblock[i])
@@ -85,9 +85,9 @@ function mass_matrix(cb::CombineShortPolynomialBasis)
     for b ∈ getblocks(cb)
         @views ABlock = A[getrangerow(b), getrangecolumn(b)]
         if isdiagonal(b)
-            fill_mass_matrix!(getbasis(cb, getindex(b,1)), ABlock)
+            fill_mass_matrix!(getbasis(cb, _getindex(b,1)), ABlock)
         else
-            fill_mass_matrix!(getbasis(cb, getindex(b,1)), getbasis(cb, getindex(b,2)), b.interaction_index, ABlock)
+            fill_mass_matrix!(getbasis(cb, _getindex(b,1)), getbasis(cb, _getindex(b,2)), b.interaction_index, ABlock)
             @views ABlockT = A[getrangecolumn(b), getrangerow(b)]
             @. ABlockT = ABlock'
         end
@@ -101,9 +101,9 @@ function weight_mass_matrix(cb::CombineShortPolynomialBasis, weight::LaurentPoly
     for b ∈ getblocks(cb)
         @views ABlock = A[getrangerow(b), getrangecolumn(b)]
         if isdiagonal(b)
-            fill_weight_mass_matrix!(getbasis(cb, getindex(b,1)), weight, ABlock)
+            fill_weight_mass_matrix!(getbasis(cb, _getindex(b,1)), weight, ABlock)
         else
-            fill_weight_mass_matrix!(getbasis(cb, getindex(b,1)), getbasis(cb, getindex(b,2)), weight, b.interaction_index, ABlock)
+            fill_weight_mass_matrix!(getbasis(cb, _getindex(b,1)), getbasis(cb, _getindex(b,2)), weight, b.interaction_index, ABlock)
             @views ABlockT = A[getrangecolumn(b), getrangerow(b)]
             @. ABlockT = ABlock'
         end
