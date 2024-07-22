@@ -67,11 +67,11 @@ end
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, weight::Base.Callable, a::Real, b::Real) where TP
     f(x) = weight(x) * p(x)
-    approximate_integral(f, (a,b); method = QuadGKJL(), reltol = eps(TP), abstol = eps(TP))
+    approximate_integral(f, (a,b); method = QuadGKJL(), reltol =  100*eps(TP), abstol =  100*eps(TP))
 end
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::Base.Callable, a::Real, b::Real) where {TP, TQ}
     f(x) = weight(x) * p(x) * q(x)
     NewT = promote_type(TP,TQ)
-    approximate_integral(f, (a,b); method = QuadGKJL(), reltol = eps(NewT), abstol = eps(NewT))
+    approximate_integral(f, (a,b); method = QuadGKJL(), reltol = 100*eps(NewT), abstol =  100*eps(NewT))
 end
