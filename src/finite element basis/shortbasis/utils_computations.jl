@@ -75,4 +75,3 @@ end
     NewT = promote_type(TP,TQ)
     approximate_integral(f, (a,b); method = QuadGKJL(), reltol = eps(NewT), abstol = eps(NewT))
 end
-
