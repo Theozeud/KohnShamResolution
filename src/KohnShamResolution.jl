@@ -80,7 +80,7 @@ module KohnShamResolution
     include("finite element basis/shortbasis/combineshortbasis.jl")
 
     export ShortP1IntLegendreBasis
-    include("finite element basis/shortbasis/combine elements.jl")
+    include("finite element basis/shortbasis/combined elements.jl")
 
     #################
     # KOHN-SHAM MODEL
