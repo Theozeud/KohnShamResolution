@@ -61,12 +61,13 @@ end
 @inline Base.eltype(::ShortPolynomialBasis{TB}) where TB = TB
 @inline bottom_type(spb::ShortPolynomialBasis) = eltype(spb.elements)
 @inline Base.length(spb::ShortPolynomialBasis) = spb.size
+@inline Base.eachindex(spb::ShortPolynomialBasis) = 1:spb.size
 
 @inline isnormalized(spb::ShortPolynomialBasis) = isnormalized(spb.elements)
 
 @inline _getindex(spb::ShortPolynomialBasis, i::Int) = _getindex(spb.infos[i])
-@inline getsegments(spb::ShortPolynomialBasis, i::Int) = getsegments(spb.infos[i])
 @inline _getindex(spb::ShortPolynomialBasis, i::Int, j::Int) = _getindex(spb.infos[i], j)
+@inline getsegments(spb::ShortPolynomialBasis, i::Int) = getsegments(spb.infos[i])
 @inline getsegments(spb::ShortPolynomialBasis, i::Int, j::Int) = getsegments(spb.infos[i], j)
 @inline getshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getshift(spb.infos[i], j)
 @inline getinvshift(spb::ShortPolynomialBasis, i::Int, j::Int) = getinvshift(spb.infos[i], j)
@@ -87,10 +88,10 @@ end
 
 @inline getpolynomial(spb::ShortPolynomialBasis, i::Int, j::Int)= getpolynomial(spb.elements, _getindex(spb, i, j))
 
-## How to define this functions properly ?
-#@inline Base._getindex(spb::ShortPolynomialBasis, n::Int) =  spb.elements[n] 
-#@inline Base.iterate(spb::ShortPolynomialBasis, state = 1) = state > length(spb) ? nothing : (spb[state], state+1)
-@inline Base.eachindex(spb::ShortPolynomialBasis) = 1:spb.size
+
+########################################################################################
+#                                     Mass Matrix && Co
+########################################################################################
 
 function mass_matrix(spb::ShortPolynomialBasis)
     @unpack elements, mesh, size = spb
@@ -122,7 +123,7 @@ function fill_mass_matrix!(spb::ShortPolynomialBasis, A)
     nothing
 end
 
-function weight_mass_matrix(spb::ShortPolynomialBasis, weight::LaurentPolynomial)
+function weight_mass_matrix(spb::ShortPolynomialBasis, weight)
     T = bottom_type(spb)
     A = zeros(T, spb.size, spb.size)
     fill_weight_mass_matrix!(spb, weight, A)
@@ -133,7 +134,7 @@ function weight_mass_matrix(spb::ShortPolynomialBasis, n::Int)
     weight_mass_matrix(spb, Monomial(n))
 end
 
-function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight::LaurentPolynomial, A)
+function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight, A)
     for I ∈ spb.coupling_index
         for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
             P = getpolynomial(spb, I[1], i)
@@ -149,6 +150,28 @@ function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight::LaurentPoly
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
     nothing
+end
+
+function weight_mass_vector(spb::ShortPolynomialBasis, weight)
+    T = bottom_type(spb)
+    A = zeros(T, spb.size)
+    fill_weight_mass_vector!(spb, weight, A)
+    A
+end
+
+function fill_weight_mass_vector!(spb::ShortPolynomialBasis, weight, A)
+    for i ∈ eachindex(spb)
+        for j ∈ _getindex(spb, i)
+            P = getpolynomial(spb, i, j)
+            invϕ = getinvshift(spb, i, j)
+            weight_shift = weight ∘ invϕ
+            dinvϕ = invϕ[1]
+            @inbounds A[i] += dinvϕ * weight_scalar_product(P, weight_shift, spb.elements.binf, spb.elements.bsup)
+        end
+        if isnormalized(spb)
+            @inbounds A[i] *= getnormalization(spb, i)
+        end
+    end
 end
 
 @memoize function build_basis(spb::ShortPolynomialBasis, i::Int)

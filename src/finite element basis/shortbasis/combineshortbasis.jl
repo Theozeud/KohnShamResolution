@@ -78,7 +78,6 @@ function find_basis(cb::CombineShortPolynomialBasis, i::Int)
     (ib, i-cb.cumul_index[ib]+1)
 end
 
-
 function mass_matrix(cb::CombineShortPolynomialBasis)
     T = bottom_type(first(cb))
     A = zeros(T, (length(cb), length(cb)))
@@ -93,6 +92,24 @@ function mass_matrix(cb::CombineShortPolynomialBasis)
         end
     end
     A
+end
+
+function fill_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasis, interaction_index::Vector{CartesianIndex{2}}, A)
+    for I ∈ interaction_index
+        for (i,j) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]))
+            P = getpolynomial(spb1, I[1], i)
+            Q = getpolynomial(spb2, I[2], j)
+            invϕ = getinvshift(spb1, I[1], i)
+            dinvϕ = invϕ[1]
+            @inbounds A[I[1], I[2]] += dinvϕ * scalar_product(P, Q, spb1.elements.binf, spb1.elements.bsup)
+        end
+        if isnormalized(spb1)
+            @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
+        end
+        if isnormalized(spb2)
+            @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2])
+        end
+    end
 end
 
 function weight_mass_matrix(cb::CombineShortPolynomialBasis, weight::LaurentPolynomial)
@@ -115,24 +132,6 @@ function weight_mass_matrix(cb::CombineShortPolynomialBasis, n::Int)
     weight_mass_matrix(cb, Monomial(n))
 end
 
-function fill_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasis, interaction_index::Vector{CartesianIndex{2}}, A)
-    for I ∈ interaction_index
-        for (i,j) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]))
-            P = getpolynomial(spb1, I[1], i)
-            Q = getpolynomial(spb2, I[2], j)
-            invϕ = getinvshift(spb1, I[1], i)
-            dinvϕ = invϕ[1]
-            @inbounds A[I[1], I[2]] += dinvϕ * scalar_product(P, Q, spb1.elements.binf, spb1.elements.bsup)
-        end
-        if isnormalized(spb1)
-            @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
-        end
-        if isnormalized(spb2)
-            @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2])
-        end
-    end
-end
-
 function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasis, weight::LaurentPolynomial, interaction_index::Vector{CartesianIndex{2}}, A)
     for I ∈ interaction_index
         for (i,j) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]))
@@ -150,6 +149,16 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
             @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2])
         end
     end
+end
+
+function weight_mass_vector(cb::CombineShortPolynomialBasis, weight)
+    T = bottom_type(first(cb))
+    A = zeros(T, length(cb))
+    for b ∈ getblocks(cb)
+        @views ABlock = A[getrangerow(b)]
+        fill_weight_mass_vector!(getbasis(cb, _getindex(b,1)), weight, ABlock)
+    end
+    A
 end
 
 @memoize function build_basis(cb::CombineShortPolynomialBasis, i::Int)
