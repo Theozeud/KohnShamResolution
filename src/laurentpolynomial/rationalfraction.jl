@@ -15,7 +15,6 @@ struct RationalFraction{T} <: AbstractPolynomial{T}
     end
 end
 
-@inline Base.eltype(::RationalFraction{T}) where T = T
 @inline convert(::Type{T}, rf::RationalFraction) where T  = RationalFraction(convert(T, rf.num), convert(T, rf.denom))
 
 function (rf::RationalFraction)(x)

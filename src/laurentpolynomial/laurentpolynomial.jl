@@ -14,7 +14,6 @@ RandMonomial(T::Type, deg::Int) = Monomial(deg, rand(T))
 RandPolynomial(degmax::Int, degmin::Int = 0) = Polynomial(rand(degmax - degmin +1), degmin)
 RandPolynomial(T::Type, degmax::Int, degmin::Int = 0) = Polynomial(rand(T, degmax - degmin +1), degmin)
 
-@inline Base.eltype(::LaurentPolynomial{T}) where T = T
 @inline convert(::Type{T}, p::LaurentPolynomial) where T = LaurentPolynomial(T.(p.coeffs), p.degmin, p.haslog, T(p.coeff_log))
 
 @inline Base.eachindex(p::LaurentPolynomial) = degmin(p):degmax(p)
