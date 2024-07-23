@@ -13,7 +13,11 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     quad_reltol::Real  = 1e-3,
     quad_abstol::Real   = 1e-3,
     hartree::Real = 0, 
-    degen_tol::Real = eps(bottom_type(discretization.basis)))
+    degen_tol::Real = eps(bottom_type(discretization.basis)),
+    potential = :pde)
+
+    # Valid option for resol_hartree
+    @assert potential ∈ [:pde, :integral] "potential must be :pde or :integral"
 
     # Set the type of number as the one of the discretization basis
     T = bottom_type(discretization.basis)
@@ -28,7 +32,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     cache = init_cache(method, model, discretization)
 
     # Registering SolverOptions
-    opts = SolverOptions(tol, maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), degen_tol)
+    opts = SolverOptions(tol, maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), degen_tol, potential)
     niter = 0
     current_stop_crit =  2*T(tol)
     values_stop_crit = T[]    

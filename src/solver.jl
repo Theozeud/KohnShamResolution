@@ -6,6 +6,7 @@ struct SolverOptions{T}
     quad_abstol::T
     hartree::T
     degen_tol::T
+    potential::Symbol
 end
 
 mutable struct KhonShamSolver{TSC}

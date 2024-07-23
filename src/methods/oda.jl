@@ -9,11 +9,8 @@ struct ConstantODA{T} <: ODA
 end
 
 struct CacheODA <: AbstractKohnShamCache
-    A
-    M₀
-    M₋₁
-    M₋₂
     Hfix
+    M₀
     tmp_H
     tmp_Dstar
     tmp_D
@@ -30,23 +27,27 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
 
     @unpack lₕ, Nₕ, basis, mesh = discretization
 
-    # Set the type of number as the one of the discretization basis
+    # Set the type of solution as the one of the discretization basis
     T = bottom_type(discretization.basis)
 
     # Init base matrices
     @assert length(basis) == Nₕ
     
+    # Creation of the base matrices
     deriv_basis = deriv(basis)
-
     A   = mass_matrix(deriv_basis)
     M₀  = mass_matrix(basis)
     M₋₁ = weight_mass_matrix(basis, -1)
-    M₋₂ = lₕ == 0 ? zeros(length(basis), length(basis)) : weight_mass_matrix(basis, -2)
 
     # Creation of the fix part of the hamiltonian   
     Kin =  zeros(T, lₕ+1, Nₕ, Nₕ)
+    if lₕ == 0
+        build_kinetic!(discretization, Kin, A)
+    else
+        M₋₂ = weight_mass_matrix(basis, -2)
+        build_kinetic!(discretization, Kin, A, M₋₂)
+    end
     Coulomb =  zeros(T, lₕ+1, Nₕ, Nₕ)
-    build_kinetic!(discretization, Kin, A, M₋₂)
     build_coulomb!(discretization, Coulomb, model, M₋₁)
     Hfix = Kin + Coulomb
 
@@ -60,10 +61,9 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     tmp_ϵ           = zeros(T, lₕ+1, Nₕ)
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
     tmp_n           = zeros(T, lₕ+1, Nₕ)
-        
-    tmp_tn      = T(0)     
+    tmp_tn      = zero(T)     
 
-    CacheODA(A, M₀, M₋₁, M₋₂, Hfix, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n, tmp_tn)
+    CacheODA(Hfix, M₀, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n, tmp_tn)
 end
 
 function performstep!(method::ODA, solver::KhonShamSolver)
@@ -103,11 +103,11 @@ function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::
     @unpack M₀, Hfix, tmp_H, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ = solver.cache
     @unpack exc = solver.model
     @unpack Dprev = solver
-    @unpack quad_method, quad_reltol, quad_abstol, hartree = solver.opts
+    @unpack quad_method, quad_reltol, quad_abstol, hartree, potential = solver.opts
 
     # STEP 1 : Compute Hartree term 
-    if hartree ≠ 0
-        build_hartree!(discretization, tmp_Hartree, Dprev,)
+    if !iszero(hartree)
+        build_hartree!(discretization, tmp_Hartree, Dprev, potential)
         @. tmp_Hartree = hartree * tmp_Hartree
     end
 
