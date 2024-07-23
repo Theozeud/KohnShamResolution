@@ -161,7 +161,7 @@ end
 
 function fill_weight_mass_vector!(spb::ShortPolynomialBasis, weight, A)
     for i ∈ eachindex(spb)
-        for j ∈ _getindex(spb, i)
+        for j ∈ eachindex(spb.infos[i])
             P = getpolynomial(spb, i, j)
             invϕ = getinvshift(spb, i, j)
             weight_shift = weight ∘ invϕ

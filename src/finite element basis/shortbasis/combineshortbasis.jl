@@ -155,8 +155,10 @@ function weight_mass_vector(cb::CombineShortPolynomialBasis, weight)
     T = bottom_type(first(cb))
     A = zeros(T, length(cb))
     for b ∈ getblocks(cb)
-        @views ABlock = A[getrangerow(b)]
-        fill_weight_mass_vector!(getbasis(cb, _getindex(b,1)), weight, ABlock)
+        if isdiagonal(b)
+            @views ABlock = A[getrangerow(b)]
+            fill_weight_mass_vector!(getbasis(cb, _getindex(b,1)), weight, ABlock)
+        end
     end
     A
 end
