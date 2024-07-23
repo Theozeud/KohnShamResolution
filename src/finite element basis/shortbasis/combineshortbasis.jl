@@ -81,6 +81,11 @@ end
 function mass_matrix(cb::CombineShortPolynomialBasis)
     T = bottom_type(first(cb))
     A = zeros(T, (length(cb), length(cb)))
+    fill_mass_matrix!(cb, A)
+    A
+end
+
+function fill_mass_matrix!(cb::CombineShortPolynomialBasis, A)
     for b ∈ getblocks(cb)
         @views ABlock = A[getrangerow(b), getrangecolumn(b)]
         if isdiagonal(b)
@@ -91,7 +96,6 @@ function mass_matrix(cb::CombineShortPolynomialBasis)
             @. ABlockT = ABlock'
         end
     end
-    A
 end
 
 function fill_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasis, interaction_index::Vector{CartesianIndex{2}}, A)
@@ -112,9 +116,14 @@ function fill_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasi
     end
 end
 
-function weight_mass_matrix(cb::CombineShortPolynomialBasis, weight::LaurentPolynomial)
+function weight_mass_matrix(cb::CombineShortPolynomialBasis, weight)
     T = bottom_type(first(cb))
     A = zeros(T, (length(cb), length(cb)))
+    fill_weight_mass_matrix!(cb, weight, A)
+    A
+end
+
+function fill_weight_mass_matrix!(cb::CombineShortPolynomialBasis, weight, A)
     for b ∈ getblocks(cb)
         @views ABlock = A[getrangerow(b), getrangecolumn(b)]
         if isdiagonal(b)
@@ -125,14 +134,13 @@ function weight_mass_matrix(cb::CombineShortPolynomialBasis, weight::LaurentPoly
             @. ABlockT = ABlock'
         end
     end
-    A
 end
 
 function weight_mass_matrix(cb::CombineShortPolynomialBasis, n::Int)
     weight_mass_matrix(cb, Monomial(n))
 end
 
-function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasis, weight::LaurentPolynomial, interaction_index::Vector{CartesianIndex{2}}, A)
+function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynomialBasis, weight, interaction_index::Vector{CartesianIndex{2}}, A)
     for I ∈ interaction_index
         for (i,j) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]))
             P = getpolynomial(spb1, I[1], i)
@@ -154,13 +162,17 @@ end
 function weight_mass_vector(cb::CombineShortPolynomialBasis, weight)
     T = bottom_type(first(cb))
     A = zeros(T, length(cb))
+    fill_weight_mass_vector(cb, weight, A)
+    A
+end
+
+function fill_weight_mass_vector(cb::CombineShortPolynomialBasis, weight, A)
     for b ∈ getblocks(cb)
         if isdiagonal(b)
             @views ABlock = A[getrangerow(b)]
             fill_weight_mass_vector!(getbasis(cb, _getindex(b,1)), weight, ABlock)
         end
     end
-    A
 end
 
 @memoize function build_basis(cb::CombineShortPolynomialBasis, i::Int)
