@@ -13,7 +13,6 @@ end
 end
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, weight::LaurentPolynomial{TW}, a::Real, b::Real) where {TP, TW}
-    @assert degmin(weight) ≥ 0
     NewT = promote_type(TP,TW)
     sum = NewT(0)
     for i ∈ eachindex(weight)
@@ -23,7 +22,6 @@ end
 end
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::LaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TW}
-    @assert degmin(weight) ≥ 0
     NewT = promote_type(TP,TQ, TW)
     sum = NewT(0)
     for i ∈ eachindex(weight)
@@ -32,6 +30,31 @@ end
     sum
 end
 
+@inline function weight_scalar_product(p::LaurentPolynomial{TP}, weight::PiecewiseLaurentPolynomial{TW}, a::Real, b::Real) where {TP, TW}
+    NewT = promote_type(TP,TW)
+    sum = NewT(0)
+    for i ∈ eachindex(weight)
+        if i ∈ weight.index
+            sum += weight_scalar_product(p, weight[i], a, b)
+        elseif !iszero(weight.default_value)
+            sum += fast_monom_scalar_product(p, 0, a, b) * weight.default_value
+        end
+    end
+    sum
+end
+
+@inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::PiecewiseLaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TW}
+    NewT = promote_type(TP,TW)
+    sum = NewT(0)
+    for i ∈ eachindex(weight)
+        if i ∈ weight.index
+            sum += weight_scalar_product(p, q, weight[i], a, b)
+        elseif !iszero(weight.default_value)
+            sum += fast_monom_scalar_product(p, q, 0, a, b) * weight.default_value
+        end
+    end
+    sum
+end
 
 @inline function weight_scalar_product(p::LaurentPolynomial, weight::RationalFraction, a::Real, b::Real)
     if degmax(weight.denom) > 2
