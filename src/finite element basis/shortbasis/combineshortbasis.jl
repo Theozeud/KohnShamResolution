@@ -147,8 +147,7 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
             Q = getpolynomial(spb2, I[2], j)
             invϕ = getinvshift(spb1, I[1], i)
             dinvϕ = invϕ[1]
-            weight_shift = weight ∘ invϕ
-            @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight_shift, spb1.elements.binf, spb1.elements.bsup)
+            @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight, invϕ, spb1.elements.binf, spb1.elements.bsup)
         end
         if isnormalized(spb1)
             @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
@@ -173,6 +172,97 @@ function fill_weight_mass_vector(cb::CombineShortPolynomialBasis, weight, A)
             fill_weight_mass_vector!(getbasis(cb, _getindex(b,1)), weight, ABlock)
         end
     end
+end
+
+function vector_mass_matrix(cb::CombineShortPolynomialBasis, vect::AbstractVector)
+    @assert length(cb) == length(vect)
+    T = bottom_type(cb)
+    A = zeros(T, cb.size, cb.size)
+    fill_vector_mass_matrix!(cb, vect, A)
+    A
+end
+
+function fill_vector_mass_matrix!(cb::CombineShortPolynomialBasis, vect::AbstractVector, A)
+    for b ∈ getblocks(cb)
+        @views ABlock = A[getrangerow(b), getrangecolumn(b)]
+        spb1 = getbasis(cb, _getindex(b,1))
+        spb2 = getbasis(cb, _getindex(b,2))
+        for I ∈ b.interaction_index
+            for K ∈ eachindex(vect) 
+                if !iszero(vect[K])
+                    idk_b, idk = find_basis(cb, K)
+                    spbk =  getbasis(cb, idk_b)
+                    for (i,j,k) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]), getsegments(spbk, idk))
+                        P = getpolynomial(spb1, I[1], i)
+                        Q = getpolynomial(spb2, I[2], j)
+                        L = getpolynomial(spbk, idk,  k)
+                        @inbounds A[I[1], I[2]] += dinvϕ * fast_scalar_product(P, Q, L, spb.elements.binf, spb.elements.bsup)
+                    end
+                    if isnormalized(spb1)
+                        @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
+                    end
+                    if isnormalized(spb2)
+                        @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2]) 
+                    end
+                    if isnormalized(spbk)
+                        @inbounds A[I[1], I[2]] *= getnormalization(spbk, idk)
+                    end
+                    @inbounds A[I[1], I[2]] *= vect[K]
+                end
+            end
+        end
+        if !isdiagonal(b)
+            @views ABlockT = A[getrangecolumn(b), getrangerow(b)]
+            @. ABlockT = ABlock'
+        end
+    end
+    nothing
+end
+
+
+function vectorweight_mass_matrix(cb::CombineShortPolynomialBasis, vect::AbstractVector, weight)
+    @assert length(cb) == length(vect)
+    T = bottom_type(cb)
+    A = zeros(T, cb.size, cb.size)
+    fill_vectorweight_mass_matrix!(cb, vect, weight, A)
+    A
+end
+
+function fill_vectorweight_mass_matrix!(cb::CombineShortPolynomialBasis, vect::AbstractVector, weight, A)
+    for b ∈ getblocks(cb)
+        @views ABlock = A[getrangerow(b), getrangecolumn(b)]
+        spb1 = getbasis(cb, _getindex(b,1))
+        spb2 = getbasis(cb, _getindex(b,2))
+        for I ∈ b.interaction_index
+            for K ∈ eachindex(vect) 
+                if !iszero(vect[K])
+                    idk_b, idk = find_basis(cb, K)
+                    spbk =  getbasis(cb, idk_b)
+                    for (i,j,k) ∈ intersection_with_indices(getsegments(spb1, I[1]), getsegments(spb2, I[2]), getsegments(spbk, idk))
+                        P = getpolynomial(spb1, I[1], i)
+                        Q = getpolynomial(spb2, I[2], j)
+                        L = getpolynomial(spbk, idk,  k)
+                        @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, L, weight, invϕ, spb.elements.binf, spb.elements.bsup)
+                    end
+                    if isnormalized(spb1)
+                        @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
+                    end
+                    if isnormalized(spb2)
+                        @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2]) 
+                    end
+                    if isnormalized(spbk)
+                        @inbounds A[I[1], I[2]] *= getnormalization(spbk, idk)
+                    end
+                    @inbounds A[I[1], I[2]] *= vect[K]
+                end
+            end
+        end
+        if !isdiagonal(b)
+            @views ABlockT = A[getrangecolumn(b), getrangerow(b)]
+            @. ABlockT = ABlock'
+        end
+    end
+    nothing
 end
 
 @memoize function build_basis(cb::CombineShortPolynomialBasis, i::Int)

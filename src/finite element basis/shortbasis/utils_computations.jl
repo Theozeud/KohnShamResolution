@@ -4,12 +4,24 @@
     LaurentPolynomial([c0, c1], 0, false, T(0))
 end
 
+@memoize function fast_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real)
+    scalar_product(p, q, a, b)
+end
+
+@memoize function fast_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, a::Real, b::Real)
+    scalar_product(p, q*l, a, b)
+end
+
 @memoize function fast_monom_scalar_product(p::LaurentPolynomial, n::Int, a::Real, b::Real)
     scalar_product(Monomial(n), p, a, b)
 end
 
 @memoize function fast_monom_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, n::Int, a::Real, b::Real)
     scalar_product(Monomial(n) * p, q, a, b)
+end
+
+@memoize function fast_monom_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, n::Int, a::Real, b::Real)
+    scalar_product(Monomial(n) * p, q*l, a, b)
 end
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, weight::LaurentPolynomial{TW},a::Real, b::Real) where {TP, TW}
@@ -32,6 +44,16 @@ end
 end
 @inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, weight::LaurentPolynomial, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, weight∘ϕ, a, b)
 
+@inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, l::LaurentPolynomial{TL}, weight::LaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TL, TW}
+    NewT = promote_type(TP,TQ,TL,TW)
+    sum = NewT(0)
+    for i ∈ eachindex(weight)
+        sum += weight[i] * fast_monom_scalar_product(p, q, l, i, a, b)
+    end
+    sum
+end
+@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, weight::LaurentPolynomial, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, l, weight∘ϕ, a, b)
+
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, weight::PiecewiseLaurentPolynomial{TW}, a::Real, b::Real) where {TP, TW}
     NewT = promote_type(TP,TW)
     sum = NewT(0)
@@ -47,7 +69,7 @@ end
 @inline weight_scalar_product(p::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, ϕ, a::Real, b::Real) = weight_scalar_product(p, weight∘ϕ, ϕ, a, b)
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::PiecewiseLaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TW}
-    NewT = promote_type(TP,TW)
+    NewT = promote_type(TP,TQ,TW)
     sum = NewT(0)
     for i ∈ eachindex(weight)
         if i ∈ weight.index
@@ -59,6 +81,20 @@ end
     sum
 end
 @inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, weight∘ϕ, ϕ, a, b)
+
+@inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, l::LaurentPolynomial{TL}, weight::PiecewiseLaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TL, TW}
+    NewT = promote_type(TP,TQ,TL,TW)
+    sum = NewT(0)
+    for i ∈ eachindex(weight)
+        if i ∈ weight.index
+            sum += weight_scalar_product(p, q, l, weight[i], a, b)
+        elseif !iszero(weight.default_value)
+            sum += fast_monom_scalar_product(p, q, 0, a, b) * weight.default_value
+        end
+    end
+    sum
+end
+@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, l, weight∘ϕ, ϕ, a, b)
 
 @inline function weight_scalar_product(p::LaurentPolynomial, weight::RationalFraction, a::Real, b::Real)
     if degmax(weight.denom) > 2
@@ -78,6 +114,15 @@ end
 end
 @inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, weight::RationalFraction, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, weight∘ϕ, ϕ, a, b)
 
+@inline function weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, weight::RationalFraction, a::Real, b::Real)
+    if degmax(weight.denom) > 2
+        return integrate((p*q*l*weight.num)/weight.denom, a, b; geomfun = false, enforceNullDelta = false)
+    else
+        return integrate((p*q*l*weight.num)/weight.denom, a, b; geomfun = true, enforceNullDelta = true)
+    end
+end
+@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, weight::RationalFraction, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, l, weight∘ϕ, ϕ, a, b)
+
 @inline function weight_scalar_product(p::LaurentPolynomial, weight::SommeRationalFraction, a::Real, b::Real)
     val = weight_scalar_product(p, weight.ent, a, b)
     for i ∈ eachindex(weight)
@@ -96,15 +141,31 @@ end
 end
 @inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, weight::SommeRationalFraction, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, weight∘ϕ, a, b)
 
+@inline function weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, weight::SommeRationalFraction, a::Real, b::Real)
+    val = weight_scalar_product(p, q, l, weight.ent, a, b)
+    for i ∈ eachindex(weight)
+        val += weight_scalar_product(p, q, l, weight[i], a, b)
+    end
+    val
+end
+@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, weight::SommeRationalFraction, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, l, weight∘ϕ, a, b)
+
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, weight::Base.Callable, a::Real, b::Real) where TP
     f(x) = weight(x) * p(x)
     approximate_integral(f, (a,b); method = QuadGKJL(), reltol =  100*eps(TP), abstol =  100*eps(TP))
 end
 @inline weight_scalar_product(p::LaurentPolynomial, weight::Base.Callable, ϕ, a::Real, b::Real) = weight_scalar_product(p, weight∘ϕ, a, b)
 
-@inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::Base.Callable, ϕ, a::Real, b::Real) where {TP, TQ}
+@inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::Base.Callable, a::Real, b::Real) where {TP, TQ}
     f(x) = weight(x) * p(x) * q(x)
     NewT = promote_type(TP,TQ)
     approximate_integral(f, (a,b); method = QuadGKJL(), reltol = 100*eps(NewT), abstol =  100*eps(NewT))
 end
 @inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, weight::Base.Callable, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, weight∘ϕ, a, b)
+
+@inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, l::LaurentPolynomial{TL}, weight::Base.Callable, a::Real, b::Real) where {TP, TQ, TL}
+    f(x) = weight(x) * p(x) * q(x) * l(x)
+    NewT = promote_type(TP,TQ,TL)
+    approximate_integral(f, (a,b); method = QuadGKJL(), reltol = 100*eps(NewT), abstol =  100*eps(NewT))
+end
+@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial{TL}, weight::Base.Callable, ϕ, a::Real, b::Real) = weight_scalar_product(p, q, l, weight∘ϕ, a, b)
