@@ -205,6 +205,23 @@ function Base.:*(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomia
 end
 
 ##################################################################################
+#                               Composition
+##################################################################################
+function Base.:∘(p::PiecewiseLaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
+    NewT = promote_type(TP,TQ)
+    laurent_poly = LaurentPolynomial{NewT}[]
+    index = Int[]
+    for i ∈ eachindex(p)
+        if i ∈ p.index
+            fp = getfunction(p,i)
+            push!(laurent_poly, fp∘q)
+            push!(index,i)
+        end
+    end
+    PiecewiseLaurentPolynomial(p.mesh, laurent_poly, index, NewT(p.default_value))
+end
+
+##################################################################################
 #                            Integration & Derivation
 ##################################################################################
 

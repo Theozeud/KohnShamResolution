@@ -276,23 +276,6 @@ end
 
 
 ##################################################################################
-#                               Composition
-##################################################################################
-function Base.:∘(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
-    @assert !haslog(p) && !haslog(q)
-    NewT = promote_type(TP,TQ)
-    if degmin(p) ≥ 0
-        r = Laurent_zero(NewT, 0, 0)
-        for i ∈ eachindex(p)
-            r += p[i] * q ^ i 
-        end
-        return r
-    elseif ismonomial(p)
-        return Monomial(0,NewT(p[begin])) / (q^degmin(p)) 
-    end
-end
-
-##################################################################################
 #                            Integration & Derivation
 ##################################################################################
 
