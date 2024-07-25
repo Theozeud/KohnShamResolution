@@ -141,7 +141,7 @@ function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight, A)
             Q = getpolynomial(spb, I[2], j)
             invϕ = getinvshift(spb, I[1], i)
             dinvϕ = invϕ[1]
-            @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight, invϕ, spb.elements.binf, spb.elements.bsup)
+            @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight, spb.elements.binf, spb.elements.bsup, invϕ)
         end
         if isnormalized(spb)
             @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
@@ -164,7 +164,7 @@ function fill_weight_mass_vector!(spb::ShortPolynomialBasis, weight, A)
             P = getpolynomial(spb, i, j)
             invϕ = getinvshift(spb, i, j)
             dinvϕ = invϕ[1]
-            @inbounds A[i] += dinvϕ * weight_scalar_product(P, weight, invϕ, spb.elements.binf, spb.elements.bsup)
+            @inbounds A[i] += dinvϕ * weight_scalar_product(P, weight, spb.elements.binf, spb.elements.bsup, invϕ)
         end
         if isnormalized(spb)
             @inbounds A[i] *= getnormalization(spb, i)
@@ -183,17 +183,19 @@ end
 function fill_vector_mass_matrix!(spb::ShortPolynomialBasis, vect::AbstractVector, A)
     for I ∈ spb.coupling_index
         for K ∈ eachindex(vect) 
+            val = zero(eltype(A))
             if !iszero(vect[K])
                 for (i,j,k) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]), getsegments(spb, K))
                     P = getpolynomial(spb, I[1], i)
                     Q = getpolynomial(spb, I[2], j)
                     L = getpolynomial(spb, K, k)
-                    @inbounds A[I[1], I[2]] += dinvϕ * fast_scalar_product(P, Q, L, spb.elements.binf, spb.elements.bsup)
+                    @inbounds val += dinvϕ * fast_scalar_product(P, Q, L, spb.elements.binf, spb.elements.bsup)
                 end
                 if isnormalized(spb)
-                    @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, K)
+                    @inbounds val *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, K)
                 end
-                @inbounds A[I[1], I[2]] *= vect[K]
+                val *= vect[K]
+                @inbounds A[I[1], I[2]] += val
             end
         end
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
@@ -211,7 +213,8 @@ end
 
 function fill_vectorweight_mass_matrix!(spb::ShortPolynomialBasis, vect::AbstractVector, weight, A)
     for I ∈ spb.coupling_index
-        for K ∈ eachindex(vect) 
+        for K ∈ eachindex(vect)
+            val =  zero(eltype(A))
             if !iszero(vect[K])
                 for (i,j,k) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]), getsegments(spb, K))
                     P = getpolynomial(spb, I[1], i)
@@ -219,12 +222,13 @@ function fill_vectorweight_mass_matrix!(spb::ShortPolynomialBasis, vect::Abstrac
                     L = getpolynomial(spb, K, k)
                     invϕ = getinvshift(spb, I[1], i)
                     dinvϕ = invϕ[1]
-                    @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, L, weight, invϕ, spb.elements.binf, spb.elements.bsup)
+                    @inbounds val += dinvϕ * weight_scalar_product(P, Q, L, weight, spb.elements.binf, spb.elements.bsup, invϕ)
                 end
                 if isnormalized(spb)
-                    @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, K)
+                    @inbounds val *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, K)
                 end
-                @inbounds A[I[1], I[2]] *= vect[K]
+                val *= vect[K]
+                @inbounds A[I[1], I[2]] += val
             end
         end
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]

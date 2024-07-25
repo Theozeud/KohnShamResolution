@@ -147,7 +147,7 @@ function fill_weight_mass_matrix!(spb1::ShortPolynomialBasis, spb2::ShortPolynom
             Q = getpolynomial(spb2, I[2], j)
             invϕ = getinvshift(spb1, I[1], i)
             dinvϕ = invϕ[1]
-            @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight, invϕ, spb1.elements.binf, spb1.elements.bsup)
+            @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight, spb1.elements.binf, spb1.elements.bsup, invϕ)
         end
         if isnormalized(spb1)
             @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
@@ -219,7 +219,6 @@ function fill_vector_mass_matrix!(cb::CombineShortPolynomialBasis, vect::Abstrac
     nothing
 end
 
-
 function vectorweight_mass_matrix(cb::CombineShortPolynomialBasis, vect::AbstractVector, weight)
     @assert length(cb) == length(vect)
     T = bottom_type(cb)
@@ -235,6 +234,7 @@ function fill_vectorweight_mass_matrix!(cb::CombineShortPolynomialBasis, vect::A
         spb2 = getbasis(cb, _getindex(b,2))
         for I ∈ b.interaction_index
             for K ∈ eachindex(vect) 
+                val = zero(eltype(A))
                 if !iszero(vect[K])
                     idk_b, idk = find_basis(cb, K)
                     spbk =  getbasis(cb, idk_b)
@@ -242,18 +242,21 @@ function fill_vectorweight_mass_matrix!(cb::CombineShortPolynomialBasis, vect::A
                         P = getpolynomial(spb1, I[1], i)
                         Q = getpolynomial(spb2, I[2], j)
                         L = getpolynomial(spbk, idk,  k)
-                        @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, L, weight, invϕ, spb.elements.binf, spb.elements.bsup)
+                        invϕ = getinvshift(spb1, I[1], i)
+                        dinvϕ = invϕ[1]
+                        @inbounds val += dinvϕ * weight_scalar_product(P, Q, L, weight, spb1.elements.binf, spb1.elements.bsup, invϕ)
                     end
                     if isnormalized(spb1)
-                        @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
+                        @inbounds val *= getnormalization(spb1, I[1]) 
                     end
                     if isnormalized(spb2)
-                        @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2]) 
+                        @inbounds val *= getnormalization(spb2, I[2]) 
                     end
                     if isnormalized(spbk)
-                        @inbounds A[I[1], I[2]] *= getnormalization(spbk, idk)
+                        @inbounds val *= getnormalization(spbk, idk)
                     end
-                    @inbounds A[I[1], I[2]] *= vect[K]
+                    val *= vect[K]
+                    @inbounds A[I[1], I[2]] += val
                 end
             end
         end
