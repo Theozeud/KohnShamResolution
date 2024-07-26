@@ -79,7 +79,7 @@ end
     end
     sum
 end
-@inline weight_scalar_product(p::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, a::Real, b::Real, ϕ) = weight_scalar_product(p, weight∘ϕ, a, b)
+@inline weight_scalar_product(p::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, a::Real, b::Real, ϕ) = weight_scalar_product(p, x->(weight∘ϕ)(x), a, b)
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, weight::PiecewiseLaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TW}
     NewT = promote_type(TP,TQ,TW)
@@ -96,7 +96,7 @@ end
     =#
     sum
 end
-@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, a::Real, b::Real, ϕ) = weight_scalar_product(p, q, weight∘ϕ, a, b)
+@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, a::Real, b::Real, ϕ) = weight_scalar_product(p, q, x->(weight∘ϕ)(x), a, b)
 
 @inline function weight_scalar_product(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}, l::LaurentPolynomial{TL}, weight::PiecewiseLaurentPolynomial{TW}, a::Real, b::Real) where {TP, TQ, TL, TW}
     NewT = promote_type(TP,TQ,TL,TW)
@@ -110,7 +110,7 @@ end
     end
     sum
 end
-@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, a::Real, b::Real, ϕ) = weight_scalar_product(p, q, l, weight∘ϕ, a, b)
+@inline weight_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, l::LaurentPolynomial, weight::PiecewiseLaurentPolynomial, a::Real, b::Real, ϕ) = weight_scalar_product(p, q, l, x->(weight∘ϕ)(x), a, b)
 
 # RationalFraction
 
