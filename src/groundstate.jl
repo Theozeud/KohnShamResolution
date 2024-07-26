@@ -36,8 +36,9 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     niter = 0
     current_stop_crit =  2*T(tol)
     values_stop_crit = T[]    
+    Ehisto = T[]
 
-    KhonShamSolver(discretization, model, D, Dprev, U, ϵ, n, niter, values_stop_crit, current_stop_crit, cache, opts)
+    KhonShamSolver(discretization, model, D, Dprev, U, ϵ, n, Ehisto, niter, values_stop_crit, current_stop_crit, cache, opts)
 end
 
 function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod; show_progress = false)
@@ -50,6 +51,7 @@ function solve!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod
 end
 
 function loopfooter!(solver::KhonShamSolver, method::AbstractKohnShamResolutionMethod)
+    push!(solver.Ehisto, min(solver.ϵ...))
     solver.current_stop_crit = stopping_criteria(method, solver)
     push!(solver.values_stop_crit, solver.current_stop_crit)
     solver.Dprev  = solver.D

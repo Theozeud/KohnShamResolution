@@ -17,6 +17,7 @@ mutable struct KhonShamSolver{TSC}
     U  
     ϵ
     n
+    Ehisto
     niter::Int
     values_stop_crit::Vector{TSC}
     current_stop_crit::TSC
