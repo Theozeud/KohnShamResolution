@@ -2,13 +2,13 @@
 # Solve the eigen problem
 function _eigen(basis, ρ, Rmin, Rmax; l = 0, ϵ = 1, z = 1)
     deriv_basis = deriv(basis)
-    @time A   = Symmetric(mass_matrix(deriv_basis))
-    @time M₀  = Symmetric(mass_matrix(basis))
-    @time M₋₁ = Symmetric(weight_mass_matrix(basis, -1))
+    A   = Symmetric(mass_matrix(deriv_basis))
+    M₀  = Symmetric(mass_matrix(basis))
+    M₋₁ = Symmetric(weight_mass_matrix(basis, -1))
     # Compute Hartree matrix
-    @time F =  weight_mass_vector(basis, x->4π*ρ(x) * x)
+    F =  weight_mass_vector(basis, x->4π*ρ(x) * x)
     Cᵨ = 4π * integrate(ρ * Monomial(2), Rmin, Rmax)
-    @time Hart = vectorweight_mass_matrix(basis, A\F, Monomial(-1))+ Cᵨ/(Rmax-Rmin) * M₀
+    Hart = vectorweight_mass_matrix(basis, A\F, Monomial(-1))+ Cᵨ/(Rmax-Rmin) * M₀
     if l == 0
         H = T(0.5) * A  -  z .* M₋₁ + ϵ * Hart
         return  eigen(H, M₀)

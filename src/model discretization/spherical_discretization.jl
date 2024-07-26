@@ -14,6 +14,11 @@ init_coeffs_discretization(kd::KohnShamSphericalDiscretization, T::Type) = zeros
 init_energy(kd::KohnShamSphericalDiscretization, T::Type)                = zeros(T, kd.lₕ+1, kd.Nₕ)
 init_occupation(kd::KohnShamSphericalDiscretization, T::Type)            = zeros(T, kd.lₕ+1, kd.Nₕ)
 
+
+function build_kinetic!(::KohnShamSphericalDiscretization, Kin, A)
+    @. Kin[1,:,:] =  1/2 * A
+end
+
 function build_kinetic!(kd::KohnShamSphericalDiscretization, Kin, A, M₋₂)
     @unpack lₕ = kd
     for l ∈ 0:lₕ
@@ -28,7 +33,7 @@ function build_coulomb!(kd::KohnShamSphericalDiscretization, Coul, model, M₋�
     end 
 end
 
-function build_hartree!(kd::KohnShamSphericalDiscretization, Hartree, ρ)
+function build_hartree_deprecated!(kd::KohnShamSphericalDiscretization, Hartree, ρ)
     @unpack basis, Rmin, Rmax = kd
     int1 = integrate(Monomial(1) * ρ)
     int2 = integrate(Monomial(2) * ρ)
@@ -41,12 +46,45 @@ function build_hartree!(kd::KohnShamSphericalDiscretization, Hartree, ρ)
             else
                 #Hartree[i,j] = integrate(potential * basis[i] * basis[j], Rmin, Rmax)
                 #Hartree[i,j] = approximate_integral(x -> potential(x) * basis[i](x) * basis[j](x), (Rmin, Rmax) ; method = QuadGKJL(), reltol = 1e-3, abstol = 1e-3)
-                int_ᵢⱼ = integrate(basis[i] * basis[j])
+                #int_ᵢⱼ = integrate(basis[i] * basis[j])
+                int_ᵢⱼ = integrate(build_basis(basis, i) * build_basis(basis, j))
                 M₀ᵢⱼ = int_ᵢⱼ - int_ᵢⱼ(Rmin)
                 Hartree[i,j] = potential(Rmax)*M₀ᵢⱼ(Rmax) - integrate(∇potential * M₀ᵢⱼ, Rmin, Rmax)
             end
         end
     end
+    Hartree
+end
+
+function build_hartree!(kd::KohnShamSphericalDiscretization, Hartree, ρ, opt)
+    @unpack basis, Rmin, Rmax = kd
+    if opt == :integral
+        build_hartree_integral!(kd::KohnShamSphericalDiscretization, Hartree, ρ)
+    elseif opt == :pde
+        deriv_basis = deriv(basis)
+        A   = mass_matrix(deriv_basis)
+        M₀ = mass_matrix(basis)
+        build_hartree_pde!(kd, Hartree, ρ, A, M₀)
+    end
+    Hartree
+end
+
+function build_hartree_integral!(kd::KohnShamSphericalDiscretization, Hartree, ρ)
+    @unpack basis, Rmin, Rmax = kd
+    potential = nothing
+    fill_weight_mass_matrix!(basis, potential, Hartree)
+    Hartree
+end
+
+function build_hartree_pde!(kd::KohnShamSphericalDiscretization, Hartree, ρ, A, M₀)
+    @unpack basis, Rmin, Rmax = kd
+    rho(x) = ρ(x)
+    f(x) = 4π * rho(x) * x
+    F =  weight_mass_vector(basis, f)
+    coeff = A\F
+    Cᵨ = 4π * integrate(ρ * Monomial(2), Rmin, Rmax)
+    MV  = vectorweight_mass_matrix(basis, coeff, Monomial(-1)) 
+    @. Hartree = MV + Cᵨ/(Rmax-Rmin) * M₀
     Hartree
 end
 

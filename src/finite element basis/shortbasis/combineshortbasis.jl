@@ -188,7 +188,8 @@ function fill_vector_mass_matrix!(cb::CombineShortPolynomialBasis, vect::Abstrac
         spb1 = getbasis(cb, _getindex(b,1))
         spb2 = getbasis(cb, _getindex(b,2))
         for I ∈ b.interaction_index
-            for K ∈ eachindex(vect) 
+            for K ∈ eachindex(vect)
+                val = zero(eltype(A))
                 if !iszero(vect[K])
                     idk_b, idk = find_basis(cb, K)
                     spbk =  getbasis(cb, idk_b)
@@ -196,18 +197,19 @@ function fill_vector_mass_matrix!(cb::CombineShortPolynomialBasis, vect::Abstrac
                         P = getpolynomial(spb1, I[1], i)
                         Q = getpolynomial(spb2, I[2], j)
                         L = getpolynomial(spbk, idk,  k)
-                        @inbounds A[I[1], I[2]] += dinvϕ * fast_scalar_product(P, Q, L, spb.elements.binf, spb.elements.bsup)
+                        @inbounds val += dinvϕ * fast_scalar_product(P, Q, L, spb.elements.binf, spb.elements.bsup)
                     end
                     if isnormalized(spb1)
-                        @inbounds A[I[1], I[2]] *= getnormalization(spb1, I[1]) 
+                        @inbounds val *= getnormalization(spb1, I[1]) 
                     end
                     if isnormalized(spb2)
-                        @inbounds A[I[1], I[2]] *= getnormalization(spb2, I[2]) 
+                        @inbounds val *= getnormalization(spb2, I[2]) 
                     end
                     if isnormalized(spbk)
-                        @inbounds A[I[1], I[2]] *= getnormalization(spbk, idk)
+                        @inbounds val *= getnormalization(spbk, idk)
                     end
-                    @inbounds A[I[1], I[2]] *= vect[K]
+                    val *= vect[K]
+                    @inbounds A[I[1], I[2]] += val
                 end
             end
         end
@@ -256,7 +258,7 @@ function fill_vectorweight_mass_matrix!(cb::CombineShortPolynomialBasis, vect::A
                         @inbounds val *= getnormalization(spbk, idk)
                     end
                     val *= vect[K]
-                    @inbounds A[I[1], I[2]] += val
+                    @inbounds ABlock[I[1], I[2]] += val
                 end
             end
         end

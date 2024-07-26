@@ -9,6 +9,7 @@ struct ConstantODA{T} <: ODA
 end
 
 struct CacheODA <: AbstractKohnShamCache
+    A
     Hfix
     M₀
     tmp_H
@@ -61,9 +62,9 @@ function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDisc
     tmp_ϵ           = zeros(T, lₕ+1, Nₕ)
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
     tmp_n           = zeros(T, lₕ+1, Nₕ)
-    tmp_tn      = zero(T)     
-
-    CacheODA(Hfix, M₀, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n, tmp_tn)
+    tmp_tn          = zero(T)     
+ 
+    CacheODA(A, Hfix, M₀, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n, tmp_tn)
 end
 
 function performstep!(method::ODA, solver::KhonShamSolver)
@@ -100,14 +101,14 @@ stopping_criteria(::ODA, D, Dprev, points) = sqrt((points[end] - points[begin])*
 function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::KhonShamSolver)
 
     @unpack lₕ = discretization
-    @unpack M₀, Hfix, tmp_H, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ = solver.cache
+    @unpack A, M₀, Hfix, tmp_H, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ = solver.cache
     @unpack exc = solver.model
     @unpack Dprev = solver
     @unpack quad_method, quad_reltol, quad_abstol, hartree, potential = solver.opts
 
     # STEP 1 : Compute Hartree term 
     if !iszero(hartree)
-        build_hartree!(discretization, tmp_Hartree, Dprev, potential)
+        build_hartree_pde!(discretization, tmp_Hartree, Dprev, A, M₀)
         @. tmp_Hartree = hartree * tmp_Hartree
     end
 
