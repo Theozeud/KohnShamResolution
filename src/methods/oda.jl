@@ -163,7 +163,7 @@ function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
         else
             if length(A) == 1
                 # First case, if no degeneracy
-                n[first(A)] = 2 * remain
+                n[first(A)] = remain
             else
                 # Second case, if degeneracy
                 @error "There is accidental degeneracy but no implementation for this case for the moment."
