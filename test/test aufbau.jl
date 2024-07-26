@@ -3,32 +3,29 @@ using LinearAlgebra
 using Plots
 
 # Creation of the model
-z = 10
-N = 5
+z = 1
+N = 78
 
 KM = KohnShamExtended(z = z,N = N)
 #KM = SlaterXα(z, N)
 
 # Choice of the method
-method = ODA()
+method = ConstantODA(1)
 
 # Discretization 
-lₕ = 2
-Rmin = 0
-cutting_pre = 10
-Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-m = logmesh(Rmin, Rmax, 10)
-basis = P1Basis(m; left = false, right = false)
+lₕ = 8
+Rmax =  45
+m = linmesh(Rmin, Rmax, 10)
+basis = ShortP1Basis(m; left = false, right = false, normalize = true)
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
 # Solve
 
 deriv_basis = deriv(basis)
- 
-A   = mass_matrix(deriv_basis, Rmin, Rmax)
-M₀  = mass_matrix(basis, Rmin, Rmax)
-M₋₁ = weight_mass_matrix(basis, -1, Rmin, Rmax)
-M₋₂ = weight_mass_matrix(basis, -2, Rmin, Rmax)
+A   = mass_matrix(deriv_basis)
+M₀  = mass_matrix(basis)
+M₋₁ = weight_mass_matrix(basis, -1)
+M₋₂ = weight_mass_matrix(basis, -2)
 
 U = zeros(lₕ+1, 8, 8)
 ϵ = zeros(lₕ+1, 8)
@@ -69,18 +66,20 @@ function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
         end
         @show A
         # Count total degeneracy
-        degen = sum(degen_matrix[i] for i in A)
+        @show degen = sum(degen_matrix[i] for i in A)
         
         # See what to do depending on the case
-        if remain - degen ≥ 0
+        @show remain
+        @show degen
+        if remain - 2*degen ≥ 0
             for i in A
-                n[i] = 2 * degen_matrix[i]
+                n[i] = 2*degen_matrix[i]
             end
-            remain -= degen
+            remain -= 2*degen
         else
             if length(A) == 1
                 # First case, if no degeneracy
-                n[first(A)] = 2 * remain
+                n[first(A)] = remain
             else
                 # Second case, if degeneracy
                 @error "There is accidental degeneracy but no implementation for this case for the moment."
