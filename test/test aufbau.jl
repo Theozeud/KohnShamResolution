@@ -3,8 +3,8 @@ using LinearAlgebra
 using Plots
 
 # Creation of the model
-z = 1
-N = 78
+z = 3
+N = 3
 
 KM = KohnShamExtended(z = z,N = N)
 #KM = SlaterXα(z, N)
@@ -13,9 +13,11 @@ KM = KohnShamExtended(z = z,N = N)
 method = ConstantODA(1)
 
 # Discretization 
-lₕ = 8
-Rmax =  45
-m = linmesh(Rmin, Rmax, 10)
+lₕ = 1
+Rmin = 0
+Rmax =  15
+Nmesh = 500
+m = linmesh(Rmin, Rmax, Nmesh)
 basis = ShortP1Basis(m; left = false, right = false, normalize = true)
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
@@ -27,8 +29,8 @@ M₀  = mass_matrix(basis)
 M₋₁ = weight_mass_matrix(basis, -1)
 M₋₂ = weight_mass_matrix(basis, -2)
 
-U = zeros(lₕ+1, 8, 8)
-ϵ = zeros(lₕ+1, 8)
+U = zeros(lₕ+1, length(basis), length(basis))
+ϵ = zeros(lₕ+1, length(basis))
 
 for l ∈ 0:lₕ
     H = 1/2 * (A + l*(l+1)*M₋₂) - z .* M₋₁
@@ -39,24 +41,35 @@ end
 
 display(ϵ)
 
-n = zeros(lₕ+1, 8)
+n = zeros(lₕ+1, length(basis))
+
+#=
+1s -> 2s -> 2p || 3s
+function next_allowed_occup(last, resi)
+    if last == (1,1)
+        return (1,2)
+    else
+        (l,n) = last
+        return [(l+1,n-1),
+
+    push!(next_allowed_occup(resi), 
+end
+(1,1) -> (1,2)
+
+=#
+
 function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
     ϵ_copy = copy(ϵ)
-    for i ∈ axes(ϵ,1)
-        for j ∈ 1:i-1
-            ϵ_copy[i,j] = eltype(ϵ)(Inf)
-        end
-    end
     _l,_n = size(ϵ)
     ϵ_vect = vec(ϵ_copy)
     @show index_sort = sortperm(ϵ_vect)
-    degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:_l-1] for i ∈ 1:_n])
+    @show degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:_l-1] for i ∈ 1:_n])
     remain = N
     idx = 1
     
     while remain > 0 && idx < length(ϵ) + 1
 
-        A = Int[]  #Stock all index corresponding to a degenerancy
+        A = Int[]  # Stock all index corresponding to a degenerancy
         ϵ_cur = ϵ_vect[index_sort[idx]]
         push!(A, index_sort[idx])
         idx += 1
@@ -116,7 +129,7 @@ function convert_into_l(l::Int)
 end 
 
 for i ∈ new_index
-    _n = i[2]
+    _n = i[2]+i[1]-1
     l = convert_into_l(i[1]-1)
     push!(result,(string(_n,l),ϵ[i], n[i]))
 end
