@@ -107,6 +107,9 @@ module KohnShamResolution
 
     include("solver.jl")
 
+    export aufbau!
+    include("methods/aufbau.jl")
+
     export ODA, ConstantODA
     include("methods/oda.jl")
 
