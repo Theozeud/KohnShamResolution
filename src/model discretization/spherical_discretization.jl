@@ -5,7 +5,6 @@ struct KohnShamSphericalDiscretization{T} <: KohnShamDiscretization
     mesh::OneDMesh{T}
     Rmin::T
     Rmax::T
-
     KohnShamSphericalDiscretization(lₕ::Int, basis::Basis, mesh::OneDMesh) = new{eltype(mesh)}(lₕ, length(basis), basis, mesh, first(mesh), last(mesh))
 end
 
@@ -13,7 +12,6 @@ init_density_matrix(kd::KohnShamSphericalDiscretization, T::Type)        = zero_
 init_coeffs_discretization(kd::KohnShamSphericalDiscretization, T::Type) = zeros(T, kd.lₕ+1, kd.Nₕ, kd.Nₕ)
 init_energy(kd::KohnShamSphericalDiscretization, T::Type)                = zeros(T, kd.lₕ+1, kd.Nₕ)
 init_occupation(kd::KohnShamSphericalDiscretization, T::Type)            = zeros(T, kd.lₕ+1, kd.Nₕ)
-
 
 function build_kinetic!(::KohnShamSphericalDiscretization, Kin, A)
     @. Kin[1,:,:] =  1/2 * A
@@ -33,27 +31,9 @@ function build_coulomb!(kd::KohnShamSphericalDiscretization, Coul, model, M₋�
     end 
 end
 
-function build_hartree_deprecated!(kd::KohnShamSphericalDiscretization, Hartree, ρ)
-    @unpack basis, Rmin, Rmax = kd
-    int1 = integrate(Monomial(1) * ρ)
-    int2 = integrate(Monomial(2) * ρ)
-    potential   = 4π*(int1(Rmax) - int1 + Monomial(-1) * (int2 - int2(Rmin)))
-    ∇potential  = - Monomial(-2) * (int2 - int2(Rmin))
-    for i ∈ eachindex(basis)
-        for j ∈ eachindex(basis)
-            if j<i
-                Hartree[i,j] = Hartree[j,i]
-            else
-                #Hartree[i,j] = integrate(potential * basis[i] * basis[j], Rmin, Rmax)
-                #Hartree[i,j] = approximate_integral(x -> potential(x) * basis[i](x) * basis[j](x), (Rmin, Rmax) ; method = QuadGKJL(), reltol = 1e-3, abstol = 1e-3)
-                #int_ᵢⱼ = integrate(basis[i] * basis[j])
-                int_ᵢⱼ = integrate(build_basis(basis, i) * build_basis(basis, j))
-                M₀ᵢⱼ = int_ᵢⱼ - int_ᵢⱼ(Rmin)
-                Hartree[i,j] = potential(Rmax)*M₀ᵢⱼ(Rmax) - integrate(∇potential * M₀ᵢⱼ, Rmin, Rmax)
-            end
-        end
-    end
-    Hartree
+function build_potential!()
+
+
 end
 
 function build_hartree!(kd::KohnShamSphericalDiscretization, Hartree, ρ, opt)
