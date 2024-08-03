@@ -1,8 +1,4 @@
 # Solving linear problem
-```
-    Solve Linear Problem of the form AX = b
-    where X is the unknown
-```
 function solve_linear_problem(A::AbstractMatrix, b::AbstractVector)
     A\b
 end

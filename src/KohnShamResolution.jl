@@ -92,9 +92,10 @@ module KohnShamResolution
 
     ##########################
     # KOHN-SHAM DISCRETIZATION
-    export KohnShamDiscretization, KohnShamSphericalDiscretization
+    export KohnShamDiscretization, KohnShamRadialDiscretization
+    export RadialCache
     include("model discretization/abstract_discretization.jl")
-    include("model discretization/spherical_discretization.jl")
+    include("model discretization/radial_discretization.jl")
 
     ###################
     # KOHN-SHAM METHODS
@@ -107,8 +108,10 @@ module KohnShamResolution
 
     include("solver.jl")
 
+    include("performstep.jl")
+
     export aufbau!
-    include("methods/aufbau.jl")
+    include("aufbau.jl")
 
     export ODA, ConstantODA
     include("methods/oda.jl")

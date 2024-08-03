@@ -10,3 +10,6 @@ build_kinetic!(::KohnShamDiscretization, args...; kwargs...) = @error "Missing f
 build_coulomb!(::KohnShamDiscretization, args...; kwargs...) = @error "Missing functions"
 build_exchange_corr(::KohnShamDiscretization, args...; kwargs...) = @error "Missing functions"
 build_potential(::KohnShamDiscretization, args...; kwargs...) = @error "Missing functions"
+
+
+abstract type AbstractKohnShamCache end

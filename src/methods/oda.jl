@@ -8,128 +8,10 @@ struct ConstantODA{T} <: ODA
     end
 end
 
-struct CacheODA <: AbstractKohnShamCache
-    A
-    Hfix
-    M₀
-    tmp_H
-    tmp_Dstar
-    tmp_D
-    tmp_U
-    tmp_Hartree
-    tmp_exc 
-    tmp_ϵ
-    tmp_index_sort
-    tmp_n    
-    tmp_tn
-end
-
-function init_cache(::ODA, model::AbstractDFTModel, discretization::KohnShamDiscretization)
-
-    @unpack lₕ, Nₕ, basis, mesh = discretization
-
-    # Set the type of solution as the one of the discretization basis
-    T = bottom_type(discretization.basis)
-
-    # Init base matrices
-    @assert length(basis) == Nₕ
-    
-    # Creation of the base matrices
-    deriv_basis = deriv(basis)
-    A   = mass_matrix(deriv_basis)
-    M₀  = mass_matrix(basis)
-    M₋₁ = weight_mass_matrix(basis, -1)
-
-    # Creation of the fix part of the hamiltonian   
-    Kin =  zeros(T, lₕ+1, Nₕ, Nₕ)
-    if lₕ == 0
-        build_kinetic!(discretization, Kin, A)
-    else
-        M₋₂ = weight_mass_matrix(basis, -2)
-        build_kinetic!(discretization, Kin, A, M₋₂)
-    end
-    Coulomb =  zeros(T, lₕ+1, Nₕ, Nₕ)
-    build_coulomb!(discretization, Coulomb, model, M₋₁)
-    Hfix = Kin + Coulomb
-
-    # Initialization of array for temporary stockage of computations
-    tmp_H           = zeros(T, Nₕ, Nₕ)
-    tmp_D           = zero_piecewiselaurantpolynomial(mesh, T)
-    tmp_Dstar       = zero_piecewiselaurantpolynomial(mesh, T)
-    tmp_U           = zeros(T, lₕ+1, Nₕ, Nₕ)
-    tmp_exc         = zeros(T, Nₕ, Nₕ)
-    tmp_Hartree     = zeros(T, Nₕ, Nₕ)
-    tmp_ϵ           = zeros(T, lₕ+1, Nₕ)
-    tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
-    tmp_n           = zeros(T, lₕ+1, Nₕ)
-    tmp_tn          = zero(T)     
- 
-    CacheODA(A, Hfix, M₀, tmp_H, tmp_Dstar, tmp_D, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n, tmp_tn)
-end
-
-function performstep!(method::ODA, solver::KhonShamSolver)
-
-    # STEP 1 : Resolution of the generalized eigenvalue problem to find atomic orbitals and corresonding energies
-    find_orbital!(solver.discretization, solver)
-
-    # STEP 2 : Build the n matrix using the Aufbau principle
-    aufbau!(solver)
-
-    # STEP 3 : Build the density related matrix
-    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_n = solver.cache
-
-    tmp_D = update_density!(method, solver)
-
-    # Registering into solver
-    solver.D  = tmp_D
-    solver.U .= tmp_U
-    solver.ϵ .= tmp_ϵ
-    solver.n .= tmp_n 
-
-    tmp_D        = zero(tmp_D)
-    tmp_Dstar    = zero(tmp_Dstar)
-    tmp_U       .= zero(tmp_U)
-    tmp_exc     .= zero(tmp_exc)
-    tmp_Hartree .= zero(tmp_Hartree)
-    tmp_ϵ       .= zero(tmp_ϵ)
-    tmp_n       .= zero(tmp_n)
-end
-
-stopping_criteria(m::ODA, solver::KhonShamSolver) = stopping_criteria(m, solver.D, solver.Dprev, solver.discretization.mesh)
-stopping_criteria(::ODA, D, Dprev, points) = sqrt((points[end] - points[begin])*sum([abs(D(x)- Dprev(x))^2 for x ∈ points[begin:end-1]])/(length(points)-1))
-
-function find_orbital!(discretization::KohnShamSphericalDiscretization, solver::KhonShamSolver)
-
-    @unpack lₕ = discretization
-    @unpack A, M₀, Hfix, tmp_H, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ = solver.cache
-    @unpack exc = solver.model
-    @unpack Dprev = solver
-    @unpack quad_method, quad_reltol, quad_abstol, hartree, potential = solver.opts
-
-    # STEP 1 : Compute Hartree term 
-    if !iszero(hartree)
-        build_hartree_pde!(discretization, tmp_Hartree, Dprev, A, M₀)
-        @. tmp_Hartree = hartree * tmp_Hartree
-    end
-
-    # STEP 2 : Compute Exchange Correlation term
-    build_exchange_corr!(discretization, tmp_exc, Dprev, exc; quad_method = quad_method, quad_reltol = quad_reltol, quad_abstol = quad_abstol)
-
-    # STEP 3 : Solve the generalized eigenvalue problem for each section l
-    for l ∈ 0:lₕ
-        # building the hamiltonian of the lᵗʰ section
-        @. tmp_H = Hfix[l+1,:,:] + tmp_exc + tmp_Hartree
-        # solving
-        tmp_ϵ[l+1,:], tmp_U[l+1,:,:] = solve_generalized_eigenvalue_problem(tmp_H, M₀)
-    end
-end
-
-
-
 function update_density!(::ODA, solver::KhonShamSolver)
 
     @unpack Dprev = solver
-    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_n, tmp_tn = solver.cache
+    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_n, tmp_tn = solver.discretization.cache
 
     tmp_Dstar = build_density!(solver.discretization, tmp_Dstar, tmp_U, tmp_n)
     tmp_tn = 0.5
@@ -139,9 +21,9 @@ end
 function update_density!(m::ConstantODA, solver::KhonShamSolver)
 
     @unpack Dprev = solver
-    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_n, tmp_tn = solver.cache
+    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_n = solver.discretization.cache
 
-    tmp_Dstar = build_density!(solver.discretization, tmp_Dstar, tmp_U, tmp_n)
+    build_density!(solver.discretization)
     
     tmp_D = m.t * tmp_Dstar + (1 - m.t) * Dprev
 end
