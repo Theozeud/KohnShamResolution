@@ -6,7 +6,9 @@ module KohnShamResolution
     using Memoize
     using LambertW
     using HypergeometricFunctions
+    using TensorOperations
 
+    # To remove ???
     using SparseArrays
     using TimerOutputs
     using ProgressMeter
