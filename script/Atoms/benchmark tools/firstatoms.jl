@@ -11,10 +11,10 @@ function compute_sol(;z, N, Rmax, Nmesh, lₕ, maxiter, oda, tol = 1e-5, T = Flo
     basis_intleg4 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 4, normalize = true)
 
     # Final Discretization
-    D1 = KohnShamSphericalDiscretization(lₕ, basis_p1, m)
-    D2 = KohnShamSphericalDiscretization(lₕ, basis_intleg2, m)
-    D3 = KohnShamSphericalDiscretization(lₕ, basis_intleg3, m)
-    D4 = KohnShamSphericalDiscretization(lₕ, basis_intleg4, m)
+    D1 = KohnShamRadialDiscretization(lₕ, basis_p1, m)
+    D2 = KohnShamRadialDiscretization(lₕ, basis_intleg2, m)
+    D3 = KohnShamRadialDiscretization(lₕ, basis_intleg3, m)
+    D4 = KohnShamRadialDiscretization(lₕ, basis_intleg4, m)
 
     # Solution
     @time "With P1" sol1 = groundstate(KM, D1, method; tol = tol, hartree = true, maxiter = maxiter, potential = :pde)

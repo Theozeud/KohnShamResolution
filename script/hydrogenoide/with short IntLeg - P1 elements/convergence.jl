@@ -26,7 +26,7 @@ opts_basis = [opts_basis_p1, opts_basis_il2, opts_basis_il3, opts_basis_il4, opt
 # - Parameter z
 
 # Plots for l = 0 for different eigenvalues
-if false
+if true
     T = Float64
     l = 0
     z = 1
@@ -36,15 +36,16 @@ if false
     vecNmesh     = 2 .^(4:7)
 
     plt1, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 1)
-    plt2, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 2)
-    plt3, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 3)
-    plt4, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 4)
-
+    #plt2, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 2)
+    #plt3, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 3)
+    #plt4, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 4)
+    #=
     title = "l = $l, z = $z, Rmax = $Rmax, T = $T"
     savefig(plt1, file*"Cvg - "*title*", n = 1")
     savefig(plt2, file*"Cvg - "*title*", n = 2")
     savefig(plt3, file*"Cvg - "*title*", n = 3")
     savefig(plt4, file*"Cvg - "*title*", n = 4")
+    =#
 end
 
 # Plots for different l for degree 1 to 5 for the the first four eigenvalue
@@ -89,7 +90,7 @@ if false
     savefig(plt4, file*"Cvg - "*title*", n = 4")
 end
 
-if true
+if false
     T = Float64
     l = 0
     z = 3

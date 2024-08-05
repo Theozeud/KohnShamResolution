@@ -1,3 +1,1 @@
 abstract type AbstractKohnShamResolutionMethod end
-
-abstract type AbstractKohnShamCache end

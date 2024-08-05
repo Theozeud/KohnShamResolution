@@ -31,10 +31,11 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     size::Int
     infos::Vector{InfoElement}
     coupling_index::Vector{CartesianIndex{2}}
+    coupling_index3::Vector{CartesianIndex{3}}
     deriv_order::Int
 
-    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}, deriv_order::Int) 
-        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, deriv_order)
+    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}, coupling_index3::Vector{CartesianIndex{3}}, deriv_order::Int) 
+        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, coupling_index3, deriv_order)
     end
 
     function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, deriv_order) 
@@ -45,7 +46,7 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
             @assert getsegments(info) ⊆ eachindex(mesh)[1:end-1]
         end 
 
-        # Creating the coupling indices
+        # Creating the coupling indices for matrix
         coupling_index = CartesianIndex{2}[]
         for i in eachindex(infos)
             for j in 1:i
@@ -54,7 +55,22 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
                 end
             end
         end
-        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, deriv_order)
+
+        # Creating the coupling indices for 3-tensor
+        coupling_index3 = CartesianIndex{3}[]
+        
+        for I ∈ coupling_index
+            i = I[1]
+            j = I[2]
+            for k ∈ 1:j
+                if !isempty(intersect(getsegments(infos[i]), getsegments(infos[j]), getsegments(infos[k])))
+                    push!(coupling_index3, CartesianIndex(i, j, k))
+                end
+            end
+        end
+        
+
+        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, coupling_index3, deriv_order)
     end
 end
 
@@ -172,6 +188,35 @@ function fill_weight_mass_vector!(spb::ShortPolynomialBasis, weight, A)
     end
 end
 
+function weight_mass_3tensor(spb::ShortPolynomialBasis, weight)
+    T = bottom_type(spb)
+    A = zeros(T, spb.size, spb.size, spb.size)
+    fill_weight_mass_3tensor!(spb, weight, A)
+    A
+end
+
+function fill_weight_mass_3tensor!(spb::ShortPolynomialBasis, weight, A)
+    for I ∈ spb.coupling_index3
+        for (i,j,k) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]), getsegments(spb, I[3]))
+            P = getpolynomial(spb, I[1], i)
+            Q = getpolynomial(spb, I[2], j)
+            L = getpolynomial(spb, I[3], k)
+            invϕ = getinvshift(spb, I[1], i)
+            dinvϕ = invϕ[1]
+            @inbounds A[I[1], I[2], I[3]] += dinvϕ * weight_scalar_product(P, Q, L, weight, spb.elements.binf, spb.elements.bsup, invϕ)
+        end
+        if isnormalized(spb)
+            @inbounds A[I[1], I[2], I[3]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, I[3])
+        end
+        @inbounds A[I[3], I[1], I[2]]  = A[I[1], I[2], I[3]]
+        @inbounds A[I[2], I[3], I[1]]  = A[I[1], I[2], I[3]]
+        @inbounds A[I[2], I[1], I[3]]  = A[I[1], I[2], I[3]]
+        @inbounds A[I[3], I[2], I[1]]  = A[I[1], I[2], I[3]]
+        @inbounds A[I[1], I[3], I[2]]  = A[I[1], I[2], I[3]]
+    end
+    nothing
+end
+
 function vector_mass_matrix(spb::ShortPolynomialBasis, vect::AbstractVector)
     @assert length(spb) == length(vect)
     T = bottom_type(spb)
@@ -262,5 +307,5 @@ end
 function deriv(spb::ShortPolynomialBasis)
     deriv_polynomials = deriv.(getpolynomial(spb.elements))
     deriv_elements = DefaultElements(isnormalized(spb.elements), eltype(spb.elements), deriv_polynomials, spb.elements.size, spb.elements.binf, spb.elements.bsup, spb.elements.normalization)
-    ShortPolynomialBasis(deriv_elements, spb.mesh, spb.size, spb.infos, spb.coupling_index, spb.deriv_order+1)
+    ShortPolynomialBasis(deriv_elements, spb.mesh, spb.size, spb.infos, spb.coupling_index, spb.coupling_index3, spb.deriv_order+1)
 end
