@@ -216,9 +216,26 @@ function hartree_v2(basis, ρ, Rmin, Rmax)
     deriv_basis = deriv(basis)
     CIL   = mass_matrix(deriv_basis)
     f(x) = 4π*ρ(x) * x
-    F =  weight_mass_vector(basis, f)
-    coeff = CIL\F
+    @show F =  weight_mass_vector(basis, f)
+    @show coeff = CIL\F
     g = ρ * Monomial(2)
-    Cᵨ = 4π * integrate(g, Rmin, Rmax)
-    vectorweight_mass_matrix(basis, coeff, Monomial(-1))+ Cᵨ/(Rmax-Rmin) * mass_matrix(basis)
+    @show Cᵨ = 4π * integrate(g, Rmin, Rmax)
+    @show vectorweight_mass_matrix(basis, coeff, Monomial(-1))
+    vectorweight_mass_matrix(basis, coeff, Monomial(-1))+ Cᵨ/(Rmax-Rmin) * mass_matrix(basis), F
 end
+
+function hartree_v3(basis, D, Rmin, Rmax)
+    deriv_basis = deriv(basis)
+    M₀ = mass_matrix(basis)
+    A = mass_matrix(deriv_basis)
+    F = weight_mass_3tensor(basis, Monomial(1))
+    @show @tensor B[m] := D[i,j] * F[i,j,m]
+    @show Pot = A\B
+    @tensor MV[i,j] := Pot[k] * F[i,j,k]
+    mw = weight_mass_matrix(basis, 2)
+    @show @tensor Cᵨ = D[i,j] * mw[i,j]
+    @show MV
+    MV + Cᵨ/(Rmax-Rmin) * M₀, B
+end
+
+
