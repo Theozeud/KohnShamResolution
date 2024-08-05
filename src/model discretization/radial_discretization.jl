@@ -7,42 +7,50 @@ struct RadialCache
     M₀
     M₋₁
     M₋₂
+    F
+    B
     Kin
     Coulomb
     Hfix
+    Pot
+    Hartree
     tmp_H
     tmp_D
     tmp_Dstar
     tmp_U
-    tmp_Hartree
+    tmp_VH10
     tmp_exc 
     tmp_ϵ
     tmp_index_sort
     tmp_n    
 end
 
-function create_cache(lₕ, Nₕ, mesh, T)
+function create_cache(lₕ, Nₕ, T)
 
     A   = zeros(T, Nₕ, Nₕ) 
     M₀  = zeros(T, Nₕ, Nₕ)
     M₋₁ =  zeros(T, Nₕ, Nₕ)
     M₋₂ =  zeros(T, Nₕ, Nₕ)
+    F   =  zeros(T, Nₕ, Nₕ, Nₕ)
+    B   =  zeros(T, Nₕ)
     Kin =  zeros(T, lₕ+1, Nₕ, Nₕ)
     Coulomb =  zeros(T, lₕ+1, Nₕ, Nₕ)
-    Hfix = zeros(T, lₕ+1, Nₕ, Nₕ) 
+    Hfix = zeros(T, lₕ+1, Nₕ, Nₕ)
+    Pot  = zeros(T, Nₕ)
+    Hartree     = zeros(T, Nₕ, Nₕ)
 
     # Initialization of array for temporary stockage of computations
     tmp_H           = zeros(T, Nₕ, Nₕ)
-    tmp_D           = zero_piecewiselaurantpolynomial(mesh, T)
-    tmp_Dstar       = zero_piecewiselaurantpolynomial(mesh, T)
+    tmp_D           = zeros(T, Nₕ, Nₕ) #zero_piecewiselaurantpolynomial(mesh, T)
+    tmp_Dstar       = zeros(T, Nₕ, Nₕ) #zero_piecewiselaurantpolynomial(mesh, T)
     tmp_U           = zeros(T, lₕ+1, Nₕ, Nₕ)
-    tmp_Hartree     = zeros(T, Nₕ, Nₕ)
+    tmp_VH10        = zeros(T, Nₕ, Nₕ)
     tmp_exc         = zeros(T, Nₕ, Nₕ)
     tmp_ϵ           = zeros(T, lₕ+1, Nₕ)
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
     tmp_n           = zeros(T, lₕ+1, Nₕ)   
  
-    RadialCache(A, M₀, M₋₁, M₋₂, Kin, Coulomb, Hfix, tmp_H, tmp_D, tmp_Dstar, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n)
+    RadialCache(A, M₀, M₋₁, M₋₂, F, B, Kin, Coulomb, Hfix, Pot, Hartree, tmp_H, tmp_D, tmp_Dstar, tmp_U, tmp_VH10, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n)
 end
 
 
@@ -63,7 +71,7 @@ struct KohnShamRadialDiscretization{T} <: KohnShamDiscretization
     function KohnShamRadialDiscretization(lₕ::Int, basis::Basis, mesh::OneDMesh)
         elT = bottom_type(basis)
         Nₕ = length(basis)
-        new{eltype(mesh)}(lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache(lₕ, Nₕ, mesh, elT))
+        new{eltype(mesh)}(lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache(lₕ, Nₕ, elT))
     end
 end
 
@@ -71,10 +79,10 @@ end
 #                          Init Cache
 #####################################################################
 
-function init_cache!(discretization::KohnShamRadialDiscretization, model::AbstractDFTModel)
+function init_cache!(discretization::KohnShamRadialDiscretization, model::AbstractDFTModel, hartree)
 
     @unpack lₕ, basis  = discretization
-    @unpack A, M₀, M₋₁, M₋₂, Kin, Coulomb, Hfix = discretization.cache
+    @unpack A, M₀, M₋₁, M₋₂, F, Kin, Coulomb, Hfix = discretization.cache
 
     # Creation of the base matrices
     deriv_basis = deriv(basis)
@@ -86,13 +94,20 @@ function init_cache!(discretization::KohnShamRadialDiscretization, model::Abstra
     if lₕ ≠ 0
         M₋₂ .= weight_mass_matrix(basis, -2)
     end
-    build_kinetic!(discretization)
-    build_coulomb!(discretization, model)
+    kinetic_matrix!(discretization)
+    coulomb_matrix!(discretization, model)
     @. Hfix = Kin + Coulomb
+
+    # Creation of the 3-index tensor F if there is the hartree term
+    if hartree
+        F .= weight_mass_3tensor(basis, Monomial(-1))
+    end
+
     nothing
 end
 
-init_density_matrix(kd::KohnShamRadialDiscretization)        = zero_piecewiselaurantpolynomial(kd.mesh, kd.elT), zero_piecewiselaurantpolynomial(kd.mesh, kd.elT) 
+#init_density_matrix(kd::KohnShamRadialDiscretization)        = zero_piecewiselaurantpolynomial(kd.mesh, kd.elT), zero_piecewiselaurantpolynomial(kd.mesh, kd.elT)
+init_density_matrix(kd::KohnShamRadialDiscretization)        = zeros(kd.elT, kd.Nₕ, kd.Nₕ)  
 init_coeffs_discretization(kd::KohnShamRadialDiscretization) = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, kd.Nₕ)
 init_energy(kd::KohnShamRadialDiscretization)                = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
 init_occupation(kd::KohnShamRadialDiscretization)            = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
@@ -101,7 +116,7 @@ init_occupation(kd::KohnShamRadialDiscretization)            = zeros(kd.elT, kd.
 #                          Kinetic Energy
 #####################################################################
 
-function build_kinetic!(discretization::KohnShamRadialDiscretization)
+function kinetic_matrix!(discretization::KohnShamRadialDiscretization)
     @unpack A, M₋₂, Kin = discretization.cache
     for l ∈ 0:discretization.lₕ
         @. Kin[l+1,:,:] =  1/2 * (A + l*(l+1)*M₋₂)
@@ -109,12 +124,11 @@ function build_kinetic!(discretization::KohnShamRadialDiscretization)
     nothing
 end
 
-
 #####################################################################
 #                          Coulomb Energy
 #####################################################################
 
-function build_coulomb!(discretization::KohnShamRadialDiscretization, model)
+function coulomb_matrix!(discretization::KohnShamRadialDiscretization, model)
     @unpack M₋₁, Coulomb = discretization.cache
     for l ∈ 0:discretization.lₕ
         Coulomb[l+1,:,:] .= - charge(model) .* M₋₁
@@ -126,32 +140,43 @@ end
 #                          Hartree Energy
 #####################################################################
 
-function build_hartree!(discretization::KohnShamRadialDiscretization, ρ, opt)
+function hartree_matrix!(discretization::KohnShamRadialDiscretization, ρ, opt)
     if opt == :integral
         #build_hartree_integral!(kd::KohnShamRadialDiscretization, Hartree, ρ)
     elseif opt == :pde
-        build_hartree_pde!(discretization, ρ)
+        hartree_matrix_pde!(discretization, ρ)
     end
     discretization.cache.tmp_Hartree
 end
 
-function build_hartree_integral!(kd::KohnShamRadialDiscretization, ρ)
+function hartree_matrix_integral!(kd::KohnShamRadialDiscretization, ρ)
     @unpack basis, Rmin, Rmax = kd
     potential = nothing
     fill_weight_mass_matrix!(basis, potential, Hartree)
     Hartree
 end
 
-function build_hartree_pde!(discretization::KohnShamRadialDiscretization, ρ)
-    @unpack A, M₀, tmp_Hartree = discretization.cache
-    @unpack basis, Rmin, Rmax = kd
+function hartree_matrix_pde_old!(discretization::KohnShamRadialDiscretization, ρ)
+    @unpack A, M₀, Hartree = discretization.cache
+    @unpack basis, Rmin, Rmax = discretization
     rho(x) = ρ(x)
     f(x) = 4π * rho(x) * x
     F =  weight_mass_vector(basis, f)
     coeff = A\F
     Cᵨ = 4π * integrate(ρ * Monomial(2), Rmin, Rmax)
     MV  = vectorweight_mass_matrix(basis, coeff, Monomial(-1)) 
-    @. tmp_Hartree = MV + Cᵨ/(Rmax-Rmin) * M₀
+    @. Hartree = MV + Cᵨ/(Rmax-Rmin) * M₀
+    nothing
+end
+
+function hartree_matrix_pde!(discretization::KohnShamRadialDiscretization, D)
+    @unpack A, M₀, F, B, Pot, Hartree, tmp_VH10 = discretization.cache
+    @unpack basis, Rmin, Rmax = discretization
+    @tensor B[m] = D[i,j] * F[i,j,m]
+    Pot .= A\B
+    @tensor Cᵨ = D[i,j] * M₀[i,j]
+    @tensor MV[i,j] := Pot[k] * F[i,j,k]
+    @. Hartree = MV + Cᵨ/(Rmax-Rmin) * M₀
     nothing
 end
 
@@ -159,7 +184,7 @@ end
 #                         Exchange Correlation
 #####################################################################
 
-function build_exchange_corr!(kd::KohnShamRadialDiscretization, exc_mat, ρ, exc::AbstractExchangeCorrelation; quad_method, quad_reltol, quad_abstol)
+function exchange_corr!(kd::KohnShamRadialDiscretization, exc_mat, ρ, exc::AbstractExchangeCorrelation; quad_method, quad_reltol, quad_abstol)
     @unpack Nₕ, basis, Rmin, Rmax = kd
     if !isthereExchangeCorrelation(exc)
         return exc_mat .= zeros(Nₕ,Nₕ)
@@ -201,6 +226,31 @@ end
 #                             Density
 #####################################################################
 
+function density_matrix!(discretization::KohnShamRadialDiscretization)
+    @unpack M₀, tmp_Dstar, tmp_U, tmp_n = discretization.cache
+    @unpack lₕ, Nₕ  = discretization
+    @inbounds for l ∈ 1:lₕ+1 
+        @inbounds for k ∈ 1 :Nₕ
+            if !iszero(tmp_n[l,k])
+                normalization = sum([tmp_U[l,i,k] * tmp_U[l,j,k] * M₀[i,j] for i∈1:Nₕ for j∈1:Nₕ])
+                @inbounds for i ∈ 1:Nₕ
+                    
+                    val = tmp_n[l,k] * tmp_U[l,i,k] * 1/normalization
+                    @inbounds @simd for j ∈ 1:i
+                        tmp_Dstar[i,j] += val * tmp_U[l,j,k]
+                    end
+                end
+            end
+        end
+    end
+    @inbounds for i in 1:Nₕ
+        @inbounds @simd for j in 1:i-1
+            tmp_Dstar[j,i] = tmp_Dstar[i,j]
+        end
+    end
+    nothing
+end
+
 function build_density!(discretization::KohnShamRadialDiscretization)
     @unpack tmp_Dstar, tmp_U, tmp_n = discretization.cache
     @unpack lₕ, Nₕ, basis, mesh = discretization
@@ -214,8 +264,19 @@ function build_density!(discretization::KohnShamRadialDiscretization)
         end
     end
     tmp_Dstar *= 1/(4π)
-    nothing
 end
+
+function build_density2!(discretization::KohnShamRadialDiscretization)
+    @unpack tmp_Dstar = discretization.cache
+    ρ = Monomial(0,0)
+    for i ∈ axes(D,1)
+        for j ∈ axes(D,2)
+            ρ += D[i,j]  * build_basis(basis, i) * build_basis(basis, j)
+        end
+    end
+    ρ* 1/4π 
+end
+
 
 #####################################################################
 #                             Energy
