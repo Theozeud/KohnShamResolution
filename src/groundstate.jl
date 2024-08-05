@@ -23,10 +23,11 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     T = discretization.elT
 
     # Init Cache of the Discretisation
-    init_cache!(discretization, model)
+    init_cache!(discretization, model, hartree)
 
     # Init storage array
-    D, Dprev    = init_density_matrix(discretization)
+    D           = init_density_matrix(discretization)
+    Dprev       = init_density_matrix(discretization)
     U           = init_coeffs_discretization(discretization)
     ϵ           = init_energy(discretization)
     n           = init_occupation(discretization)
@@ -58,24 +59,14 @@ function performstep!(solver::KhonShamSolver)
     # STEP 2 : Build the n matrix using the Aufbau principle
     aufbau!(solver)
 
-    # STEP 3 : Build the density 
-    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_Hartree, tmp_exc, tmp_ϵ, tmp_n = solver.discretization.cache
+    # STEP 3 : Compute density star
+    density_matrix!(solver.discretization)
 
-    tmp_D = update_density!(solver.method, solver)
+    # STEP 4 : Compute new density
+    update_density!(solver.method, solver)
 
-    # Registering into solver
-    solver.D  = tmp_D
-    solver.U .= tmp_U
-    solver.ϵ .= tmp_ϵ
-    solver.n .= tmp_n 
-
-    tmp_D        = zero(tmp_D)
-    tmp_Dstar    = zero(tmp_Dstar)
-    tmp_U       .= zero(tmp_U)
-    tmp_exc     .= zero(tmp_exc)
-    tmp_Hartree .= zero(tmp_Hartree)
-    tmp_ϵ       .= zero(tmp_ϵ)
-    tmp_n       .= zero(tmp_n)
+    # Reset Solver
+    reset_cache!(solver)
 end
 
 
@@ -83,15 +74,33 @@ function loopfooter!(solver::KhonShamSolver)
     push!(solver.Ehisto, min(solver.ϵ...))
     solver.current_stop_crit = stopping_criteria(solver)
     push!(solver.values_stop_crit, solver.current_stop_crit)
-    solver.Dprev  = solver.D
+    solver.Dprev  .= solver.D
     solver.niter += 1
 end
 
+#function stopping_criteria(solver::KhonShamSolver)
+#    m = solver.discretization.mesh
+#    sqrt((m[end] - m[begin])*sum([abs(solver.D(x)- solver.Dprev(x))^2 for x ∈ m[begin:end-1]])/(length(m)-1))
+#end
 function stopping_criteria(solver::KhonShamSolver)
-    m = solver.discretization.mesh
-    sqrt((m[end] - m[begin])*sum([abs(solver.D(x)- solver.Dprev(x))^2 for x ∈ m[begin:end-1]])/(length(m)-1))
+    norm(solver.D - solver.Dprev)
 end
-
+    
 function makesolution(solver::KhonShamSolver)
     KohnShamSolution(solver)
+end
+
+function reset_cache!(solver::KhonShamSolver)
+    @unpack tmp_D, tmp_Dstar, tmp_U, Hartree, tmp_exc, tmp_ϵ, tmp_n = solver.discretization.cache
+    solver.D .= tmp_D
+    solver.U .= tmp_U
+    solver.ϵ .= tmp_ϵ
+    solver.n .= tmp_n 
+    tmp_D       .= zero(tmp_D)
+    tmp_Dstar   .= zero(tmp_Dstar)
+    tmp_U       .= zero(tmp_U)
+    tmp_exc     .= zero(tmp_exc)
+    Hartree     .= zero(Hartree)
+    tmp_ϵ       .= zero(tmp_ϵ)
+    tmp_n       .= zero(tmp_n)
 end
