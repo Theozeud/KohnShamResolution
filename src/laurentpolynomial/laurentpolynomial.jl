@@ -14,7 +14,6 @@ RandMonomial(T::Type, deg::Int) = Monomial(deg, rand(T))
 RandPolynomial(degmax::Int, degmin::Int = 0) = Polynomial(rand(degmax - degmin +1), degmin)
 RandPolynomial(T::Type, degmax::Int, degmin::Int = 0) = Polynomial(rand(T, degmax - degmin +1), degmin)
 
-@inline Base.eltype(::LaurentPolynomial{T}) where T = T
 @inline convert(::Type{T}, p::LaurentPolynomial) where T = LaurentPolynomial(T.(p.coeffs), p.degmin, p.haslog, T(p.coeff_log))
 
 @inline Base.eachindex(p::LaurentPolynomial) = degmin(p):degmax(p)
@@ -275,23 +274,6 @@ function diveucl(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
     return (round(Q/NewT(q[end])), R)
 end
 
-
-##################################################################################
-#                               Composition
-##################################################################################
-function Base.:∘(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
-    @assert !haslog(p) && !haslog(q)
-    NewT = promote_type(TP,TQ)
-    if degmin(p) ≥ 0
-        r = Laurent_zero(NewT, 0, 0)
-        for i ∈ eachindex(p)
-            r += p[i] * q ^ i 
-        end
-        return r
-    elseif ismonomial(p)
-        return Monomial(0,NewT(p[begin])) / (q^degmin(p)) 
-    end
-end
 
 ##################################################################################
 #                            Integration & Derivation

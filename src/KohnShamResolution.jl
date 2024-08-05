@@ -6,7 +6,9 @@ module KohnShamResolution
     using Memoize
     using LambertW
     using HypergeometricFunctions
+    using TensorOperations
 
+    # To remove ???
     using SparseArrays
     using TimerOutputs
     using ProgressMeter
@@ -52,7 +54,9 @@ module KohnShamResolution
     include("finite element basis/abstract polynomial basis.jl")
     
     export LaurentPolynomialBasis
-    export mass_matrix, weight_mass_matrix, build_on_basis
+    export mass_matrix, weight_mass_matrix, weight_mass_vector, vector_mass_matrix, vectorweight_mass_matrix,
+           weight_mass_3tensor
+    export build_on_basis
     include("finite element basis/completebasis/laurentpolynomialbasis.jl")
 
     export HatBasis, P1Basis, BubbleBasis, IntLegendreBasis
@@ -80,7 +84,7 @@ module KohnShamResolution
     include("finite element basis/shortbasis/combineshortbasis.jl")
 
     export ShortP1IntLegendreBasis
-    include("finite element basis/shortbasis/combine elements.jl")
+    include("finite element basis/shortbasis/combined elements.jl")
 
     #################
     # KOHN-SHAM MODEL
@@ -92,9 +96,10 @@ module KohnShamResolution
 
     ##########################
     # KOHN-SHAM DISCRETIZATION
-    export KohnShamDiscretization, KohnShamSphericalDiscretization
+    export KohnShamDiscretization, KohnShamRadialDiscretization
+    export RadialCache
     include("model discretization/abstract_discretization.jl")
-    include("model discretization/spherical_discretization.jl")
+    include("model discretization/radial_discretization.jl")
 
     ###################
     # KOHN-SHAM METHODS
@@ -106,6 +111,11 @@ module KohnShamResolution
     include("problem.jl")
 
     include("solver.jl")
+
+    include("performstep.jl")
+
+    export aufbau!
+    include("aufbau.jl")
 
     export ODA, ConstantODA
     include("methods/oda.jl")

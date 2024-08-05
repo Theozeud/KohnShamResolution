@@ -4,10 +4,12 @@ struct KohnShamSolution
     success::String 
     occup::Vector
     E::Real
-    ϵ::Vector
+    Ehisto
+    ϵ
     eigvects
     niter::Int
     crit::Vector
+    ρ
 
     function KohnShamSolution(solver::KhonShamSolver)
 
@@ -26,7 +28,7 @@ struct KohnShamSolution
         occup = [(string(i[2], convert_into_l(i[1]-1)), ϵ[i], n[i]) for i ∈ new_index]
         eigvects = build_eigenvector(solver.discretization, solver.U; Index =  new_index)
 
-        new(success, occup, ϵ[first(new_index)], sort(vec(ϵ)), eigvects, solver.niter, solver.values_stop_crit)
+        new(success, occup, ϵ[first(new_index)], solver.Ehisto, ϵ, eigvects, solver.niter, solver.values_stop_crit, solver.D)
     end
 end
 

@@ -5,8 +5,6 @@ mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractPolynomial{T}
     default_value::T
 end
 
-@inline Base.eltype(::PiecewiseLaurentPolynomial{T,TM}) where {T,TM} = T
-
 @inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = zero_piecewiselaurantpolynomial(pwlp.mesh, T)
 @inline Base.zero(::Type{PiecewiseLaurentPolynomial{T}}, mesh::OneDMesh) where T = zero_piecewiselaurantpolynomial(pwlp.mesh, T)
 @inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, LaurentPolynomial{T}[], Int[], T(0))
@@ -204,6 +202,23 @@ function Base.:*(p::PiecewiseLaurentPolynomial{TP}, q::PiecewiseLaurentPolynomia
         end
     end
     PiecewiseLaurentPolynomial(p.mesh, laurent_poly, index, NewT(p.default_value) * NewT(q.default_value))
+end
+
+##################################################################################
+#                               Composition
+##################################################################################
+function Base.:∘(p::PiecewiseLaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
+    NewT = promote_type(TP,TQ)
+    laurent_poly = LaurentPolynomial{NewT}[]
+    index = Int[]
+    for i ∈ eachindex(p)
+        if i ∈ p.index
+            fp = getfunction(p,i)
+            push!(laurent_poly, fp∘q)
+            push!(index,i)
+        end
+    end
+    PiecewiseLaurentPolynomial(p.mesh, laurent_poly, index, NewT(p.default_value))
 end
 
 ##################################################################################

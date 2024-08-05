@@ -38,30 +38,6 @@ end
 
 
 ########################################################################################
-#                    Integrated Legendre Polynomials mass matrix
-########################################################################################
-#=
-function fill_mass_matrix!(ilb::IntLegendreElements{true}, ::OneDMesh, A)
-    T = eltype(ilb)
-    for I ∈ axes(A,1)
-        A[I,I] = T(1)
-    end
-    nothing
-end
-
-function fill_mass_matrix!(ilb::IntLegendreElements{false}, mesh::OneDMesh, A)
-    T = eltype(ilb)
-    for i ∈ eachindex(mesh)[1:end-1]
-        for n ∈ 1:ilb.size
-            I = (i-1)*ilb.size + n
-            A[I,I] = (T(mesh[i+1]) - T(mesh[i]))/(T(ilb.bsup) - T(ilb.binf))
-        end
-    end
-    nothing
-end
-=#
-
-########################################################################################
 #                    Difference Legendre Polynomials mass matrix
 ########################################################################################
 function fill_mass_matrix!(dlb::DiffLegendreElements{true}, ::OneDMesh, A)

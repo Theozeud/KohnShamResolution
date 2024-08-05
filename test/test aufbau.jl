@@ -3,35 +3,34 @@ using LinearAlgebra
 using Plots
 
 # Creation of the model
-z = 10
-N = 5
+z = 3
+N = 3
 
 KM = KohnShamExtended(z = z,N = N)
 #KM = SlaterXα(z, N)
 
 # Choice of the method
-method = ODA()
+method = ConstantODA(1)
 
 # Discretization 
-lₕ = 2
+lₕ = 1
 Rmin = 0
-cutting_pre = 10
-Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-m = logmesh(Rmin, Rmax, 10)
-basis = P1Basis(m; left = false, right = false)
+Rmax =  15
+Nmesh = 500
+m = linmesh(Rmin, Rmax, Nmesh)
+basis = ShortP1Basis(m; left = false, right = false, normalize = true)
 D = KohnShamSphericalDiscretization(lₕ, basis, m)
 
 # Solve
 
 deriv_basis = deriv(basis)
- 
-A   = mass_matrix(deriv_basis, Rmin, Rmax)
-M₀  = mass_matrix(basis, Rmin, Rmax)
-M₋₁ = weight_mass_matrix(basis, -1, Rmin, Rmax)
-M₋₂ = weight_mass_matrix(basis, -2, Rmin, Rmax)
+A   = mass_matrix(deriv_basis)
+M₀  = mass_matrix(basis)
+M₋₁ = weight_mass_matrix(basis, -1)
+M₋₂ = weight_mass_matrix(basis, -2)
 
-U = zeros(lₕ+1, 8, 8)
-ϵ = zeros(lₕ+1, 8)
+U = zeros(lₕ+1, length(basis), length(basis))
+ϵ = zeros(lₕ+1, length(basis))
 
 for l ∈ 0:lₕ
     H = 1/2 * (A + l*(l+1)*M₋₂) - z .* M₋₁
@@ -42,24 +41,35 @@ end
 
 display(ϵ)
 
-n = zeros(lₕ+1, 8)
+n = zeros(lₕ+1, length(basis))
+
+#=
+1s -> 2s -> 2p || 3s
+function next_allowed_occup(last, resi)
+    if last == (1,1)
+        return (1,2)
+    else
+        (l,n) = last
+        return [(l+1,n-1),
+
+    push!(next_allowed_occup(resi), 
+end
+(1,1) -> (1,2)
+
+=#
+
 function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
     ϵ_copy = copy(ϵ)
-    for i ∈ axes(ϵ,1)
-        for j ∈ 1:i-1
-            ϵ_copy[i,j] = eltype(ϵ)(Inf)
-        end
-    end
     _l,_n = size(ϵ)
     ϵ_vect = vec(ϵ_copy)
     @show index_sort = sortperm(ϵ_vect)
-    degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:_l-1] for i ∈ 1:_n])
+    @show degen_matrix = reduce(hcat, [[2*l + 1 for l ∈ 0:_l-1] for i ∈ 1:_n])
     remain = N
     idx = 1
     
     while remain > 0 && idx < length(ϵ) + 1
 
-        A = Int[]  #Stock all index corresponding to a degenerancy
+        A = Int[]  # Stock all index corresponding to a degenerancy
         ϵ_cur = ϵ_vect[index_sort[idx]]
         push!(A, index_sort[idx])
         idx += 1
@@ -69,18 +79,20 @@ function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
         end
         @show A
         # Count total degeneracy
-        degen = sum(degen_matrix[i] for i in A)
+        @show degen = sum(degen_matrix[i] for i in A)
         
         # See what to do depending on the case
-        if remain - degen ≥ 0
+        @show remain
+        @show degen
+        if remain - 2*degen ≥ 0
             for i in A
-                n[i] = 2 * degen_matrix[i]
+                n[i] = 2*degen_matrix[i]
             end
-            remain -= degen
+            remain -= 2*degen
         else
             if length(A) == 1
                 # First case, if no degeneracy
-                n[first(A)] = 2 * remain
+                n[first(A)] = remain
             else
                 # Second case, if degeneracy
                 @error "There is accidental degeneracy but no implementation for this case for the moment."
@@ -117,7 +129,7 @@ function convert_into_l(l::Int)
 end 
 
 for i ∈ new_index
-    _n = i[2]
+    _n = i[2]+i[1]-1
     l = convert_into_l(i[1]-1)
     push!(result,(string(_n,l),ϵ[i], n[i]))
 end

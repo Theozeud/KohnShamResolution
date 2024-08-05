@@ -15,7 +15,6 @@ struct RationalFraction{T} <: AbstractPolynomial{T}
     end
 end
 
-@inline Base.eltype(::RationalFraction{T}) where T = T
 @inline convert(::Type{T}, rf::RationalFraction) where T  = RationalFraction(convert(T, rf.num), convert(T, rf.denom))
 
 function (rf::RationalFraction)(x)
@@ -153,4 +152,38 @@ function integrate(srf::SommeRationalFraction, a::Real, b::Real; geomfun = false
         val += integrate(srf[i], a, b; geomfun = geomfun)
     end
     val
+end
+
+
+
+
+
+
+##################################################################################
+#                               Composition
+##################################################################################
+function Base.:∘(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
+    @assert !haslog(p) && !haslog(q)
+    NewT = promote_type(TP,TQ)
+    if ismonomial(p)
+        if degmin(p) < 0
+            return Monomial(0,NewT(p[begin])) / (q^(-degmin(p)))
+        else
+            return Monomial(0,NewT(p[begin])) * (q^degmin(p))
+        end
+    end 
+    ent = Laurent_zero(NewT, 0, 0)
+    if degmax(p) ≥ 0
+        for i ∈ max(0, degmin(p)):degmax(p)
+          ent += p[i] * q ^ i 
+        end
+        if degmin(p) ≥ 0
+            return ent
+        end
+    end
+    ratiofrac = Vector{RationalFraction}(undef, -degmin(p))
+    for i ∈ degmin(p):-1
+        ratiofrac[i-degmin(p)+1] = Monomial(0,NewT(p[i])) / (q^i)
+    end
+    return SommeRationalFraction(ent, ratiofrac)
 end

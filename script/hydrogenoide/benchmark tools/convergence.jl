@@ -8,42 +8,28 @@ function fundamental(z, x)
     z^(3/2)/sqrt(π)*exp(-z*abs(x))
 end
 
-#Rmax = (1.5 * log(z) + cutting_pre*log(10))/z
-
-function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Real, vecBasis::NamedTuple, typemesh; opts_mesh = NamedTuple(), opts_basis = [NamedTuple() for i ∈ eachindex(vecBasis)], T = Float64, lₕ = 0, nb_eigval = 1)
-    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
+function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Real, vecBasis::NamedTuple, typemesh; opts_mesh = NamedTuple(), opts_basis = [NamedTuple() for i ∈ eachindex(vecBasis)], T = Float64, l = 0, nb_eigval = 1)
+    plt_ϵ_error = plot( size = (750,550), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
                         legendfontsize  = 12,  
                         titlefontsize   = 12,
                         guidefontsize   = 12,
                         tickfontsize    = 12)
     xlabel!(plt_ϵ_error, "Nmesh")
-    ylabel!(plt_ϵ_error, "Error on the "*string(nb_eigval)*"-th eigenvalues")
-    title!(plt_ϵ_error, "Rmax = "*string(Rmax)*" and z = "*string(z))
+    ylabel!(plt_ϵ_error, "Error on the $nb_eigval-th eigenvalue")
+    title!(plt_ϵ_error, "Rmax = $Rmax, z = $z and l = $l")
 
-    plt_u_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
-                        legendfontsize  = 12,  
-                        titlefontsize   = 12,
-                        guidefontsize   = 12,
-                        tickfontsize    = 12)
-    xlabel!(plt_u_error, "Nmesh")
-    ylabel!(plt_u_error, "L2 error on the fundamental")
-    title!(plt_u_error, "Rmax = "*string(Rmax)*" and z = "*string(z))
-
-    Uerror = zeros(length(vecBasis), length(vecNmesh))
     ϵerror = zeros(length(vecBasis), length(vecNmesh))
     for (i,Basis) ∈ enumerate(vecBasis)
         println("Basis "*string(keys(vecBasis)[i]))
-        (_, _, ϵ_error, u_error) = test_convergence_withNmesh(vecNmesh, Rmax, z, Basis, typemesh; opts_mesh = opts_mesh, opts_basis = opts_basis[i], T = T, lₕ = lₕ, nb_eigval = nb_eigval)
-        plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 3, label = "Basis "*string(keys(vecBasis)[i])*", ϵ"*string(nb_eigval), markershape = :x, markersize = 10)
-        plot!(plt_u_error, vecNmesh, u_error, lw = 3, label = "Basis "*string(keys(vecBasis)[i]), markershape = :x, markersize = 10)
-        Uerror[i, :] = u_error
+        (_, ϵ_error) = test_convergence_withNmesh(vecNmesh, Rmax, z, Basis, typemesh; opts_mesh = opts_mesh, opts_basis = opts_basis[i], T = T, l = l, nb_eigval = nb_eigval)
+        plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 4, label = string(keys(vecBasis)[i]), markershape = :x, markersize = 10)
         ϵerror[i, : ] = ϵ_error
     end
-    (plt_ϵ_error, plt_u_error, ϵerror, Uerror)
+    (plt_ϵ_error, ϵerror)
 end
 
 
-function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Real, Basis, typemesh; opts_mesh = NamedTuple(), opts_basis = NamedTuple(), T = Float64, lₕ = 0, nb_eigval = 1)
+function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Real, Basis, typemesh; opts_mesh = NamedTuple(), opts_basis = NamedTuple(), T = Float64, l = 0, nb_eigval = 1)
     # Default parameters
     Rmin = zero(typeof(Rmax))
     # Setup the model
@@ -52,38 +38,25 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
     method = ConstantODA(one(T))
     # Computation of the errors
     ϵ_error = zeros(T, length(vecNmesh))
-    u_error = zeros(T, length(vecNmesh))
     for (i,Nmesh) ∈ enumerate(vecNmesh)
         # Creation of the discretization
         m = typemesh(Rmin, Rmax, Nmesh; opts_mesh...)
         basis = Basis(m, T; opts_basis...)
-        D = KohnShamSphericalDiscretization(lₕ, basis, m)
+        D = KohnShamRadialDiscretization(l, basis, m)
         # Solving the problem
-        @time "Nmesh = "*string(Nmesh) sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
-        funda = sol.eigvects[1]
-        # Compute the error for eigenvalues and the fundamental
-        ϵ_error[i] = abs(sol.ϵ[nb_eigval] - eigval_theo(nb_eigval, z))
-        u_error[i]   = sqrt(1/(Nmesh - 1) * sum((funda.(m.points[1:end-1]) .- fundamental.(z, m.points[1:end-1])).^2))
+        @time "Nmesh = $Nmesh" sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
+        # Compute the error for eigenvalues
+        ϵ_error[i] = abs(sol.ϵ[nb_eigval] - eigval_theo(nb_eigval+l, z))
     end
     # Creation of the plot for eigenvalue
-    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
+    plt_ϵ_error = plot( size = (1300,1000), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
                                  legendfontsize  = 12,  
                                  titlefontsize   = 12,
                                  guidefontsize   = 12,
                                  tickfontsize    = 12)
     xlabel!(plt_ϵ_error, "Nmesh")
-    ylabel!(plt_ϵ_error, "Error on the "*string(nb_eigval)*"-th eigenvalues")
-    title!(plt_ϵ_error, "Rmax = "*string(Rmax)*" and z = "*string(z))
-    plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 3, label = "ϵ"*string(nb_eigval), markershape = :x, markersize = 10)
-    # Creation of the plot for the fundamental
-    plt_u_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
-                                 legendfontsize  = 12,  
-                                 titlefontsize   = 12,
-                                 guidefontsize   = 12,
-                                 tickfontsize    = 12)
-    xlabel!(plt_u_error, "Nmesh")
-    ylabel!(plt_u_error, "L2 error on the fundamental")
-    title!(plt_u_error, "Rmax = "*string(Rmax)*" and z = "*string(z))
-    plot!(plt_u_error, vecNmesh, u_error, lw = 3, label = "Fundamental ", markershape = :x, markersize = 10)
-    return (plt_ϵ_error, plt_u_error, ϵ_error, u_error)
+    ylabel!(plt_ϵ_error, "Error on the $nb_eigval-th eigenvalues")
+    title!(plt_ϵ_error, "Rmax = $Rmax, z = $z and l = $l")
+    plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 4, label = "ϵ$nb_eigval", markershape = :x, markersize = 10)
+    return (plt_ϵ_error, ϵ_error)
 end
