@@ -12,14 +12,16 @@ struct RadialCache
     Kin
     Coulomb
     Hfix
-    Pot
+    C
+    Cᵨ
     Hartree
+    Exc
+    Energy
     tmp_H
     tmp_D
     tmp_Dstar
     tmp_U
-    tmp_VH10
-    tmp_exc 
+    tmp_MV
     tmp_ϵ
     tmp_index_sort
     tmp_n    
@@ -34,23 +36,25 @@ function create_cache(lₕ, Nₕ, T)
     F   =  zeros(T, Nₕ, Nₕ, Nₕ)
     B   =  zeros(T, Nₕ)
     Kin =  zeros(T, lₕ+1, Nₕ, Nₕ)
-    Coulomb =  zeros(T, lₕ+1, Nₕ, Nₕ)
-    Hfix = zeros(T, lₕ+1, Nₕ, Nₕ)
-    Pot  = zeros(T, Nₕ)
-    Hartree     = zeros(T, Nₕ, Nₕ)
+    Coulomb = zeros(T, lₕ+1, Nₕ, Nₕ)
+    Hfix    = zeros(T, lₕ+1, Nₕ, Nₕ)
+    C     = zeros(T, Nₕ)
+    Cᵨ    = zero(T)
+    Hartree = zeros(T, Nₕ, Nₕ)
+    Exc     = zeros(T, Nₕ, Nₕ)
+    Energy  = zero(T)
 
     # Initialization of array for temporary stockage of computations
     tmp_H           = zeros(T, Nₕ, Nₕ)
     tmp_D           = zeros(T, Nₕ, Nₕ) #zero_piecewiselaurantpolynomial(mesh, T)
     tmp_Dstar       = zeros(T, Nₕ, Nₕ) #zero_piecewiselaurantpolynomial(mesh, T)
     tmp_U           = zeros(T, lₕ+1, Nₕ, Nₕ)
-    tmp_VH10        = zeros(T, Nₕ, Nₕ)
-    tmp_exc         = zeros(T, Nₕ, Nₕ)
+    tmp_MV          = zeros(T, Nₕ, Nₕ)
     tmp_ϵ           = zeros(T, lₕ+1, Nₕ)
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
     tmp_n           = zeros(T, lₕ+1, Nₕ)   
  
-    RadialCache(A, M₀, M₋₁, M₋₂, F, B, Kin, Coulomb, Hfix, Pot, Hartree, tmp_H, tmp_D, tmp_Dstar, tmp_U, tmp_VH10, tmp_exc, tmp_ϵ, tmp_index_sort, tmp_n)
+    RadialCache(A, M₀, M₋₁, M₋₂, F, B, Kin, Coulomb, Hfix, C, Cᵨ, Hartree, Exc, Energy, tmp_H, tmp_D, tmp_Dstar, tmp_U, tmp_MV, tmp_ϵ, tmp_index_sort, tmp_n)
 end
 
 
@@ -170,13 +174,13 @@ function hartree_matrix_pde_old!(discretization::KohnShamRadialDiscretization, �
 end
 
 function hartree_matrix_pde!(discretization::KohnShamRadialDiscretization, D)
-    @unpack A, M₀, F, B, Pot, Hartree, tmp_VH10 = discretization.cache
+    @unpack A, M₀, F, B, C, Cᵨ, Hartree, tmp_MV = discretization.cache
     @unpack basis, Rmin, Rmax = discretization
     @tensor B[m] = D[i,j] * F[i,j,m]
-    Pot .= A\B
+    C .= A\B
     @tensor Cᵨ = D[i,j] * M₀[i,j]
-    @tensor MV[i,j] := Pot[k] * F[i,j,k]
-    @. Hartree = MV + Cᵨ/(Rmax-Rmin) * M₀
+    @tensor tmp_MV[i,j] = C[k] * F[i,j,k]
+    @. Hartree = tmp_MV + Cᵨ/(Rmax-Rmin) * M₀
     nothing
 end
 
@@ -184,21 +188,9 @@ end
 #                         Exchange Correlation
 #####################################################################
 
-function exchange_corr!(kd::KohnShamRadialDiscretization, exc_mat, ρ, exc::AbstractExchangeCorrelation; quad_method, quad_reltol, quad_abstol)
-    @unpack Nₕ, basis, Rmin, Rmax = kd
-    if !isthereExchangeCorrelation(exc)
-        return exc_mat .= zeros(Nₕ,Nₕ)
-    end
-    for i ∈ eachindex(basis)
-        for j ∈ eachindex(basis)
-            if j<i
-                exc_mat[i,j] = exc_mat[j,i]
-            else
-                exc_mat[i,j] = approximate_integral(x -> exc.vxc(ρ(x)) * basis[i](x) * basis[j](x), (Rmin, Rmax) ; method = quad_method, reltol = quad_reltol, abstol = quad_abstol)
-            end
-        end
-    end
-    exc_mat
+function exchange_corr_matrix!(discretization::KohnShamRadialDiscretization, model)
+    @unpack Exc = discretization.cache
+    Exc .= weight_mass_matrix(basis, model.exc)
 end
 
 #####################################################################
@@ -234,7 +226,6 @@ function density_matrix!(discretization::KohnShamRadialDiscretization)
             if !iszero(tmp_n[l,k])
                 normalization = sum([tmp_U[l,i,k] * tmp_U[l,j,k] * M₀[i,j] for i∈1:Nₕ for j∈1:Nₕ])
                 @inbounds for i ∈ 1:Nₕ
-                    
                     val = tmp_n[l,k] * tmp_U[l,i,k] * 1/normalization
                     @inbounds @simd for j ∈ 1:i
                         tmp_Dstar[i,j] += val * tmp_U[l,j,k]
@@ -274,7 +265,7 @@ function build_density2!(discretization::KohnShamRadialDiscretization)
             ρ += D[i,j]  * build_basis(basis, i) * build_basis(basis, j)
         end
     end
-    ρ* 1/4π 
+    ρ* 1/4π * Monomial(-2)
 end
 
 
@@ -282,8 +273,10 @@ end
 #                             Energy
 #####################################################################
 
-function build_energy()
-
-
+function energy(discretization::KohnShamRadialDiscretization)
+    @unpack Rmax = discretization
+    @unpack Energy, tmp_n, tmp_ϵ, B, C, Cᵨ = discretization.cache
+    @tensor Energy = tmp_n[l,n] * tmp_ϵ[l,n] 
+    Energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax)
 end
 

@@ -40,3 +40,4 @@ Base.size(km::KohnShamExtended) = (km.z,km.N)
 ReducedHartreeFock(z::Real, N::Int, potential::Base.Callable = NothingFunction()) = KohnShamExtended(z = z, N = N, potential = potential)
 SlaterXα(z::Real, N::Int, potential::Base.Callable = NothingFunction()) = KohnShamExtended(z = z, N = N, exc = build_SlaterXα(), potential = potential)
 
+isthereExchangeCorrelation(km::KohnShamExtended) = isthereExchangeCorrelation(km.exc)
