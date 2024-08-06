@@ -38,8 +38,10 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     current_stop_crit =  2*T(tol)
     values_stop_crit = T[]    
     Ehisto = T[]
+    ϵhisto = []
+    Energyhisto = T[]
 
-    KhonShamSolver(discretization, model, method, D, Dprev, U, ϵ, n, Ehisto, niter, values_stop_crit, current_stop_crit, opts)
+    KhonShamSolver(discretization, model, method, D, Dprev, U, ϵ, n, Ehisto, ϵhisto, Energyhisto, niter, values_stop_crit, current_stop_crit, opts)
 end
 
 function solve!(solver::KhonShamSolver; show_progress = false)
@@ -65,17 +67,22 @@ function performstep!(solver::KhonShamSolver)
     # STEP 4 : Compute new density
     update_density!(solver.method, solver)
 
-    # Reset Solver
-    reset_cache!(solver)
+    # Update Solver
+    update_solver!(solver)
 end
 
 
 function loopfooter!(solver::KhonShamSolver)
+    # Store Data for analysis
     push!(solver.Ehisto, min(solver.ϵ...))
+    push!(solver.ϵhisto, copy(solver.ϵ[1,:]))
+    # Update the solver
     solver.current_stop_crit = stopping_criteria(solver)
     push!(solver.values_stop_crit, solver.current_stop_crit)
     solver.Dprev  .= solver.D
     solver.niter += 1
+    # Store the Energy
+    push!(solver.Energyhisto, energy(solver.discretization))
 end
 
 #function stopping_criteria(solver::KhonShamSolver)
@@ -90,17 +97,12 @@ function makesolution(solver::KhonShamSolver)
     KohnShamSolution(solver)
 end
 
-function reset_cache!(solver::KhonShamSolver)
-    @unpack tmp_D, tmp_Dstar, tmp_U, Hartree, tmp_exc, tmp_ϵ, tmp_n = solver.discretization.cache
+function update_solver!(solver::KhonShamSolver)
+    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_ϵ, tmp_n = solver.discretization.cache
     solver.D .= tmp_D
     solver.U .= tmp_U
     solver.ϵ .= tmp_ϵ
     solver.n .= tmp_n 
     tmp_D       .= zero(tmp_D)
     tmp_Dstar   .= zero(tmp_Dstar)
-    tmp_U       .= zero(tmp_U)
-    tmp_exc     .= zero(tmp_exc)
-    Hartree     .= zero(Hartree)
-    tmp_ϵ       .= zero(tmp_ϵ)
-    tmp_n       .= zero(tmp_n)
 end
