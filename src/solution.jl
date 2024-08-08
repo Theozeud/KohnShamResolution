@@ -2,15 +2,13 @@ abstract type AbstractKohnShamSolution end
 
 struct KohnShamSolution
     success::String 
-    occup::Vector
-    E::Real
-    Ehisto
-    ϵhisto
-    Energyhisto
-    ϵ
-    eigvects
     niter::Int
     crit::Vector
+    Energy::Real
+    occup::Vector
+    ϵ
+    ϵhisto
+    Energyhisto
     ρ
 
     function KohnShamSolution(solver::KhonShamSolver)
@@ -28,9 +26,9 @@ struct KohnShamSolution
         new_index = index[index_sort]
         
         occup = [(string(i[2], convert_into_l(i[1]-1)), ϵ[i], n[i]) for i ∈ new_index]
-        eigvects = build_eigenvector(solver.discretization, solver.U; Index =  new_index)
+        ρ = solver.opts.light ? nothing : build_density2!(solver.discretization, solver.D)
 
-        new(success, occup, ϵ[first(new_index)], solver.Ehisto, solver.ϵhisto, solver.Energyhisto, ϵ, eigvects, solver.niter, solver.values_stop_crit, solver.D)
+        new(success, solver.niter, solver.values_stop_crit, last(solver.Energyhisto), occup, ϵ, solver.ϵhisto, solver.Energyhisto, ρ)
     end
 end
 
@@ -43,8 +41,8 @@ function Base.show(io::IO, sol::KohnShamSolution)
     end
     printstyled(io, "ϵn = "; bold = true)
     println(io, string(sol.occup))
-    printstyled(io, "E = "; bold = true, color = :green)
-    printstyled(io, sol.E; bold = true, color = :green)
+    printstyled(io, "Energy = "; bold = true, color = :green)
+    printstyled(io, sol.Energy; bold = true, color = :green)
     println("")
     printstyled(io, "niter = "; bold = true)
     println(io, string(sol.niter))
@@ -82,7 +80,3 @@ occup(sol::KohnShamSolution, i::Int) = sol.occup[i][3]
 eigenvalue(sol::KohnShamSolution) = [sol.occup[i][2] for i in eachindex(sol)]
 eigenvector(sol::KohnShamSolution) = [sol.eigvects[i] for i in eachindex(sol)]
 occup(sol::KohnShamSolution) = [sol.occup[i][3] for i in eachindex(sol)]
-
-# afficher en plus le fondamentale et l'orbital correspondant, 
-# affciher les énergies ϵ seulement pour les n non nuls
-# retenir les états occupés
