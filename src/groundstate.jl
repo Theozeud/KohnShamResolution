@@ -14,7 +14,8 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     quad_abstol::Real   = 1e-3,
     hartree::Real = 0, 
     degen_tol::Real = eps(bottom_type(discretization.basis)),
-    potential = :pde)
+    potential = :pde,
+    light = false)
 
     # Valid option for resol_hartree
     @assert potential ∈ [:pde, :integral] "potential must be :pde or :integral"
@@ -33,15 +34,14 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     n           = init_occupation(discretization)
     
     #  SolverOptions
-    opts = SolverOptions(tol, maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), degen_tol, potential)
+    opts = SolverOptions(tol, maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), degen_tol, potential, light)
     niter = 0
     current_stop_crit =  2*T(tol)
     values_stop_crit = T[]    
-    Ehisto = T[]
     ϵhisto = []
     Energyhisto = T[]
 
-    KhonShamSolver(discretization, model, method, D, Dprev, U, ϵ, n, Ehisto, ϵhisto, Energyhisto, niter, values_stop_crit, current_stop_crit, opts)
+    KhonShamSolver(discretization, model, method, D, Dprev, U, ϵ, n, ϵhisto, Energyhisto, niter, values_stop_crit, current_stop_crit, opts)
 end
 
 function solve!(solver::KhonShamSolver; show_progress = false)
@@ -74,7 +74,6 @@ end
 
 function loopfooter!(solver::KhonShamSolver)
     # Store Data for analysis
-    push!(solver.Ehisto, min(solver.ϵ...))
     push!(solver.ϵhisto, copy(solver.ϵ[1,:]))
     # Update the solver
     solver.current_stop_crit = stopping_criteria(solver)
