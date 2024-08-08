@@ -33,22 +33,20 @@ if true
     Rmax = Int(round(-lambertw(-1e-16/sqrt(z), -1)/z))
   
     typemesh = linmesh
-    vecNmesh     = 2 .^(4:7)
+    vecNmesh     = 2 .^(3:8)
 
     plt1, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 1)
-    #plt2, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 2)
-    #plt3, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 3)
-    #plt4, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 4)
-    #=
+    plt2, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 2, legend = false)
+    plt3, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 3, legend = false)
+    plt4, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 4, legend = false)
+
     title = "l = $l, z = $z, Rmax = $Rmax, T = $T"
-    savefig(plt1, file*"Cvg - "*title*", n = 1")
-    savefig(plt2, file*"Cvg - "*title*", n = 2")
-    savefig(plt3, file*"Cvg - "*title*", n = 3")
-    savefig(plt4, file*"Cvg - "*title*", n = 4")
-    =#
+    plt = plot(plt1, plt2, plt3, plt4, layout = (2,2), size = (1800, 1000), margin = 0.8Plots.cm)
+
+    savefig(plt, file*"Cvg - "*title*", n = 1 à 4")
 end
 
-# Plots for different l for degree 1 to 5 for the the first four eigenvalue
+# Plots for different l for degree 1 to 5
 if false
     T = Float64
     z = 1
@@ -73,39 +71,41 @@ end
 if false
     T = Float64
     l = 0
-    z = 2
+    n = 1
     Rmax = Int(round(-lambertw(-1e-16/sqrt(z), -1)/z))
     typemesh = linmesh
     vecNmesh     = 2 .^(4:7)
 
-    plt1, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 1)
-    plt2, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 2)
-    plt3, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 3)
-    plt4, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 4)
+    plt1, _ = test_convergence_withNmesh(vecNmesh, Rmax, 1, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = n, light = true)
+    plt2, _ = test_convergence_withNmesh(vecNmesh, Rmax, 2, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = n)
+    plt3, _ = test_convergence_withNmesh(vecNmesh, Rmax, 3, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = n)
+    plt4, _ = test_convergence_withNmesh(vecNmesh, Rmax, 4, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = n)
 
-    title = "l = $l, z = $z, Rmax = $Rmax, T = $T"
-    savefig(plt1, file*"Cvg - "*title*", n = 1")
-    savefig(plt2, file*"Cvg - "*title*", n = 2")
-    savefig(plt3, file*"Cvg - "*title*", n = 3")
-    savefig(plt4, file*"Cvg - "*title*", n = 4")
+    title = "l = $l, n = $n, Rmax = $Rmax, T = $T"
+    plt = plot(plt1, plt2, plt3, plt4, layout = (2,2), size = (1800, 1000), margin = 0.8Plots.cm)
+
+    savefig(plt, file*"Cvg - "*title*", n = 1 à 4")
 end
 
+
+# Plot with a different Mesh
 if false
     T = Float64
     l = 0
-    z = 3
-    Rmax = Int(round(-lambertw(-1e-16/sqrt(z), -1)/z))
-    typemesh = linmesh
+    z = 1
+    Rmax = Int(round(-lambertw(-1e-16/sqrt(z), -1)/z))*5
+    typemesh = geometricmesh
+    opts_mesh = (s = 0.8,)
     vecNmesh     = 2 .^(4:7)
 
-    plt1, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 1)
-    plt2, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 2)
-    plt3, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 3)
-    plt4, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, T = T, l = l, nb_eigval = 4)
+    plt1, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, opts_mesh = opts_mesh, T = T, l = l, nb_eigval = 1)
+    #plt2, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, opts_mesh = opts_mesh, T = T, l = l, nb_eigval = 2)
+    #plt3, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, opts_mesh = opts_mesh, T = T, l = l, nb_eigval = 3)
+    #plt4, _ = test_convergence_withNmesh(vecNmesh, Rmax, z, basis, typemesh; opts_basis = opts_basis, opts_mesh = opts_mesh, T = T, l = l, nb_eigval = 4)
 
     title = "l = $l, z = $z, Rmax = $Rmax, T = $T"
-    savefig(plt1, file*"Cvg - "*title*", n = 1")
-    savefig(plt2, file*"Cvg - "*title*", n = 2")
-    savefig(plt3, file*"Cvg - "*title*", n = 3")
-    savefig(plt4, file*"Cvg - "*title*", n = 4")
+    #savefig(plt1, file*"Cvg - "*title*", n = 1")
+    #savefig(plt2, file*"Cvg - "*title*", n = 2")
+    #savefig(plt3, file*"Cvg - "*title*", n = 3")
+    #savefig(plt4, file*"Cvg - "*title*", n = 4")
 end

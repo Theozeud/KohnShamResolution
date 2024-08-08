@@ -61,7 +61,8 @@ function plot_Ehisto(sols; title, label)
     ylabel!(plt_Ehisto, "Evolution of ϵ₁")
     title!(plt_Ehisto, title)
     for (i,sol) ∈ enumerate(sols)
-        plot!(plt_Ehisto, sol.Ehisto, lw = 3, label = label[i], markershape = :x, markersize = 10)
+        Ehisto = [min(sol.ϵhisto[i]...) for i∈ eachindex(sol.ϵhisto)]
+        plot!(plt_Ehisto, Ehisto, lw = 3, label = label[i], markershape = :x, markersize = 10)
     end
     plt_diffE = plot(  size = (650,500), margin = 0.5Plots.cm, legend = :outertopright, yaxis = :log,
                         legendfontsize  = 12,  
@@ -72,7 +73,8 @@ function plot_Ehisto(sols; title, label)
     ylabel!(plt_diffE, "Convergence of ϵ₁")
     title!(plt_diffE, title)
     for (i,sol) ∈ enumerate(sols)
-        plot!(plt_diffE, eachindex(sol.crit)[2:end], abs.(sol.Ehisto[2:end] .- sol.Ehisto[1:end-1]), lw = 3, label = label[i], markershape = :x, markersize = 10)
+        Ehisto = [min(sol.ϵhisto[i]...) for i∈ eachindex(sol.ϵhisto)]
+        plot!(plt_diffE, eachindex(sol.crit)[2:end], abs.(Ehisto[2:end] .- Ehisto[1:end-1]), lw = 3, label = label[i], markershape = :x, markersize = 10)
     end
     plt_Ehisto, plt_diffE
 end
@@ -91,4 +93,71 @@ function plot_density(sols, Rmax; title, label)
         plot!(plt_ρ, X, sol.ρ.(X), lw = 3, label = label[i])
     end
     plt_ρ
+end
+
+function plot_Energy(sols; title, label)
+    plt = plot(  size = (650,500), margin = 0.5Plots.cm, legend = :outertopright,
+                        legendfontsize  = 11,  
+                        titlefontsize   = 11,
+                        guidefontsize   = 11,
+                        tickfontsize    = 11)
+    xlabel!(plt, "Iteration")
+    ylabel!(plt, "Evolution of the Energy")
+    title!(plt, title)
+    for (i,sol) ∈ enumerate(sols)
+        plot!(plt, sol.Energyhisto, lw = 3, label = label[i], markershape = :x, markersize = 10)
+    end
+
+    plt_diff = plot(size = (650,500), margin = 0.5Plots.cm, legend = :outertopright, yaxis = :log,
+                    legendfontsize  = 12,  
+                    titlefontsize   = 12,
+                    guidefontsize   = 12,
+                    tickfontsize    = 12)
+    xlabel!(plt_diff, "Iteration")
+    ylabel!(plt_diff, "Convergence of the Energy")
+    title!(plt_diff, title)
+    for (i,sol) ∈ enumerate(sols)
+        plot!(plt_diff, eachindex(sol.crit)[2:end], 1e-16 .+ abs.(sol.Energyhisto[2:end] .- sol.Energyhisto[1:end-1]), lw = 3, label = label[i], markershape = :x, markersize = 10)
+    end
+    plot(plt, plt_diff, layout = (1,2), size = (1100,400))
+end
+
+
+
+function _groundstate_withNmesh(model, method, order; Rmax, Nmesh, lₕ, maxiter, tol = 1e-5, T = Float64)
+    EnergyArray = []
+    for N ∈ Nmesh
+        sol,_,_ = _groundstate(model, method, order; Rmax = Rmax, Nmesh = N, lₕ = lₕ, maxiter = maxiter, tol = tol,  T = T)
+        push!(EnergyArray, sol.Energy)
+    end
+    plt_diff = plot(size = (650,500), margin = 0.5Plots.cm, legend = :outertopright, yaxis = :log,
+                    legendfontsize  = 12,  
+                    titlefontsize   = 12,
+                    guidefontsize   = 12,
+                    tickfontsize    = 12)
+    xlabel!(plt_diff, "Nmesh")
+    ylabel!(plt_diff, "Convergence of the Energy")
+    title!(plt_diff, "Rmax = $Rmax, z = model.z, oda = method.t, N = model.N")
+    plot!(plt_diff, Nmesh[2:end], 1e-16 .+ abs.(EnergyArray[2:end] .- EnergyArray[1:end-1]), lw = 3, label = order == 1 ? "P1" : "IntLeg$order", markershape = :x, markersize = 10)
+    plt_diff
+end
+
+function _groundstate(model, method, order; Rmax, Nmesh, lₕ, maxiter, tol = 1e-5, T = Float64)
+    m = linmesh(zero(T), Rmax, Nmesh)
+    if order == 1 
+        basis = ShortP1Basis(m, T; left = false, right = false, normalize = true)
+    else
+        basis = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = order, normalize = true)
+    end
+    # Final Discretization
+    D = KohnShamRadialDiscretization(lₕ, basis, m)
+    # Solution
+    @time sol = groundstate(model, D, method; tol = tol, hartree = true, maxiter = maxiter, potential = :pde)
+
+    # Title
+    title = "Rmax = $Rmax, z = model.z, oda = method.t, N = model.N, Nmesh = $Nmesh"
+    # Label
+    label = order == 1 ? "P1" : "IntLeg$order"
+    # Return
+    sol, title, label
 end

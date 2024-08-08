@@ -8,8 +8,8 @@ function fundamental(z, x)
     z^(3/2)/sqrt(π)*exp(-z*abs(x))
 end
 
-function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Real, vecBasis::NamedTuple, typemesh; opts_mesh = NamedTuple(), opts_basis = [NamedTuple() for i ∈ eachindex(vecBasis)], T = Float64, l = 0, nb_eigval = 1)
-    plt_ϵ_error = plot( size = (750,550), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
+function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Real, vecBasis::NamedTuple, typemesh; opts_mesh = NamedTuple(), opts_basis = [NamedTuple() for i ∈ eachindex(vecBasis)], T = Float64, l = 0, nb_eigval = 1, legend = true)
+    plt_ϵ_error = plot( size = (750,550), margin = 0.5Plots.cm, legend = legend ? :bottomleft : false, legend_orientation=:horizontal, xaxis=:log, yaxis=:log,
                         legendfontsize  = 12,  
                         titlefontsize   = 12,
                         guidefontsize   = 12,
@@ -29,7 +29,7 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
 end
 
 
-function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Real, Basis, typemesh; opts_mesh = NamedTuple(), opts_basis = NamedTuple(), T = Float64, l = 0, nb_eigval = 1)
+function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Real, Basis, typemesh; opts_mesh = NamedTuple(), opts_basis = NamedTuple(), T = Float64, l = 0, nb_eigval = 1, legend = true)
     # Default parameters
     Rmin = zero(typeof(Rmax))
     # Setup the model
@@ -44,12 +44,12 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
         basis = Basis(m, T; opts_basis...)
         D = KohnShamRadialDiscretization(l, basis, m)
         # Solving the problem
-        @time "Nmesh = $Nmesh" sol = groundstate(KM, D, method; tol = 1e-20, hartree = false)
+        @time "Nmesh = $Nmesh" sol = groundstate(KM, D, method; tol = 1e-20, hartree = false, light = true)
         # Compute the error for eigenvalues
         ϵ_error[i] = abs(sol.ϵ[nb_eigval] - eigval_theo(nb_eigval+l, z))
     end
     # Creation of the plot for eigenvalue
-    plt_ϵ_error = plot( size = (1300,1000), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
+    plt_ϵ_error = plot( size = (1300,1000), margin = 0.5Plots.cm, legend = legend ? :bottomleft : false, xaxis=:log, yaxis=:log,
                                  legendfontsize  = 12,  
                                  titlefontsize   = 12,
                                  guidefontsize   = 12,
