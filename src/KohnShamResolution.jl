@@ -21,7 +21,7 @@ module KohnShamResolution
     ######
     # MESH
     export OneDMesh
-    export mesh, find_index, linmesh, LogRange, logmesh, LinearExpRange, linearexpmesh
+    export mesh, find_index, linmesh, LogRange, logmesh, LinearExpRange, linearexpmesh, geometricmesh
     include("mesh.jl")
 
     ####################
