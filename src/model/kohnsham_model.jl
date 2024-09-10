@@ -14,8 +14,8 @@ struct ExchangeCorrelation <: AbstractExchangeCorrelation
 end
 
 build_SlaterXα() = ExchangeCorrelation(exc_SlaterXα, vxc_SlaterXα)
-exc_SlaterXα(ρ) = -3/4 * (3/π)^(1/3) * ρ^(4/3)
-vxc_SlaterXα(ρ) = - (3/π)^(1/3) * ρ^(1/3)
+exc_SlaterXα(ρ) = -3/4 * (3/π)^(1/3) * ρ^(1/3)
+vxc_SlaterXα(ρ) = - 1/4 *(3/π)^(1/3) * ρ^(-2/3)
 
 
 abstract type AbstractDFTModel end

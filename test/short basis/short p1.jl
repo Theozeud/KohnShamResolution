@@ -6,7 +6,7 @@ using Plots
 T = Float64
 Rmin = 0
 Rmax = 5
-Nmesh = 5
+Nmesh = 6
 m = linmesh(Rmin, Rmax, Nmesh)
 normalize = true
 left = false
@@ -37,17 +37,18 @@ display(shortdm)
 
 # Plot Basis
 X = LinRange(Rmin, Rmax, Nmesh * 100)
-plt_basis = plot()
+plt_basis = plot(legend =false)
 for i ∈ 1:length(shortp1)
     p = build_basis(shortp1, i)
-    plot!(plt_basis, X, p.(X))
+    plot!(plt_basis, X, p.(X), lw = 4)
 end
+xlabel!("Maillage")
 plt_basis
 
 # Plot Derivative of the Basis
 deriv_basis = deriv(shortp1)
 X = LinRange(Rmin, Rmax, Nmesh * 100)
-plt_derivbasis = plot()
+plt_derivbasis = plot(legend =false)
 for i ∈ 1:length(deriv_basis)
     p = build_basis(deriv_basis, i)
     plot!(plt_derivbasis, X, p.(X))

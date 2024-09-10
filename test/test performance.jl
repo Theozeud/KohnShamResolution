@@ -17,7 +17,7 @@ M = ConstantODA(0.0)
 lₕ = 0
 Nₕ = 128
 Rmin = 0
-Rmax = 45
+Rmax = 41
 
 @timeit to "Create mesh" m = linmesh(Rmin, Rmax, Nₕ)
 
@@ -25,7 +25,7 @@ Rmax = 45
 
 @timeit to "init Discretization" D = KohnShamRadialDiscretization(lₕ, basis, m)
 
-@timeit to "Init Solver" solver = KohnShamResolution.init(KM, D, M; tol = 1e-3, hartree = false)
+@timeit to "Init Solver" solver = KohnShamResolution.init(KM, D, M; tol = 1e-3, hartree = false, light = true)
 
 #@timeit to "PerformStep" KohnShamResolution.performstep!(solver)
 
@@ -38,11 +38,13 @@ Rmax = 45
 
     @timeit to "update density" KohnShamResolution.update_density!(solver.method, solver)
 
-    @timeit to "reset cache" KohnShamResolution.reset_cache!(solver)
+    @timeit to "reset cache" KohnShamResolution. update_solver!(solver)
 end
 
 @timeit to "Loop footer" KohnShamResolution.loopfooter!(solver)
 
 @timeit to "Make Solution" KohnShamResolution.makesolution(solver)
+
+@timeit to "Build Density in Solution" KohnShamResolution.build_density2!(solver.discretization, solver.D)
 
 to

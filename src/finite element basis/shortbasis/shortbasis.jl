@@ -281,7 +281,6 @@ function fill_vectorweight_mass_matrix!(spb::ShortPolynomialBasis, vect::Abstrac
     nothing
 end
 
-
 @memoize function build_basis(spb::ShortPolynomialBasis, i::Int)
     T = bottom_type(spb)
     polys = LaurentPolynomial{T}[]
@@ -293,6 +292,22 @@ end
         end
     end
     PiecewiseLaurentPolynomial(spb.mesh, polys, getsegments(spb, i), T(0))
+end
+
+function eval_basis(spb::ShortPolynomialBasis, i::Int, x)
+    val = zero(x)
+    index_x = findindex(spb.mesh, x)
+    for (j,seg,ϕ,_) ∈ spb.infos[i]
+        if index_x == seg
+            P = getpolynomial(spb.elements, j)
+            if isnormalized(spb)
+                val += getnormalization(spb,i) * P(ϕ(x))
+            else
+                val += P(ϕ(x))
+            end
+        end
+    end
+    val
 end
 
 function build_on_basis(spb::ShortPolynomialBasis, coeffs)

@@ -72,8 +72,8 @@ end
 ##################################################################################
 # Compute Error
 
-function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, vecBasis::NamedTuple, typemesh, l = 0; opts_mesh = NamedTuple(), opts_basis = [NamedTuple() for i ∈ eachindex(vecBasis)], T = Float64, nb_eigval = 1)
-    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :outertopright, xaxis=:log, yaxis=:log,
+function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, vecBasis::NamedTuple, typemesh, l = 0; opts_mesh = NamedTuple(), opts_basis = [NamedTuple() for i ∈ eachindex(vecBasis)], T = Float64, nb_eigval = 1, print_label = true)
+    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :bottomleft, xaxis=:log, yaxis=:log,
                         legendfontsize  = 12,  
                         titlefontsize   = 12,
                         guidefontsize   = 12,
@@ -85,7 +85,7 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, vecBas
     for (i, Basis) ∈ enumerate(vecBasis)
         println("Basis "*string(keys(vecBasis)[i]))
         (_, ϵ_error) = test_convergence_withNmesh(vecNmesh, Rmax, Basis, typemesh, l; opts_mesh = opts_mesh, opts_basis = opts_basis[i], T = T, nb_eigval = nb_eigval)
-        plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 3, label = "Basis "*string(keys(vecBasis)[i])*", ϵ"*string(nb_eigval), markershape = :x, markersize = 10)
+        plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 4, label = print_label ? string(keys(vecBasis)[i]) : false, markershape = :x, markersize = 10)
         ϵerror[i, : ] = ϵ_error
     end
     (plt_ϵ_error, ϵerror)
@@ -132,34 +132,3 @@ function test_convergence_withNmesh(vecNmesh, Rmax::Real, Basis, typemesh, l = 0
     plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 3, label = "ϵ$nb_eigval", markershape = :x, markersize = 10)
     return (plt_ϵ_error, ϵ_error)
 end
-
-
-
-#=
-T = Float64
-# Creation of the model
-z = 1
-
-# Discretization 
-Rmin = 0
-Rmax = 100
-Nmesh = 150
-m = linmesh(Rmin, Rmax, Nmesh)
-basis = ShortP1IntLegendreBasis(m; left = false, right = false, normalize = true, ordermin = 2, ordermax = 2)
-
-# Solve
-deriv_basis = deriv(basis)
-A   = mass_matrix(deriv_basis)
-M₀  = mass_matrix(basis)
-M₋₁ = weight_mass_matrix(basis, -1)
-M₋₂ = weight_mass_matrix(basis, -2)
-
-l = 3
-H = Symmetric(1/2 * A  - z .* M₋₁ + 1/2 * l*(l+1)*M₋₂ )
-
-using ArnoldiMethod
-@time decomp, history = partialschur(inv(M₀)*H, nev=10, tol=1e-10, which=:SR)
-@show decomp
-#@time ϵ = eigen(H,M₀).values[1]
-eigval_theo(T, l+1, 1)
-=#

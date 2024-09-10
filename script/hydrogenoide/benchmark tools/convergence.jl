@@ -42,7 +42,7 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
         # Creation of the discretization
         m = typemesh(Rmin, Rmax, Nmesh; opts_mesh...)
         basis = Basis(m, T; opts_basis...)
-        D = KohnShamRadialDiscretization(l, basis, m)
+        D = KohnShamRadialDiscretization(l, basis, m; lmin = l)
         # Solving the problem
         @time "Nmesh = $Nmesh" sol = groundstate(KM, D, method; tol = 1e-20, hartree = false, light = true)
         # Compute the error for eigenvalues
@@ -60,3 +60,4 @@ function test_convergence_withNmesh(vecNmesh::AbstractVector, Rmax::Real, z::Rea
     plot!(plt_ϵ_error, vecNmesh, ϵ_error, lw = 4, label = "ϵ$nb_eigval", markershape = :x, markersize = 10)
     return (plt_ϵ_error, ϵ_error)
 end
+

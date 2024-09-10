@@ -7,6 +7,7 @@ struct SolverOptions{T}
     hartree::T
     degen_tol::T
     potential::Symbol
+    light::Bool
 end
 
 mutable struct KhonShamSolver{TSC}
@@ -18,7 +19,6 @@ mutable struct KhonShamSolver{TSC}
     U  
     ϵ
     n
-    Ehisto
     ϵhisto
     Energyhisto
     niter::Int

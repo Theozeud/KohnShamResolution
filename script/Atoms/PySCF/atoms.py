@@ -5,11 +5,11 @@ mol = gto.M(
     basis = 'sto-3g',   # Base de fonctions (STO-3G pour des calculs de base)
     charge = 0,         # Charge nette de la molécule
     spin = 0,           # Nombre d'électrons non appariés (0 pour un atome d'hydrogène)
-    symmetry = True,    # Activer la symétrie
-    symmetry_subgroup = 'C1' #'D2h'
+    symmetry = False,    # Activer la symétrie
+    #symmetry_subgroup = 'C1' #'D2h'
 )
 
-# Configurer le calcul Hartree-Fock
+# Configurer le calcul
 mf = scf.RHF(mol)
 
 # Exécuter le calcul

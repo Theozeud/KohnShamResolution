@@ -34,7 +34,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     n           = init_occupation(discretization)
     
     #  SolverOptions
-    opts = SolverOptions(tol, maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), degen_tol, potential, light)
+    opts = SolverOptions(T(tol), maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), T(degen_tol), potential, light)
     niter = 0
     current_stop_crit =  2*T(tol)
     values_stop_crit = T[]    

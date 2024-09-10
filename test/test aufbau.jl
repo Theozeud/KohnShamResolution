@@ -43,21 +43,6 @@ display(ϵ)
 
 n = zeros(lₕ+1, length(basis))
 
-#=
-1s -> 2s -> 2p || 3s
-function next_allowed_occup(last, resi)
-    if last == (1,1)
-        return (1,2)
-    else
-        (l,n) = last
-        return [(l+1,n-1),
-
-    push!(next_allowed_occup(resi), 
-end
-(1,1) -> (1,2)
-
-=#
-
 function aufbau!(n, ϵ, N; tol = eps(eltype(ϵ)))
     ϵ_copy = copy(ϵ)
     _l,_n = size(ϵ)

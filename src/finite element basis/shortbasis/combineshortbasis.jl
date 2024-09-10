@@ -72,41 +72,6 @@ struct CombineShortPolynomialBasis <: Basis
             end
             size_i += length(basisVector[i])
         end
-
-        # Infos Block for the 3-tensor
-        #=
-        blocks3 = Vector{InfoBlock}(undef, length(basisVector)*(length(basisVector)+1)*(length(basisVector)+2)÷6)
-        ib = 1 
-        size_i = 1
-        
-        for i ∈ eachindex(basisVector)
-            axes1 = size_i:size_i+length(basisVector[i])-1
-            size_j = 1
-            for j ∈ 1:i
-                axes2 = size_j:size_j+length(basisVector[j])-1
-                size_k = 1
-                for k ∈ 1:j
-                    axes3 = size_k:size_k+length(basisVector[k])-1
-                    size_k += length(basisVector[k])
-                    interaction_index = CartesianIndex{3}[]
-                    for n in eachindex(basisVector[i].infos)
-                        for m in eachindex(basisVector[j].infos)
-                            for p in eachindex(basisVector[k].infos)
-                                if !isempty(intersect(getsegments(basisVector[i], n), getsegments(basisVector[j], m), getsegments(basisVector[k], p)))
-                                    push!(interaction_index, CartesianIndex(n,m,p))
-                                end
-                            end
-                        end
-                    end
-                    block = InfoBlock(CartesianIndex(i,j,k), (axes1, axes2, axes3), i == j == k, interaction_index)
-                    blocks3[ib] = block
-                    ib+=1
-                end
-                size_j += length(basisVector[j])
-            end
-            size_i += length(basisVector[i])
-        end
-        =#
         
         new(basisVector, size, blocks, blocks3, cumul_index)
     end
@@ -376,6 +341,12 @@ end
     (ib, iib) = find_basis(cb, i)
     spb = getbasis(cb, ib)
     build_basis(spb, iib)
+end
+
+function eval_basis(cb::CombineShortPolynomialBasis, i::Int, x)
+    (ib, iib) = find_basis(cb, i)
+    spb = getbasis(cb, ib)
+    eval_basis(spb, iib, x)
 end
 
 function build_on_basis(cb::CombineShortPolynomialBasis, coeffs)
