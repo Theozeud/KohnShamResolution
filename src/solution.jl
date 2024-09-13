@@ -26,7 +26,7 @@ struct KohnShamSolution
         new_index = index[index_sort]
         
         occup = [(string(i[2], convert_into_l(i[1]-1)), ϵ[i], n[i]) for i ∈ new_index]
-        ρ = solver.opts.light ? nothing : build_density2!(solver.discretization, solver.D)
+        ρ = solver.opts.light ? nothing : build_density!(solver.discretization, solver.D)
 
         new(success, solver.niter, solver.values_stop_crit, last(solver.Energyhisto), occup, ϵ, solver.ϵhisto, solver.Energyhisto, ρ)
     end

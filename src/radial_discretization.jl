@@ -208,6 +208,7 @@ function exchange_corr_matrix!(discretization::KohnShamRadialDiscretization, mod
     @unpack Exc = discretization.cache
     ρ(x) = eval_density_as_function(discretization, D, x)
     Exc .= weight_mass_matrix(discretization.basis, model.exc.vxc∘ρ)
+    nothing
 end
 
 #####################################################################
@@ -219,7 +220,8 @@ function energy(discretization::KohnShamRadialDiscretization)
     @unpack Energy, B, C, Cᵨ = discretization.cache
     @unpack tmp_n, tmp_ϵ = discretization.tmp_cache
     @tensor Energy = tmp_n[l,n] * tmp_ϵ[l,n] 
-    Energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/(Rmax-Rmin))
+    discretization.cache.Energy = Energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/(Rmax-Rmin))
+    nothing
 end
 
 #####################################################################

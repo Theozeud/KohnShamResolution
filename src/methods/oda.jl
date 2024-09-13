@@ -21,7 +21,7 @@ end
 =#
 
 function update_density!(m::ConstantODA, solver::KhonShamSolver)
-    @unpack tmp_D, tmp_Dstar = solver.discretization.cache
+    @unpack tmp_D, tmp_Dstar = solver.discretization.tmp_cache
     tmp_D .= m.t * tmp_Dstar + (1 - m.t) * solver.Dprev
     nothing
 end

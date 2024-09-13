@@ -14,11 +14,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     quad_abstol::Real   = 1e-3,
     hartree::Real = 0, 
     degen_tol::Real = eps(bottom_type(discretization.basis)),
-    potential = :pde,
     light = false)
-
-    # Valid option for resol_hartree
-    @assert potential ∈ [:pde, :integral] "potential must be :pde or :integral"
 
     # Set the type of number as the one of the discretization basis
     T = discretization.elT
@@ -34,7 +30,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     n           = init_occupation(discretization)
     
     #  SolverOptions
-    opts = SolverOptions(T(tol), maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), T(degen_tol), potential, light)
+    opts = SolverOptions(T(tol), maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), T(degen_tol), light)
     niter = 0
     current_stop_crit =  2*T(tol)
     values_stop_crit = T[]    
@@ -73,21 +69,15 @@ end
 
 
 function loopfooter!(solver::KhonShamSolver)
-    # Store Data for analysis
+    solver.current_stop_crit = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA 
+    solver.Dprev  .= solver.D                                       # UPDATE THE CURRENT DENSITY
+    solver.niter += 1                                               # INCREASE THE NUMBER OF ITERATIONS DONE
+    push!(solver.values_stop_crit, solver.current_stop_crit)        # STORE THE NEW STOPPING CRITERIA 
     push!(solver.ϵhisto, copy(solver.ϵ[1,:]))
-    # Update the solver
-    solver.current_stop_crit = stopping_criteria(solver)
-    push!(solver.values_stop_crit, solver.current_stop_crit)
-    solver.Dprev  .= solver.D
-    solver.niter += 1
-    # Store the Energy
-    push!(solver.Energyhisto, energy(solver.discretization))
+    push!(solver.Energyhisto, solver.discretization.cache.Energy)   # STORE THE TOTAL ENERGY
 end
 
-#function stopping_criteria(solver::KhonShamSolver)
-#    m = solver.discretization.mesh
-#    sqrt((m[end] - m[begin])*sum([abs(solver.D(x)- solver.Dprev(x))^2 for x ∈ m[begin:end-1]])/(length(m)-1))
-#end
+
 function stopping_criteria(solver::KhonShamSolver)
     norm(solver.D - solver.Dprev)
 end
@@ -97,7 +87,7 @@ function makesolution(solver::KhonShamSolver)
 end
 
 function update_solver!(solver::KhonShamSolver)
-    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_ϵ, tmp_n = solver.discretization.cache
+    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_ϵ, tmp_n = solver.discretization.tmp_cache
     solver.D .= tmp_D
     solver.U .= tmp_U
     solver.ϵ .= tmp_ϵ

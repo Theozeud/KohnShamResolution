@@ -1,6 +1,6 @@
 function aufbau!(solver::KhonShamSolver)
     @unpack N = solver.model
-    @unpack tmp_ϵ, tmp_index_sort, tmp_n = solver.discretization.cache
+    @unpack tmp_ϵ, tmp_index_sort, tmp_n = solver.discretization.tmp_cache
     tmp_n .= zero(tmp_n)
     tmp_index_sort = aufbau!(tmp_n, tmp_ϵ, N; tol = solver.opts.degen_tol)
 end

@@ -93,13 +93,17 @@ module KohnShamResolution
     export exchcorr, charge, nbelec, potential
     export ReducedHartreeFock, SlaterXα
     include("model/kohnsham_model.jl")
+    
+    ##################
+    # KOHN-SHAM SOLVER
+    include("solver.jl")
+
 
     ##########################
     # KOHN-SHAM DISCRETIZATION
     export KohnShamDiscretization, KohnShamRadialDiscretization
-    export RadialCache
-    include("model discretization/abstract_discretization.jl")
-    include("model discretization/radial_discretization.jl")
+    export RadialCache, Radial_tmp_Cache
+    include("radial_discretization.jl")
 
     ###################
     # KOHN-SHAM METHODS
@@ -110,10 +114,7 @@ module KohnShamResolution
     export DFTProblem
     include("problem.jl")
 
-    include("solver.jl")
-
-    include("performstep.jl")
-
+    
     export aufbau!
     include("aufbau.jl")
 
