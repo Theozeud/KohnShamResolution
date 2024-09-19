@@ -97,7 +97,7 @@ end
 @inline function getnormalization(spb::ShortPolynomialBasis, i::Int)
     norma = bottom_type(spb)(0)
     for j ∈ eachindex(spb.infos[i])
-        norma += getnormalization(spb.infos[i], j)^(1+spb.deriv_order*2) * getnormalization(spb.elements, _getindex(spb, i, j))
+        norma += getnormalization(spb.infos[i], j)^(isnormalized(spb)+spb.deriv_order*2) * getnormalization(spb.elements, _getindex(spb, i, j))
     end
     1/sqrt(norma)
 end
@@ -130,9 +130,7 @@ function fill_mass_matrix!(spb::ShortPolynomialBasis, A)
                 dinvϕ = invϕ[1]
                 @inbounds A[I[1], I[2]] += dinvϕ * fast_scalar_product(P, Q, spb.elements.binf, spb.elements.bsup)
             end
-            if isnormalized(spb)
-                @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
-            end
+            @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
             @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
         end
     end
@@ -159,9 +157,7 @@ function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight, A)
             dinvϕ = invϕ[1]
             @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight, spb.elements.binf, spb.elements.bsup, invϕ)
         end
-        if isnormalized(spb)
-            @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
-        end
+        @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
     nothing
@@ -182,9 +178,7 @@ function fill_weight_mass_vector!(spb::ShortPolynomialBasis, weight, A)
             dinvϕ = invϕ[1]
             @inbounds A[i] += dinvϕ * weight_scalar_product(P, weight, spb.elements.binf, spb.elements.bsup, invϕ)
         end
-        if isnormalized(spb)
-            @inbounds A[i] *= getnormalization(spb, i)
-        end
+        @inbounds A[i] *= getnormalization(spb, i)
     end
 end
 
@@ -205,9 +199,7 @@ function fill_weight_mass_3tensor!(spb::ShortPolynomialBasis, weight, A)
             dinvϕ = invϕ[1]
             @inbounds A[I[1], I[2], I[3]] += dinvϕ * weight_scalar_product(P, Q, L, weight, spb.elements.binf, spb.elements.bsup, invϕ)
         end
-        if isnormalized(spb)
-            @inbounds A[I[1], I[2], I[3]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, I[3])
-        end
+        @inbounds A[I[1], I[2], I[3]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, I[3])
         @inbounds A[I[3], I[1], I[2]]  = A[I[1], I[2], I[3]]
         @inbounds A[I[2], I[3], I[1]]  = A[I[1], I[2], I[3]]
         @inbounds A[I[2], I[1], I[3]]  = A[I[1], I[2], I[3]]
@@ -217,79 +209,12 @@ function fill_weight_mass_3tensor!(spb::ShortPolynomialBasis, weight, A)
     nothing
 end
 
-function vector_mass_matrix(spb::ShortPolynomialBasis, vect::AbstractVector)
-    @assert length(spb) == length(vect)
-    T = bottom_type(spb)
-    A = zeros(T, spb.size, spb.size)
-    fill_vector_mass_matrix!(spb, vect, A)
-    A
-end
-
-function fill_vector_mass_matrix!(spb::ShortPolynomialBasis, vect::AbstractVector, A)
-    for I ∈ spb.coupling_index
-        for K ∈ eachindex(vect) 
-            val = zero(eltype(A))
-            if !iszero(vect[K])
-                for (i,j,k) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]), getsegments(spb, K))
-                    P = getpolynomial(spb, I[1], i)
-                    Q = getpolynomial(spb, I[2], j)
-                    L = getpolynomial(spb, K, k)
-                    @inbounds val += dinvϕ * fast_scalar_product(P, Q, L, spb.elements.binf, spb.elements.bsup)
-                end
-                if isnormalized(spb)
-                    @inbounds val *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, K)
-                end
-                val *= vect[K]
-                @inbounds A[I[1], I[2]] += val
-            end
-        end
-        @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
-    end
-    nothing
-end
-
-function vectorweight_mass_matrix(spb::ShortPolynomialBasis, vect::AbstractVector, weight)
-    @assert length(spb) == length(vect)
-    T = bottom_type(spb)
-    A = zeros(T, spb.size, spb.size)
-    fill_vectorweight_mass_matrix!(spb, vect, weight, A)
-    A
-end
-
-function fill_vectorweight_mass_matrix!(spb::ShortPolynomialBasis, vect::AbstractVector, weight, A)
-    for I ∈ spb.coupling_index
-        for K ∈ eachindex(vect)
-            val =  zero(eltype(A))
-            if !iszero(vect[K])
-                for (i,j,k) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]), getsegments(spb, K))
-                    P = getpolynomial(spb, I[1], i)
-                    Q = getpolynomial(spb, I[2], j)
-                    L = getpolynomial(spb, K, k)
-                    invϕ = getinvshift(spb, I[1], i)
-                    dinvϕ = invϕ[1]
-                    @inbounds val += dinvϕ * weight_scalar_product(P, Q, L, weight, spb.elements.binf, spb.elements.bsup, invϕ)
-                end
-                if isnormalized(spb)
-                    @inbounds val *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, K)
-                end
-                val *= vect[K]
-                @inbounds A[I[1], I[2]] += val
-            end
-        end
-        @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
-    end
-    nothing
-end
 
 @memoize function build_basis(spb::ShortPolynomialBasis, i::Int)
     T = bottom_type(spb)
     polys = LaurentPolynomial{T}[]
     for (j,_,ϕ,_) ∈ spb.infos[i]
-        if isnormalized(spb)
-            push!(polys, getnormalization(spb,i) * getpolynomial(spb.elements, j) ∘ ϕ)
-        else
-            push!(polys, getpolynomial(spb.elements, j) ∘ ϕ)
-        end
+        push!(polys, getnormalization(spb,i) * getpolynomial(spb.elements, j) ∘ ϕ)
     end
     PiecewiseLaurentPolynomial(spb.mesh, polys, getsegments(spb, i), T(0))
 end
@@ -300,11 +225,7 @@ function eval_basis(spb::ShortPolynomialBasis, i::Int, x)
     for (j,seg,ϕ,_) ∈ spb.infos[i]
         if index_x == seg
             P = getpolynomial(spb.elements, j)
-            if isnormalized(spb)
-                val += getnormalization(spb,i) * P(ϕ(x))
-            else
-                val += P(ϕ(x))
-            end
+            val += getnormalization(spb,i) * P(ϕ(x))
         end
     end
     val
