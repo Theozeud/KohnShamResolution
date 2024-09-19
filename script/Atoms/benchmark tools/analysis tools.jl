@@ -20,11 +20,11 @@ function compute_sol(;z, N, Rmax, Nmesh, lₕ, maxiter, oda, tol = 1e-5, T = Flo
     D5 = KohnShamRadialDiscretization(lₕ, basis_intleg5, m)
 
     # Solution
-    @time "With P1" sol1 = groundstate(KM, D1, method; tol = tol, hartree = true, maxiter = maxiter, potential = :pde)
-    @time "With IntLeg2" sol2 = groundstate(KM, D2, method; tol = tol, hartree = true, maxiter = maxiter, potential = :pde)
-    @time "With IntLeg3" sol3 = groundstate(KM, D3, method; tol = tol, hartree = true, maxiter = maxiter, potential = :pde)
-    @time "With IntLeg4" sol4 = groundstate(KM, D4, method; tol = tol, hartree = true, maxiter = maxiter, potential = :pde)
-    @time "With IntLeg5" sol5 = groundstate(KM, D5, method; tol = tol, hartree = true, maxiter = maxiter, potential = :pde)
+    @time "With P1" sol1 = groundstate(KM, D1, method; tol = tol, hartree = true, maxiter = maxiter)
+    @time "With IntLeg2" sol2 = groundstate(KM, D2, method; tol = tol, hartree = true, maxiter = maxiter)
+    @time "With IntLeg3" sol3 = groundstate(KM, D3, method; tol = tol, hartree = true, maxiter = maxiter)
+    @time "With IntLeg4" sol4 = groundstate(KM, D4, method; tol = tol, hartree = true, maxiter = maxiter)
+    @time "With IntLeg5" sol5 = groundstate(KM, D5, method; tol = tol, hartree = true, maxiter = maxiter)
     sols = [sol1, sol2, sol3, sol4, sol5]
     # Title
     title = "Rmax = $Rmax, z = $z, t = $oda, N = $N, Nmesh = $Nmesh"
@@ -157,7 +157,7 @@ function _groundstate(model, method, order; Rmax, Nmesh, lₕ, maxiter, tol = 1e
     # Final Discretization
     D = KohnShamRadialDiscretization(lₕ, basis, m)
     # Solution
-    @time sol = groundstate(model, D, method; tol = tol, hartree = true, maxiter = maxiter, potential = :pde)
+    @time sol = groundstate(model, D, method; tol = tol, hartree = true, maxiter = maxiter)
 
     # Title
     title = "Rmax = $Rmax, z = model.z, oda = method.t, N = model.N, Nmesh = $Nmesh"
