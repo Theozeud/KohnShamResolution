@@ -97,7 +97,11 @@ end
 @inline function getnormalization(spb::ShortPolynomialBasis, i::Int)
     norma = bottom_type(spb)(0)
     for j ∈ eachindex(spb.infos[i])
-        norma += getnormalization(spb.infos[i], j)^(isnormalized(spb)+spb.deriv_order*2) * getnormalization(spb.elements, _getindex(spb, i, j))
+        if isnormalized(spb)
+            norma += getnormalization(spb.infos[i], j)^(1+spb.deriv_order*2) * getnormalization(spb.elements, _getindex(spb, i, j))
+        else
+            norma += getnormalization(spb.infos[i], j)^(spb.deriv_order*2)
+        end
     end
     1/sqrt(norma)
 end
@@ -209,14 +213,22 @@ function fill_weight_mass_3tensor!(spb::ShortPolynomialBasis, weight, A)
     nothing
 end
 
-
-@memoize function build_basis(spb::ShortPolynomialBasis, i::Int)
+function build_basis(spb::ShortPolynomialBasis, i::Int)
     T = bottom_type(spb)
     polys = LaurentPolynomial{T}[]
     for (j,_,ϕ,_) ∈ spb.infos[i]
         push!(polys, getnormalization(spb,i) * getpolynomial(spb.elements, j) ∘ ϕ)
     end
     PiecewiseLaurentPolynomial(spb.mesh, polys, getsegments(spb, i), T(0))
+end
+
+function build_on_basis(spb::ShortPolynomialBasis, coeffs)
+    @assert eachindex(coeffs) == eachindex(spb) 
+    poly = coeffs[firstindex(coeffs)] * build_basis(spb, firstindex(coeffs))
+    for i ∈ eachindex(spb)[2:end]
+        poly += coeffs[i] * build_basis(spb, i)
+    end
+    poly
 end
 
 function eval_basis(spb::ShortPolynomialBasis, i::Int, x)
@@ -231,14 +243,7 @@ function eval_basis(spb::ShortPolynomialBasis, i::Int, x)
     val
 end
 
-function build_on_basis(spb::ShortPolynomialBasis, coeffs)
-    @assert eachindex(coeffs) == eachindex(spb) 
-    poly = coeffs[firstindex(coeffs)] * build_basis(spb, firstindex(coeffs))
-    for i ∈ eachindex(spb)[2:end]
-        poly += coeffs[i] * build_basis(spb, i)
-    end
-    poly
-end
+
 
 function deriv(spb::ShortPolynomialBasis)
     deriv_polynomials = deriv.(getpolynomial(spb.elements))

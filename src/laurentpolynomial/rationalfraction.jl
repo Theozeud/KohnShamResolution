@@ -163,6 +163,8 @@ end
 #                               Composition
 ##################################################################################
 function Base.:∘(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
+    elag!(p)
+    elag!(q)
     @assert !haslog(p) && !haslog(q)
     NewT = promote_type(TP,TQ)
     if ismonomial(p)

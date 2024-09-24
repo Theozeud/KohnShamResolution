@@ -227,7 +227,7 @@ function fill_weight_mass_3tensor!(spb1::ShortPolynomialBasis, spb2::ShortPolyno
     end
 end
 
-@memoize function build_basis(cb::CombineShortPolynomialBasis, i::Int)
+function build_basis(cb::CombineShortPolynomialBasis, i::Int)
     (ib, iib) = find_basis(cb, i)
     spb = getbasis(cb, ib)
     build_basis(spb, iib)
