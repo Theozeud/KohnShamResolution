@@ -60,17 +60,17 @@ function eval_sol2(U, basis)
 end
 
 function local_errors(Λ, U, basis, m, z = 1, T = Float64)
-    Nm = length(m)
+    Nm = length(m.points)
     error = zeros(T, Nm - 1)
     eval = eval_sol2(U[:,1], basis)
     for i ∈ 1:Nm-1
-        error[i] = abs(eval(m[i]) - eigvect_theo(T, 1, z)(m[i]))/sqrt((m[i+1] - m[i]))
+        error[i] = abs(eval(m[i+1]) - eigvect_theo(T, 1, z)(m[i+1]))/sqrt((m[i+1] - m[i])) + abs(Λ[1] - eigval_theo(T, 1, z))
     end
     error
 end
 
 # h-strategy
-function h_strategy(m, localerr, tol, Nmax)
+function h_strategy1(m, localerr, tol, Nmax)
     points = copy(m.points)
     Nm = length(m)
     index = sortperm(localerr; rev = true)
@@ -119,53 +119,95 @@ function h_strategy(m, localerr, tol, Nmax)
 end
 
 
+function h_strategy2(m, localerr, tol, Nmax)
+    newpoints = copy(m.points)
+    Nm = length(m)
+    index = sortperm(localerr; rev = true)
+    Nb = Nm
+    while Nb < Nmax && !isempty(index)
+        fi = first(index)
+        if localerr[fi] > tol/Nm
+            push!(newpoints, (m.points[fi] + m.points[fi+1])/2)
+            popfirst!(index)
+            Nb += 1
+        else
+            break
+        end
+    end
+    mesh(newpoints), (Nb < Nmax) 
+end
+
+
 # full procedure
-function hadapt_hydro(mesh, ordermax, tol, Nmax; l = 0, T = Float64, z = 1)
-    Mesh = []
+function hadapt_hydro(m, ordermax, tol, Nmax; l = 0, T = Float64, z = 1)
+    APlot = [plot_sol_inter(0, m, m)]
+    Mesh = [m]
     refine = true
     iter = 1
     Λ, U = zero(T), zeros(1,1)
     basis = nothing
     while refine
         println("iter = $iter")
-        @show mesh
-        push!(Mesh, mesh)
-        nU, Λ, basis =  eigen_hydro(mesh, ordermax, l, T)
-        localerr = local_errors(Λ, nU, basis, mesh, z, T)
-        mesh, refine = h_strategy(mesh, localerr, tol, Nmax)
+        nU, Λ, basis =  eigen_hydro(m, ordermax, l, T)
+        localerr = local_errors(Λ, nU, basis, m, z, T)
+        m, refine = h_strategy2(m, localerr, tol, Nmax)
+        plt = plot_sol_inter(iter, last(Mesh), m)
+        push!(APlot, plt)    
+        push!(Mesh, m)
         iter += 1
-        refine = false
         U = nU
+        refine = false
     end
-    return Λ, U, Mesh, basis
+    return Λ, U, Mesh, basis, APlot
 end
 
-l = 0
+
+# Plot intermédiare
+function plot_sol_inter(step::Int, last_mesh, current_mesh)
+    plt = plot( size = (900,600), margin = 0.5Plots.cm, legend = :outertopright,
+                legendfontsize  = 18,  
+                titlefontsize   = 18,
+                guidefontsize   = 18,
+                tickfontsize    = 18)
+    xlabel!(plt, "t")
+    title!(plt, "Step $step")
+    scatter!(plt, current_mesh.points, zero(current_mesh.points); markershape = :o, markercolor = :red, markersize = 12)
+    scatter!(plt, last_mesh.points, zero(last_mesh.points); markershape = :o, markercolor = :black, markersize = 12)
+    plt
+end
+
+
+
+## Script
+
+l = 1
 z = 1
-Rmax = 10
-Nmbegin = 10
-tol = 1e-8
-Nmax = 80
-order = 3
+Rmax = 80
+Nmbegin = 90
+tol = 1e-4
+Nmax = 20
+order = 4
 
 
-@show m = mesh(Float64.([0,0.5,1,2,3,4,5,6,7,8,9,10]))
-#linmesh(0,Rmax,Nmbegin)
+@show m = geometricmesh(0, Rmax, Nmbegin;s = 0.9) #mesh(Float64.([0,1,2,3,4,5,6,7,8,9,10]))
+#linmesh(0, Rmax, Nmbegin) #
 
 sol = hadapt_hydro(m, order, tol, Nmax, l = l, z = z)
 Λ = sol[1]
 U = sol[2]
 Mesh = sol[3]
 basis = sol[4]
+APlot = sol[5]
 
-@show abs(-0.5 -Λ[1])
+@show abs(-0.125 -Λ[1])
 
 using Plots
 unum2 = eval_sol2(U[:,1], basis)
-X = LinRange(0,Rmax, 100)
-plot(X, eigvect_theo(Float64, 1, z).(X), lw = 3, label = "Théorique")
+X = LinRange(0,Rmax, 1000)
+plot(size = (1000,700))
+plot!(X, eigvect_theo(Float64, 1, z).(X), lw = 3, label = "Théorique")
 plot!(X, abs.(unum2.(X)), label = "h-adaptative", lw = 3)
-plot!(X, abs.([eval_sol(U, basis, x) for x ∈ X]), lw = 3, markershape = :x)
+#plot!(X, abs.([eval_sol(U, basis, x) for x ∈ X]), lw = 3, markershape = :x)
 
 
 #=
