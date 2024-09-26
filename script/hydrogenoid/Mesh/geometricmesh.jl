@@ -7,9 +7,9 @@ problimesh = hydrogenoid(;  z             = 1,
                             typemesh      = linmesh, 
                             typebasis     = ShortP1IntLegendreBasis, 
                             optsmesh      = NamedTuple(), 
-                            optsbasis     = (normalize = false, ordermax = 4, ordermin = 2), 
+                            optsbasis     = (normalize = true, ordermax = 4, ordermin = 2), 
                             T             = Float64, 
-                            name          = "IntLeg2")
+                            name          = "IntLeg4")
 
 Ulin, λlin = eigen_hydro(problimesh)
 

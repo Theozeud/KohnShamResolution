@@ -3,14 +3,14 @@ using PrettyTables
 
 function compute_sol(;z, N, Rmax, Nmesh, lₕ, maxiter, oda, tol = 1e-5, T = Float64)
     method = ConstantODA(T(oda))
-    m = linmesh(zero(T), Rmax, Nmesh)
+    m = geometricmesh(zero(T), Rmax, Nmesh; s = 0.9)
     KM = KohnShamExtended(z = z, N = N)
-
-    basis_p1 = ShortP1Basis(m, T; left = false, right = false, normalize = true)
-    basis_intleg2 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 2, normalize = true)
-    basis_intleg3 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 3, normalize = true)
-    basis_intleg4 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 4, normalize = true)
-    basis_intleg5 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 5, normalize = true)
+    normalize = false
+    basis_p1 = ShortP1Basis(m, T; left = false, right = false, normalize = normalize)
+    basis_intleg2 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 2, normalize = normalize)
+    basis_intleg3 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 3, normalize = normalize)
+    basis_intleg4 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 4, normalize = normalize)
+    basis_intleg5 = ShortP1IntLegendreBasis(m, T; left = false, right = false, ordermin = 2, ordermax = 5, normalize = normalize)
 
     # Final Discretization
     D1 = KohnShamRadialDiscretization(lₕ, basis_p1, m)
@@ -20,11 +20,12 @@ function compute_sol(;z, N, Rmax, Nmesh, lₕ, maxiter, oda, tol = 1e-5, T = Flo
     D5 = KohnShamRadialDiscretization(lₕ, basis_intleg5, m)
 
     # Solution
-    @time "With P1" sol1 = groundstate(KM, D1, method; tol = tol, hartree = true, maxiter = maxiter)
-    @time "With IntLeg2" sol2 = groundstate(KM, D2, method; tol = tol, hartree = true, maxiter = maxiter)
-    @time "With IntLeg3" sol3 = groundstate(KM, D3, method; tol = tol, hartree = true, maxiter = maxiter)
-    @time "With IntLeg4" sol4 = groundstate(KM, D4, method; tol = tol, hartree = true, maxiter = maxiter)
-    @time "With IntLeg5" sol5 = groundstate(KM, D5, method; tol = tol, hartree = true, maxiter = maxiter)
+    hartree = true
+    @time "With P1" sol1 = groundstate(KM, D1, method; tol = tol, hartree = hartree, maxiter = maxiter)
+    @time "With IntLeg2" sol2 = groundstate(KM, D2, method; tol = tol, hartree = hartree, maxiter = maxiter)
+    @time "With IntLeg3" sol3 = groundstate(KM, D3, method; tol = tol, hartree = hartree, maxiter = maxiter)
+    @time "With IntLeg4" sol4 = groundstate(KM, D4, method; tol = tol, hartree = hartree, maxiter = maxiter)
+    @time "With IntLeg5" sol5 = groundstate(KM, D5, method; tol = tol, hartree = hartree, maxiter = maxiter)
     sols = [sol1, sol2, sol3, sol4, sol5]
     # Title
     title = "Rmax = $Rmax, z = $z, t = $oda, N = $N, Nmesh = $Nmesh"
