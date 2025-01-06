@@ -1,9 +1,0 @@
-## Solution
-See to better display Solution
-May be use of pretty tables ?
-
-lpb = LaurentPolynomialBasis([px,px2,p,p,p,p,p])
-using PrettyTables
-showpt(A) = pretty_table(A, show_header = false; alignment = :c)
-@time M = mass_matrix(lpb,1,2)
-showpt(M)
