@@ -11,11 +11,11 @@ N = 1
 KM = KohnShamExtended(z = z, N = N)
 
 # Choice of the method
-M = ConstantODA(0.0)
+M = CDA(0.0)
 
 # Discretization 
-lₕ = 0
-Nₕ = 128
+lₕ = 3
+Nₕ = 300
 Rmin = 0
 Rmax = 41
 
@@ -25,7 +25,7 @@ Rmax = 41
 
 @timeit to "init Discretization" D = KohnShamRadialDiscretization(lₕ, basis, m)
 
-@timeit to "Init Solver" solver = KohnShamResolution.init(KM, D, M; tol = 1e-3, hartree = false, light = true)
+@timeit to "Init Solver" solver = KohnShamResolution.init(KM, D, M; scftol = 1e-3, hartree = false)
 
 #@timeit to "PerformStep" KohnShamResolution.performstep!(solver)
 
@@ -45,6 +45,6 @@ end
 
 @timeit to "Make Solution" KohnShamResolution.makesolution(solver)
 
-@timeit to "Build Density in Solution" KohnShamResolution.build_density2!(solver.discretization, solver.D)
+#@timeit to "Build Density in Solution" KohnShamResolution.build_density2!(solver.discretization, solver.D)
 
 to
