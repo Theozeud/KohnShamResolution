@@ -1,20 +1,21 @@
-function groundstate(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::AbstractKohnShamResolutionMethod; show_progress = false, kwargs...)
+
+function groundstate(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::SCFMethod; kwargs...)
     solver = init(model, discretization, method; kwargs...)
-    solve!(solver; show_progress = show_progress)
+    solve!(solver)
     makesolution(solver)
 end
 
 groundstate(problem::DFTProblem; kwargs...) =  groundstate(model(problem), discretization(problem), method(problem); kwargs...)
 
-function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::AbstractKohnShamResolutionMethod; 
-    tol::Real, 
+function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::SCFMethod; 
+    scftol::Real, 
     maxiter::Int = 100,
     quad_method = QuadGKJL(),
     quad_reltol::Real  = 1e-3,
     quad_abstol::Real   = 1e-3,
     hartree::Real = 0, 
     degen_tol::Real = eps(bottom_type(discretization.basis)),
-    light = false)
+    logconfig = LogConfig())
 
     # Set the type of number as the one of the discretization basis
     T = discretization.elT
@@ -28,22 +29,23 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     U           = init_coeffs_discretization(discretization)
     ϵ           = init_energy(discretization)
     n           = init_occupation(discretization)
+    energy      = zero(T)
     
     #  SolverOptions
-    opts = SolverOptions(T(tol), maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), T(degen_tol), light)
-    niter = 0
-    current_stop_crit =  2*T(tol)
-    values_stop_crit = T[]    
-    ϵhisto = []
-    Energyhisto = T[]
+    opts = SolverOptions(T(scftol), maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), T(degen_tol))
 
-    KhonShamSolver(discretization, model, method, D, Dprev, U, ϵ, n, ϵhisto, Energyhisto, niter, values_stop_crit, current_stop_crit, opts)
+    # Init log parameters
+    niter = 0
+    stopping_criteria = zero(T)
+    logbook = LogBook(logconfig, T)
+    
+    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, energy, logbook)
 end
 
-function solve!(solver::KhonShamSolver; show_progress = false)
-    p = ProgressThresh(solver.opts.ε; enabled = show_progress, desc = "Itération Principale") 
-    while solver.current_stop_crit > solver.opts.ε && solver.niter < solver.opts.maxiter
-        update!(p, solver.current_stop_crit)
+
+
+function solve!(solver::KhonShamSolver)
+    while (solver.stopping_criteria > solver.opts.scftol || iszero(solver.niter)) && solver.niter < solver.opts.maxiter
         performstep!(solver)
         loopfooter!(solver)
     end
@@ -63,19 +65,17 @@ function performstep!(solver::KhonShamSolver)
     # STEP 4 : Compute new density
     update_density!(solver.method, solver)
 
-    # Update Solver
+    # STEP 5 : Update Solver
     update_solver!(solver)
 end
 
 
 function loopfooter!(solver::KhonShamSolver)
-    solver.current_stop_crit = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA 
+    solver.stopping_criteria = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA 
     solver.Dprev  .= solver.D                                       # UPDATE THE CURRENT DENSITY
     solver.niter += 1                                               # INCREASE THE NUMBER OF ITERATIONS DONE
-    push!(solver.values_stop_crit, solver.current_stop_crit)        # STORE THE NEW STOPPING CRITERIA 
-    push!(solver.ϵhisto, copy(solver.ϵ[1,:]))
-    push!(solver.Energyhisto, solver.discretization.cache.Energy)   # STORE THE TOTAL ENERGY
-end
+    update_log!(solver)                                             # UPDATE THE LOG
+end 
 
 
 function stopping_criteria(solver::KhonShamSolver)
@@ -94,4 +94,14 @@ function update_solver!(solver::KhonShamSolver)
     solver.n .= tmp_n 
     tmp_D       .= zero(tmp_D)
     tmp_Dstar   .= zero(tmp_Dstar)
+    nothing
+end
+
+function update_log!(solver::KhonShamSolver)
+    @unpack logbook = solver
+    @unpack occupation_number, orbitals_energy, stopping_criteria, energy, density = logbook.config
+    stopping_criteria ? push!(solver.logbook.stopping_criteria_log, solver.stopping_criteria)  : nothing     # STORE THE STOPPING CRITERIA 
+    orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ[1,:]))         : nothing     # STORE THE ORBITALS ENERGY
+    energy ?            push!(solver.logbook.energy_log, solver.discretization.cache.Energy)   : nothing     # STORE THE TOTAL ENERGY
+    nothing
 end
