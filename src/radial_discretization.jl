@@ -6,7 +6,7 @@ mutable struct RadialCache
     A               # Matrix of Qᵢ'Qⱼ'
     M₀              # Matrix of QᵢQⱼ
     M₋₁             # Matrix of 1/x QᵢQⱼ
-    M₋₂             # Matrix of 1/x QᵢQⱼ
+    M₋₂             # Matrix of 1/x^2 QᵢQⱼ
     F               # Tensor of 1/x QᵢQⱼQₖ
     B               # Matrix of 4πρQᵢ
     C               # Matrix for V(ρ) - solution of the Gauss Electrostatic law
@@ -71,13 +71,13 @@ struct KohnShamRadialDiscretization{T} <: KohnShamDiscretization
     lₕ::Int
     Nₕ::Int
     basis::Basis
-    mesh::OneDMesh{T}
+    mesh::Mesh{T}
     Rmin::T
     Rmax::T
     elT::Type
     cache::RadialCache
     tmp_cache::Radial_tmp_Cache
-    function KohnShamRadialDiscretization(lₕ::Int, basis::Basis, mesh::OneDMesh; lmin = 0)
+    function KohnShamRadialDiscretization(lₕ::Int, basis::Basis, mesh::Mesh; lmin = 0)
         elT = bottom_type(basis)
         Nₕ = length(basis)
         @assert lmin ≤ lₕ
@@ -109,7 +109,7 @@ function init_cache!(discretization::KohnShamRadialDiscretization, model::Abstra
     @. Hfix = Kin + Coulomb
 
     # Creation of the 3-index tensor F if there is the hartree term
-    if hartree
+    if !iszero(hartree)
         F .= weight_mass_3tensor(basis, Monomial(-1))
     end
 
@@ -125,7 +125,6 @@ init_density_matrix(kd::KohnShamRadialDiscretization)        = zeros(kd.elT, kd.
 init_coeffs_discretization(kd::KohnShamRadialDiscretization) = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, kd.Nₕ)
 init_energy(kd::KohnShamRadialDiscretization)                = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
 init_occupation(kd::KohnShamRadialDiscretization)            = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
-
 
 #####################################################################
 #               Find Orbital : Solve the eigen problems
@@ -178,7 +177,7 @@ end
 function coulomb_matrix!(discretization::KohnShamRadialDiscretization, model)
     @unpack M₋₁, Coulomb = discretization.cache
     for l ∈ discretization.lmin:discretization.lₕ
-        Coulomb[l+1-discretization.lmin,:,:] .= - charge(model) .* M₋₁
+        Coulomb[l+1-discretization.lmin,:,:] .= - model.z .* M₋₁
     end 
     nothing
 end
