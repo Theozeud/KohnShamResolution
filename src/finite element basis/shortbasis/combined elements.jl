@@ -1,4 +1,4 @@
-function ShortP1IntLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = true, left = false, right = false, ordermin = 2, ordermax = 2, first = true, Rcut = last(mesh))
+function ShortP1IntLegendreBasis(mesh::Mesh, T::Type = Float64; normalize::Bool = true, left = false, right = false, ordermin = 2, ordermax = 2, first = true, Rcut = last(mesh))
     if ordermax == 1
         return ShortP1Basis(mesh, T; normalize = normalize, left = left, right = right)
     else

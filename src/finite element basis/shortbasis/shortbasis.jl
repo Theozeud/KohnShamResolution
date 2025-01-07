@@ -27,18 +27,18 @@ end
 ########################################################################################
 struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     elements::TB
-    mesh::OneDMesh
+    mesh::Mesh
     size::Int
     infos::Vector{InfoElement}
     coupling_index::Vector{CartesianIndex{2}}
     coupling_index3::Vector{CartesianIndex{3}}
     deriv_order::Int
 
-    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}, coupling_index3::Vector{CartesianIndex{3}}, deriv_order::Int) 
+    function ShortPolynomialBasis(elements, mesh::Mesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}, coupling_index3::Vector{CartesianIndex{3}}, deriv_order::Int) 
         new{typeof(elements)}(elements, mesh, size, infos, coupling_index, coupling_index3, deriv_order)
     end
 
-    function ShortPolynomialBasis(elements, mesh::OneDMesh, size::Int, infos, deriv_order) 
+    function ShortPolynomialBasis(elements, mesh::Mesh, size::Int, infos, deriv_order) 
         
         # Basics checks for consistency
         @assert size == length(infos)

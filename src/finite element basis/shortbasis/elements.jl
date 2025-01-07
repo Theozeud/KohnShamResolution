@@ -41,7 +41,7 @@ struct P1Elements{N, T} <: AbstractShortElements{N, T}
     end
 end
 
-function ShortP1Basis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
+function ShortP1Basis(mesh::Mesh, T::Type = Float64; normalize::Bool = false, kwargs...)
     p1elements = P1Elements(T; normalize = normalize, kwargs...)
     size = length(mesh) - 2 + p1elements.left + p1elements.right
     binf = p1elements.binf
@@ -126,7 +126,7 @@ end
 @inline Base.getindex(ilb::IntLegendreElements, n::Int) =  ilb.polynomials[n] 
 @inline getpolynomial(ilb::IntLegendreElements) = ilb.polynomials
 
-function ShortIntLegendreBasis(mesh::OneDMesh, T::Type = Float64; Rcut::Real = last(mesh), normalize::Bool = false, kwargs...)
+function ShortIntLegendreBasis(mesh::Mesh, T::Type = Float64; Rcut::Real = last(mesh), normalize::Bool = false, kwargs...)
     intlegelement = IntLegendreElements(T; normalize = normalize, kwargs...)
     Ncut = min(findindex(mesh, Rcut), lastindex(mesh))
     size = intlegelement.size * (Ncut - 1)
@@ -173,7 +173,7 @@ end
 @inline Base.getindex(dlb::DiffLegendreElements, n::Int) =  dlb.polynomials[n] 
 @inline getpolynomial(dlb::DiffLegendreElements) = dlb.polynomials
 
-function ShortDiffLegendreBasis(mesh::OneDMesh, T::Type = Float64; normalize::Bool = false, kwargs...)
+function ShortDiffLegendreBasis(mesh::Mesh, T::Type = Float64; normalize::Bool = false, kwargs...)
     difflegelement = DiffLegendreElements(T; normalize = normalize, kwargs...)
     size = difflegelement.size * (length(mesh) - 1)
     infos = Vector{InfoElement{T}}(undef, size)
