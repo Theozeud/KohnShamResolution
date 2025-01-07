@@ -13,7 +13,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     quad_method = QuadGKJL(),
     quad_reltol::Real  = 1e-3,
     quad_abstol::Real   = 1e-3,
-    hartree::Real = 0, 
+    hartree::Real = 1, 
     degen_tol::Real = eps(bottom_type(discretization.basis)),
     logconfig = LogConfig())
 
