@@ -10,7 +10,7 @@ end
 
 mutable struct KhonShamSolver
     niter                           # Number of iterations
-    stop_criteria                   # Current stopping criteria
+    stopping_criteria               # Current stopping criteria
     discretization                  # Discretization parameters
     model                           # Model
     method                          # Iterative method
