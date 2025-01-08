@@ -5,6 +5,8 @@ using UnPack
 using GenericLinearAlgebra
 using DoubleFloats
 
+using IterativeSolvers
+
 # Structure Problem
 struct LaplacianProblem
     name
@@ -15,13 +17,36 @@ struct LaplacianProblem
     optsmesh
     Rmax
     Nmesh
+
+    LaplacianProblem(;name, T, typebasis, optsbasis, typemesh, optsmesh, Rmax, Nmesh) =
+        new(name, T, typebasis, optsbasis, typemesh, optsmesh, Rmax, Nmesh)
+
+    LaplacianProblem(prob;  name = prob.name, T = prob.T, typebasis = prob.typebasis, 
+                            optsbasis = prob.optsbasis, typemesh = prob.typemesh, 
+                            optsmesh = prob.optsmesh, Rmax = prob.Rmax, Nmesh = prob.Nmesh) =
+        new(name, T, typebasis, optsbasis, typemesh, optsmesh, Rmax, Nmesh)
 end
 
 # Structure Solution
 struct LaplacianSolution
     prob
     λ
+    Δλ
     u
+    function LaplacianSolution(prob, λ, u)
+        λ_theo = theoretical_eigenvalue.(eachindex(λ), prob.Rmax, prob.T) 
+        Δλ = abs.(λ .- λ_theo)
+        new(prob, λ, Δλ, u)
+    end
+end
+
+# Structure to compute convergence curve
+struct LaplacianConvergenceNmesh
+    probs           # Set of problems
+    vecNmesh        # Set of Nmesh used
+    ΔΛ              # Dict of errors on eigenvalues : for each problem,
+                    # there is a vector of errors depending on Nmesh
+    nums            # Number of eigenvalue and eigenvector used 
 end
 
 # Theoretical Eigenvalue and Eigenvectors
@@ -52,11 +77,14 @@ function eigvals_(problems)
         basis = typebasis(mesh, T; optsbasis...)
         M₀  = mass_matrix(basis)
         A   = Symmetric(mass_matrix(deriv(basis)))
-        λ = eigvals(inv(M₀) * A)
+        #λ = eigvals(inv(M₀) * A)
+        λ  = lobpcg(A, M₀, false, 10; tol = 1e-9).λ
         push!(sols, LaplacianSolution(problem, λ, nothing))
     end
     sols
 end
+
+
 
 # Plot Eigenvalue
 function plot_eigenvalue(sols)
@@ -68,7 +96,7 @@ function plot_eigenvalue(sols)
     mindex = 0
     RMAX   = 0
     for sol ∈ sols
-        plot!(plt, sol.λ, label = sol.prob.name, lw = 4)
+        plot!(plt, sol.λ, label = sol.prob.name, lw = 5)
         if length(sol.λ) > mindex
             mindex = length(sol.λ)
         end
@@ -76,7 +104,7 @@ function plot_eigenvalue(sols)
             RMAX = sol.prob.Rmax
         end
     end
-    plot!(plt, theoretical_eigenvalue.(1:mindex, RMAX, sol.prob.T), label = "Theoretical", lw = 4)
+    plot!(plt, theoretical_eigenvalue.(1:mindex, RMAX, Float64), label = "Theoretical", lw = 4, ls = :dash, lc = :black)
     return plt
 end
 
@@ -109,88 +137,52 @@ end
 ##################################################################################
 # Compute Error
 
-function compute_error_eigenvalue(vecNmesh, Rmax, num, T)
-
-    label = ["Différence finie", "P1", "IntLeg 2", "IntLeg 3", "IntLeg 4"]
-    ϵerror = zeros(T, length(vecNmesh), length(label))
-    for (i, Nmesh) ∈ enumerate(vecNmesh)
-        # Creation of the mesh
-        m = linmesh(Rmin, Rmax, Nmesh, T)
-        
-        # True eigenvalue
-        @time "Nmesh = "*string(Nmesh) begin
-        true_val = val_theo.(1:Nmesh, Rmax, T)
-
-        # With finite difference
-        vals_diff = eigen_with_finite_diff(Nmesh, Rmax)
-
-        # With P1
-        vals_p1 = eigen_with_P1(m, T)
-
-        # With P1-Integrated Legendre Polynomials ordre 2
-        vals_il2 = eigen_with_P1IntLeg(m, 2, T)
-
-        # With P1-Integrated Legendre Polynomials ordre 3
-        vals_il3 = eigen_with_P1IntLeg(m, 3, T)
-
-        # With P1-Integrated Legendre Polynomials ordre 4
-        vals_il4 = eigen_with_P1IntLeg(m, 4, T)
+function convergenceNmesh(vecNmesh::AbstractVector, problems; nums = [1])
+    ΔΛ = Dict()
+    for problem ∈ problems
+        @unpack T, name = problem
+        println(name)
+        Δλ = zeros(T, length(vecNmesh), length(nums))
+        @inbounds for i ∈ eachindex(vecNmesh)
+            newprob = LaplacianProblem(problem; Nmesh = vecNmesh[i])
+            @time "Nmesh = $(vecNmesh[i])" sol = eigvals_([newprob])
+            Δλ[i,:] .= sol[1].Δλ[nums]
         end
-
-        # Compute the error for eigenvalues and the fundamental
-        ϵerror[i,1] = abs(vals_diff[num] - true_val[num])
-        ϵerror[i,2] = abs(vals_p1[num] - true_val[num])
-        ϵerror[i,3] = abs(vals_il2[num] - true_val[num])
-        ϵerror[i,4] = abs(vals_il3[num] - true_val[num])
-        ϵerror[i,5] = abs(vals_il4[num] - true_val[num])
+        ΔΛ[name] = Δλ
     end
+    LaplacianConvergenceNmesh(problems, vecNmesh, ΔΛ, nums)
+end
 
-    # Creation of the plot for eigenvalue
-    plt_ϵ_error = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :topright, xaxis=:log, yaxis=:log,
-                        legendfontsize  = 14,  
-                        titlefontsize   = 14,
-                        guidefontsize   = 14,
-                        tickfontsize    = 14)
-    xlabel!(plt_ϵ_error, "Nmesh")
-    ylabel!(plt_ϵ_error, "Error on the $num-th eigenvalue")
-    title!(plt_ϵ_error, "Rmax = $Rmax")
-    for i ∈ eachindex(label)
-        plot!(plt_ϵ_error, vecNmesh, ϵerror[:, i], lw = 4, label = label[i], markershape = :x, markersize = 10)
+function convergence_plot_Nmesh(sols::LaplacianConvergenceNmesh)
+    plt = plot( size = (1000,800), margin = 0.5Plots.cm, legend = :bottomleft , xaxis=:log, yaxis=:log,
+                legendfontsize  = 14,  
+                titlefontsize   = 18,
+                guidefontsize   = 14,
+                tickfontsize    = 14)
+    xlabel!(plt, "Nmesh")
+    ylabel!(plt, "Error")
+    title!(plt, "Convergence Plot")
+    for prob ∈ sols.probs
+        for num ∈ sols.nums
+            plot!(plt, sols.vecNmesh, sols.ΔΛ[prob.name][:,num], lw = 4, label = prob.name*"-$num", markershape = :x, markersize = 10)
+        end
     end
-    plt_ϵ_error
+    plt
 end
 
 ##############################################
-prob = LaplacianProblem("problem", 
-                        Float64,
-                        ShortP1IntLegendreBasis,
-                        (normalize = false, ordermax = 4),
-                        linmesh,
-                        (;),
-                        10,
-                        100)
+prob = LaplacianProblem(name = "problem", 
+                        T = Float64,
+                        typebasis = ShortP1IntLegendreBasis,
+                        optsbasis = (normalize = false, ordermax = 5),
+                        typemesh = linmesh,
+                        optsmesh = (;),
+                        Rmax = 100,
+                        Nmesh = 100)
 
 sol = eigvals_([prob])
-
 plot_eigenvalue(sol)
 
-#=
-plt_eigenvalue = plot_eigenvalue(100, 10, [2,3])
+sol = convergenceNmesh(2 .^(4:8), [prob])
 
-savefig(plt_eigenvalue, "test/image_tests/Laplacien - Valeurs Propres 1-2-3")
-plt_eigenvalue = plot_eigenvalue(100,10, [2,3,4,5])
-savefig(plt_eigenvalue, "test/image_tests/Laplacien - Valeurs Propres 1-2-3-4-5")
-
-
-plt_eigenvector = plot_eigenvector(100,10, 198, 3)
-savefig(plt_eigenvector, "test/image_tests/Laplacien - Vecteur Propre 198 - ordre 3")
-plt_eigenvector = plot_eigenvector(100,10, 199, 3)
-savefig(plt_eigenvector, "test/image_tests/Laplacien - Vecteur Propre 199 - ordre 3")
-plt_eigenvector = plot_eigenvector(100,10, 200, 3)
-savefig(plt_eigenvector, "test/image_tests/Laplacien - Vecteur Propre 200 - ordre 3")
-
-plt_eigenvalue_error = compute_error_eigenvalue(vecNmesh, 10, 1)
-savefig(plt_eigenvalue_error, "test/image_tests/Laplacien - Erreurs valeurs propres")
-
-compute_error_eigenvalue(vecNmesh, 10, 1)
-=#
+convergence_plot_Nmesh(sol)

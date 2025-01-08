@@ -12,11 +12,14 @@
 end
 
 @inline function findindex2(m, x)
-    idx = searchsortedfirst(m, x)
-    return idx > 1 && m[idx - 1] == x ? idx - 1 : idx
+    if x ≤ m[end]
+        return searchsortedlast(m, x)
+    else
+        return lastindex(m)+1
+    end
 end
 
-m = LinRange(0,10,100)
+m = LinRange(0,10,600)
 
-@show findindex(m, 0.1)
-@show findindex2(m, 0.1)
+@show @btime findindex(m, 5)
+@show @btime findindex2(m, 5)
