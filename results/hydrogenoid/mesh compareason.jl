@@ -1,6 +1,6 @@
 using KohnShamResolution
 
-include("../../benchmarktools/Hydrogenoid/setup.jl")
+include("../../benchmarktools/hydrogenoid/setup.jl")
 
 
 const problinmesh = HydrogenoidProblem(; 
