@@ -2,8 +2,8 @@
 
 function convergence_plot_Nmesh(sols::HydrogenoidConvergenceNmesh, nums = first(sols.num))
     plt = plot( size = (1300,1000), margin = 0.5Plots.cm, legend = :bottomleft , xaxis=:log, yaxis=:log,
-                legendfontsize  = 12,  
-                titlefontsize   = 12,
+                legendfontsize  = 14,  
+                titlefontsize   = 18,
                 guidefontsize   = 12,
                 tickfontsize    = 12)
     xlabel!(plt, "Nmesh")
