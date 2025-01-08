@@ -1,12 +1,16 @@
-include("../benchmark.jl")
+using KohnShamResolution
+
+include("../../../benchmarktools/Hydrogenoid/benchmark.jl")
+
+
 
 probgeomesh = hydrogenoid(; z             = 1, 
                             l             = 0, 
                             Rmax          = 60, 
                             Nmesh         = 70,
-                            typemesh      = geometricmesh, 
+                            typemesh      = linmesh, 
                             typebasis     = ShortP1IntLegendreBasis, 
-                            optsmesh      = (s = 0.9,), 
+                            optsmesh      = (;), #(s = 0.9,), 
                             optsbasis     = (normalize = false, ordermax = 4, ordermin = 2), 
                             T             = Double64, 
                             name          = "IntLeg4")
