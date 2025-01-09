@@ -1,13 +1,13 @@
 mutable struct PiecewiseLaurentPolynomial{T,TM} <: AbstractPolynomial{T}
-    mesh::OneDMesh{TM}
+    mesh::Mesh{TM}
     functions::Vector{LaurentPolynomial{T}}
     index::Vector{Int}
     default_value::T
 end
 
 @inline Base.zero(pwlp::PiecewiseLaurentPolynomial{T}) where T = zero_piecewiselaurantpolynomial(pwlp.mesh, T)
-@inline Base.zero(::Type{PiecewiseLaurentPolynomial{T}}, mesh::OneDMesh) where T = zero_piecewiselaurantpolynomial(pwlp.mesh, T)
-@inline zero_piecewiselaurantpolynomial(mesh::OneDMesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, LaurentPolynomial{T}[], Int[], T(0))
+@inline Base.zero(::Type{PiecewiseLaurentPolynomial{T}}, mesh::Mesh) where T = zero_piecewiselaurantpolynomial(pwlp.mesh, T)
+@inline zero_piecewiselaurantpolynomial(mesh::Mesh, T::Type = Float64) = PiecewiseLaurentPolynomial(mesh, LaurentPolynomial{T}[], Int[], T(0))
 
 @inline Base.eachindex(pwlp::PiecewiseLaurentPolynomial) = eachindex(pwlp.mesh)
 @inline Base.firstindex(pwlp::PiecewiseLaurentPolynomial) = firstindex(pwlp.mesh)
@@ -353,9 +353,9 @@ function deriv!(p::PiecewiseLaurentPolynomial)
 end
 
 scalar_product(p::PiecewiseLaurentPolynomial, q::PiecewiseLaurentPolynomial, a::Real, b::Real) = integrate(p*q,a,b)
-scalar_product(p::PiecewiseLaurentPolynomial, q::PiecewiseLaurentPolynomial, m::OneDMesh) = integrate(p*q, left(m), right(m))
+scalar_product(p::PiecewiseLaurentPolynomial, q::PiecewiseLaurentPolynomial, m::Mesh) = integrate(p*q, left(m), right(m))
 
-function normL2(p::PiecewiseLaurentPolynomial{T}, m::OneDMesh) where T
+function normL2(p::PiecewiseLaurentPolynomial{T}, m::Mesh) where T
     int = scalar_product(p,p,m)
     if int > 0
         return sqrt(int)
