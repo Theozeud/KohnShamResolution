@@ -60,7 +60,7 @@ function ShortP1Basis(mesh::Mesh, T::Type = Float64;  kwargs...)
         push!(infos, info)
     end
 
-    ShortPolynomialBasis(p1elements, mesh, size, infos, 0)
+    ShortPolynomialBasis(p1elements, mesh, size, infos)
 end
 
 @inline Base.eachindex(::P1Elements) = 1:2
@@ -109,7 +109,7 @@ end
 @inline getpolynomial(ilb::IntLegendreElements) = ilb.polynomials
 @inline getderivpolynomial(ilb::IntLegendreElements) = ilb.derivpolynomials
 
-function ShortIntLegendreBasis(mesh::Mesh, T::Type = Float64; Rcut::Real = last(mesh), normalize::Bool = false, kwargs...)
+function ShortIntLegendreBasis(mesh::Mesh, T::Type = Float64; Rcut::Real = last(mesh), kwargs...)
     intlegelement = IntLegendreElements(T; kwargs...)
     Ncut = min(findindex(mesh, Rcut), lastindex(mesh))
     size = intlegelement.size * (Ncut - 1)
@@ -123,7 +123,7 @@ function ShortIntLegendreBasis(mesh::Mesh, T::Type = Float64; Rcut::Real = last(
             infos[(i-1) * intlegelement.size + n] = InfoElement(index, segments, shifts, invshifts)
         end
     end
-    ShortPolynomialBasis(intlegelement, mesh, size, infos, 0)
+    ShortPolynomialBasis(intlegelement, mesh, size, infos)
 end
 
 ########################################################################################
@@ -166,6 +166,6 @@ function ShortDiffLegendreBasis(mesh::Mesh, T::Type = Float64; normalize::Bool =
             infos[(i-1) * difflegelement.size + n] = InfoElement(index, segments, shifts, invshifts)
         end
     end
-    ShortPolynomialBasis(difflegelement, mesh, size, infos, 0)
+    ShortPolynomialBasis(difflegelement, mesh, size, infos)
 end
 

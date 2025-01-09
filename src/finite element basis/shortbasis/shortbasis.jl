@@ -32,13 +32,12 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
     infos::Vector{InfoElement}
     coupling_index::Vector{CartesianIndex{2}}
     coupling_index3::Vector{CartesianIndex{3}}
-    deriv_order::Int
 
-    function ShortPolynomialBasis(elements, mesh::Mesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}, coupling_index3::Vector{CartesianIndex{3}}, deriv_order::Int) 
-        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, coupling_index3, deriv_order)
+    function ShortPolynomialBasis(elements, mesh::Mesh, size::Int, infos, coupling_index::Vector{CartesianIndex{2}}, coupling_index3::Vector{CartesianIndex{3}}) 
+        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, coupling_index3)
     end
 
-    function ShortPolynomialBasis(elements, mesh::Mesh, size::Int, infos, deriv_order) 
+    function ShortPolynomialBasis(elements, mesh::Mesh, size::Int, infos) 
         
         # Basics checks for consistency
         @assert size == length(infos)
@@ -70,7 +69,7 @@ struct ShortPolynomialBasis{TB <: AbstractShortElements} <: Basis
         end
         
 
-        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, coupling_index3, deriv_order)
+        new{typeof(elements)}(elements, mesh, size, infos, coupling_index, coupling_index3)
     end
 end
 
