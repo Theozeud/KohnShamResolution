@@ -61,7 +61,7 @@ function eigen_(problems)
         mesh = typemesh(zero(T), Rmax, Nmesh; T = T, optsmesh...)
         basis = typebasis(mesh, T; optsbasis...)
         M₀  = Symmetric(mass_matrix(basis))
-        A   = Symmetric(mass_matrix(deriv(basis)))
+        A   = Symmetric(stiffness_matrix(basis))
         u, λ = eigen(A, M₀)
         push!(sols, LaplacianSolution(problem, λ, u))
     end
@@ -76,9 +76,9 @@ function eigvals_(problems)
         mesh = typemesh(zero(T), Rmax, Nmesh; T = T, optsmesh...)
         basis = typebasis(mesh, T; optsbasis...)
         M₀  = mass_matrix(basis)
-        A   = Symmetric(mass_matrix(deriv(basis)))
-        #λ = eigvals(inv(M₀) * A)
-        λ  = lobpcg(A, M₀, false, 10; tol = 1e-9).λ
+        A   = Symmetric(stiffness_matrix(basis))
+        λ = eigvals(inv(M₀) * A)
+        #λ  = lobpcg(A, M₀, false, 10; tol = 1e-9).λ
         push!(sols, LaplacianSolution(problem, λ, nothing))
     end
     sols
@@ -174,7 +174,7 @@ end
 prob = LaplacianProblem(name = "problem", 
                         T = Float64,
                         typebasis = ShortP1IntLegendreBasis,
-                        optsbasis = (normalize = false, ordermax = 5),
+                        optsbasis = (ordermax = 5,),
                         typemesh = linmesh,
                         optsmesh = (;),
                         Rmax = 100,

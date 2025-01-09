@@ -18,8 +18,7 @@ function eigen_hydro(problem)
     @unpack T, z, l, Rmax, Nmesh, typemesh, optsmesh, typebasis, optsbasis = problem
     mesh = typemesh(zero(T), Rmax, Nmesh; T = T, optsmesh...)
     basis = typebasis(mesh, T; optsbasis...)
-    deriv_basis = deriv(basis)
-    A   = Symmetric(mass_matrix(deriv_basis))
+    A   = Symmetric(stiffness_matrix(basis))
     M₀  = Symmetric(mass_matrix(basis))
     M₋₁ = Symmetric(weight_mass_matrix(basis, -1))
     if l == 0
@@ -41,8 +40,7 @@ function eigvals_hydro(problem)
     @unpack T, z, l, Rmax, Nmesh, typemesh, optsmesh, typebasis, optsbasis = problem
     mesh = typemesh(zero(T), Rmax, Nmesh; T = T, optsmesh...)
     basis = typebasis(mesh, T; optsbasis...)
-    deriv_basis = deriv(basis)
-    A   = Symmetric(mass_matrix(deriv_basis))
+    A   = Symmetric(stiffness_matrix(basis))
     M₀  = Symmetric(mass_matrix(basis))
     M₋₁ = Symmetric(weight_mass_matrix(basis, -1))
     if l == 0
