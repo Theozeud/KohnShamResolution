@@ -320,6 +320,11 @@ end
 
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial) = integrate(p*q)
 scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real) = integrate(p*q, a, b)
+
+scalar_product(p::LaurentPolynomial, x::Real, a::Real, b::Real) = integrate(p, a, b) * x
+scalar_product(x::Real, p::LaurentPolynomial, a::Real, b::Real) = x * integrate(p, a, b)
+scalar_product(y::Real, x::Real, a::Real, b::Real) = x*y*(b-a)
+
 function normL2(p::LaurentPolynomial{T}, a::Real, b::Real) where T
     if iszero(p)
         return T(0)

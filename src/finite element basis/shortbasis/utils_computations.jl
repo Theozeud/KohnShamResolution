@@ -8,6 +8,18 @@ end
 # Fast Scalar Product
 ############################################################################
 
+@memoize function fast_scalar_product(x::Real, y::Real, a::Real, b::Real)
+    x*y*(b-a)
+end
+
+@memoize function fast_scalar_product(p::LaurentPolynomial, x::Real, a::Real, b::Real)
+    scalar_product(p, x, a, b)
+end
+
+@memoize function fast_scalar_product(x::Real, p::LaurentPolynomial, a::Real, b::Real)
+    scalar_product(p, x, a, b)
+end
+
 @memoize function fast_scalar_product(p::LaurentPolynomial, q::LaurentPolynomial, a::Real, b::Real)
     scalar_product(p, q, a, b)
 end
