@@ -1,7 +1,7 @@
 ########################################################################################
 #                                   P1 mass matrix
 ########################################################################################
-function fill_mass_matrix!(p1::P1Elements{true}, ::Mesh, A)
+function fill_mass_matrix!(p1::P1Elements, ::Mesh, A)
     if p1.bsup != 1 || p1.binf != -1
         @warn "Mass matrix is filled like if the bounds of P1 elements are scaled on [-1,1]!"
     end
@@ -41,7 +41,7 @@ end
 ########################################################################################
 #                    Difference Legendre Polynomials mass matrix
 ########################################################################################
-function fill_mass_matrix!(dlb::DiffLegendreElements{true}, ::Mesh, A)
+function fill_mass_matrix!(dlb::DiffLegendreElements, ::Mesh, A)
     T = eltype(dlb)
     C(j) = 1/sqrt(2) * sqrt((2j+3)*(2j-1)/(4j+2))
     for I ∈ axes(A,1)
