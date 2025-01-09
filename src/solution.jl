@@ -2,6 +2,8 @@
 struct KohnShamSolution
     success::String         # Print the final state of the solver
                             #        Can be : SUCCESS or MAXITERS
+
+    solveropts              # Option of the solver used
     
     niter::Int              # Number of iterations
     stopping_criteria       # Final stopping criteria
@@ -24,7 +26,7 @@ struct KohnShamSolution
         new_index = index[index_sort]
         occupation_number = [(string(i[2], convert_into_l(i[1]-1)), solver.ϵ[i], solver.n[i]) for i ∈ new_index]
 
-        new(success, solver.niter, solver.stopping_criteria, solver.energy, occupation_number, ϵ, solver.logbook)
+        new(success, solver.opts, solver.niter, solver.stopping_criteria, solver.energy, occupation_number, ϵ, solver.logbook)
     end
 end
 
