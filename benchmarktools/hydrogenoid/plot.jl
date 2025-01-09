@@ -20,7 +20,7 @@ end
 
 # Convergence Plot with Rmax
 
-function convergence_plot_Rmax(sols::HydrogenoidConvergenceNmesh, nums = first(sols.num))
+function convergence_plot_Rmax(sols::HydrogenoidConvergenceRmax, nums = first(sols.num))
     plt = plot( size = (1300,1000), margin = 0.5Plots.cm, legend = legend ? :bottomleft : false, xaxis=:log, yaxis=:log,
                 legendfontsize  = 12,  
                 titlefontsize   = 12,

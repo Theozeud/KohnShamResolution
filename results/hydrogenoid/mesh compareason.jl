@@ -12,7 +12,7 @@ const problinmesh = HydrogenoidProblem(;
                             typemesh      = linmesh, 
                             typebasis     = ShortP1IntLegendreBasis, 
                             optsmesh      = (;),  
-                            optsbasis     = (normalize = false, ordermax = 4),                           
+                            optsbasis     = (ordermax = 4, ),                           
                             name          = "IntLeg2-linmesh",
                             nU            = nothing)
 
@@ -25,7 +25,7 @@ const probgeomesh = HydrogenoidProblem(;
                             typemesh      = geometricmesh, 
                             typebasis     = ShortP1IntLegendreBasis, 
                             optsmesh      = (s = 0.9,),  
-                            optsbasis     = (normalize = false, ordermax = 4),                           
+                            optsbasis     = (ordermax = 4, ),                           
                             name          = "IntLeg2-geomesh",
                             nU            = nothing)
 #@time λgeo = eigvals_hydro(problinmesh)
@@ -33,6 +33,6 @@ const probgeomesh = HydrogenoidProblem(;
 #@time sol = eigen_hydro(problinmesh)
 ##plt = plot_eigenvector(1, Ugeo, probgeomesh)
 
-convNmesh = convergenceNmesh(2 .^(3:8), [problinmesh, probgeomesh]; nums = [4])
+convNmesh = convergenceNmesh(2 .^(3:8), [problinmesh, probgeomesh]; nums = [1])
 
 convergence_plot_Nmesh(convNmesh)
