@@ -20,4 +20,9 @@ for I ∈ CartesianIndices(element_massmatrix)
     element_massmatrix[I] = scalar_product(intLeg[I[1]], intLeg[I[2]], intLeg.binf, intLeg.bsup)
 end
 
-_convert(::Type{T}, p::LaurentPolynomial) where T = LaurentPolynomial(T.(p.coeffs), p.degmin, p.haslog, T(p.coeff_log))
+element_stiffnessmatrix = zeros(T, intLeg.size, intLeg.size)
+for I ∈ CartesianIndices(element_stiffnessmatrix)
+    element_stiffnessmatrix[I] = scalar_product(getderivpolynomial(intLeg,I[1]), getderivpolynomial(intLeg,I[2]), intLeg.binf, intLeg.bsup)
+end
+
+# Study 

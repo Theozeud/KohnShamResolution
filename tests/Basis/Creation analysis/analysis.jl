@@ -152,6 +152,6 @@ end
 
 @time basiss = ShortP1IntLegendreBasis(mesh, T; ordermax = ordermax)
 
-#tblock = basis.blocks
-#tblock3 = basis.blocks3
+tblock = basis.blocks
+tblock3 = basis.blocks3
 nothing
