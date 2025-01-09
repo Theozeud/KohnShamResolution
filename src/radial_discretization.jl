@@ -26,9 +26,8 @@ mutable struct Radial_tmp_Cache
     tmp_U           # Store the eigenvector
     tmp_ϵ           # Store the eigenvalue
     tmp_n           # Store the occupation number
-    tmp_MV          # Store the contraction F:C
-    tmp_index_sort  #
-    
+    tmp_MV          # Store the contraction F:C  
+    tmp_index_sort
 end
 
 function create_cache(lₕ, Nₕ, T, lmin)
@@ -54,9 +53,8 @@ function create_cache(lₕ, Nₕ, T, lmin)
     tmp_U           = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
     tmp_MV          = zeros(T, Nₕ, Nₕ)
     tmp_ϵ           = zeros(T, lₕ+1 - lmin, Nₕ)
-    tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1 - lmin))
     tmp_n           = zeros(T, lₕ+1 - lmin, Nₕ)   
- 
+    tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1 - lmin))
     RadialCache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Exc, Energy),  Radial_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
 end
 
@@ -95,8 +93,7 @@ function init_cache!(discretization::KohnShamRadialDiscretization, model::Abstra
     @unpack A, M₀, M₋₁, M₋₂, F, Kin, Coulomb, Hfix = discretization.cache
 
     # Creation of the base matrices
-    deriv_basis = deriv(basis)
-    A   .= mass_matrix(deriv_basis)
+    A   .= stiffness_matrix(basis)
     M₀  .= mass_matrix(basis)
     M₋₁ .= weight_mass_matrix(basis, -1)
 
@@ -155,6 +152,8 @@ function find_orbital!(discretization::KohnShamRadialDiscretization, solver::Kho
         @. tmp_H = Hfix[l+1-lmin,:,:] + Exc + Hartree
         # solving
         tmp_ϵ[l+1-lmin,:], tmp_U[l+1-lmin,:,:] = solve_generalized_eigenvalue_problem(tmp_H, M₀)
+        # normalization of eigenvector
+        
     end
 end
 
@@ -287,14 +286,12 @@ end
 
 function eval_density_as_function(discretization::KohnShamRadialDiscretization, D, x)
     @unpack basis, mesh = discretization
-    if iszero(x)
-        x+= mesh[2]/10
-    end
+
     val = 0
     for i ∈ axes(D,1)
         vx = eval_basis(basis, i, x)
         for j ∈ axes(D,2)
-            vy = eval_basis(basis, i, x)
+            vy = eval_basis(basis, j, x)
             val += D[i,j]  * vx * vy
         end
     end
