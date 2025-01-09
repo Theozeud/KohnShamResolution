@@ -1,4 +1,4 @@
-include("../../../../../benchmarktools/atoms/includes.jl")
+include("../../../../../benchmarktools/atoms/setup.jl")
 using KohnShamResolution
 
 # MODEL
@@ -11,19 +11,19 @@ T = Float64
 
 # MESH
 Rmin = 0.0
-Rmax = 20.0
-Nmesh = 300
+Rmax = 40.0
+Nmesh = 40
 mesh = linmesh(Rmin, Rmax, Nmesh; T = T)
 
 # BASIS
-basis = ShortIntLegendreBasis(mesh, T; normalize = false, ordermax = 2)
+basis = ShortP1IntLegendreBasis(mesh, T; ordermax = 5)
 
 # DISCRETIZATION
 lh = 0
 discretization = KohnShamRadialDiscretization(lh, basis, mesh)
 
 # SCF METHOD
-method = CDA(0.8)
+method = CDA(0.7)
 scftol = 1e-14 
 maxiter = 100
 
@@ -31,4 +31,11 @@ maxiter = 100
 logconfig = LogConfig()
 
 # RESOLUTION
-sol = groundstate(model, discretization, method; scftol = scftol, maxiter = maxiter, logconfig = logconfig)
+@time sol = groundstate(model, discretization, method; 
+        scftol = scftol, 
+        maxiter = maxiter, 
+        logconfig = logconfig, 
+        hartree = true)
+
+
+plot_stopping_criteria([sol])
