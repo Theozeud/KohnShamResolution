@@ -79,8 +79,6 @@ end
 @inline Base.length(spb::ShortPolynomialBasis) = spb.size
 @inline Base.eachindex(spb::ShortPolynomialBasis) = 1:spb.size
 
-@inline isnormalized(spb::ShortPolynomialBasis) = isnormalized(spb.elements)
-
 @inline _getindex(spb::ShortPolynomialBasis, i::Int) = _getindex(spb.infos[i])
 @inline _getindex(spb::ShortPolynomialBasis, i::Int, j::Int) = _getindex(spb.infos[i], j)
 @inline getsegments(spb::ShortPolynomialBasis, i::Int) = getsegments(spb.infos[i])
@@ -107,11 +105,13 @@ end
 end
 
 @inline getpolynomial(spb::ShortPolynomialBasis, i::Int, j::Int)= getpolynomial(spb.elements, _getindex(spb, i, j))
-
+@inline getderivpolynomial(spb::ShortPolynomialBasis, i::Int, j::Int)= getderivpolynomial(spb.elements, _getindex(spb, i, j))
 
 ########################################################################################
-#                                     Mass Matrix && Co
+#                              Generation of FEM Matrices
 ########################################################################################
+
+# Mass matrix
 
 function mass_matrix(spb::ShortPolynomialBasis)
     @unpack elements, mesh, size = spb
@@ -134,12 +134,44 @@ function fill_mass_matrix!(spb::ShortPolynomialBasis, A)
                 dinvϕ = invϕ[1]
                 @inbounds A[I[1], I[2]] += dinvϕ * fast_scalar_product(P, Q, spb.elements.binf, spb.elements.bsup)
             end
-            @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
+            #@inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
             @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
         end
     end
     nothing
 end
+
+# Stiffness matrix
+
+function stiffness_matrix(spb::ShortPolynomialBasis)
+    @unpack elements, mesh, size = spb
+    T = bottom_type(spb)
+    A = zeros(T, size, size)
+    fill_stiffness_matrix!(spb, A)
+    A
+end
+
+function fill_stiffness_matrix!(spb::ShortPolynomialBasis, A)
+    @unpack elements, mesh = spb
+    try 
+        fill_stiffness_matrix!(elements, mesh, A)
+    catch
+        for I ∈ spb.coupling_index
+            for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
+                P = getderivpolynomial(spb, I[1], i)
+                Q = getderivpolynomial(spb, I[2], j)
+                ϕ = getshift(spb, I[1], i)
+                dϕ = ϕ[1]
+                @inbounds A[I[1], I[2]] += dϕ * fast_scalar_product(P, Q, spb.elements.binf, spb.elements.bsup)
+            end
+            #@inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
+            @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
+        end
+    end
+    nothing
+end
+
+# Weight Mass matrix
 
 function weight_mass_matrix(spb::ShortPolynomialBasis, weight)
     T = bottom_type(spb)
@@ -161,11 +193,13 @@ function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight, A)
             dinvϕ = invϕ[1]
             @inbounds A[I[1], I[2]] += dinvϕ * weight_scalar_product(P, Q, weight, spb.elements.binf, spb.elements.bsup, invϕ)
         end
-        @inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
+        #@inbounds A[I[1], I[2]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2])
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
     nothing
 end
+
+# Weight Mass vector
 
 function weight_mass_vector(spb::ShortPolynomialBasis, weight)
     T = bottom_type(spb)
@@ -182,9 +216,11 @@ function fill_weight_mass_vector!(spb::ShortPolynomialBasis, weight, A)
             dinvϕ = invϕ[1]
             @inbounds A[i] += dinvϕ * weight_scalar_product(P, weight, spb.elements.binf, spb.elements.bsup, invϕ)
         end
-        @inbounds A[i] *= getnormalization(spb, i)
+        #@inbounds A[i] *= getnormalization(spb, i)
     end
 end
+
+# Weight Mass tensor
 
 function weight_mass_3tensor(spb::ShortPolynomialBasis, weight)
     T = bottom_type(spb)
@@ -203,7 +239,7 @@ function fill_weight_mass_3tensor!(spb::ShortPolynomialBasis, weight, A)
             dinvϕ = invϕ[1]
             @inbounds A[I[1], I[2], I[3]] += dinvϕ * weight_scalar_product(P, Q, L, weight, spb.elements.binf, spb.elements.bsup, invϕ)
         end
-        @inbounds A[I[1], I[2], I[3]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, I[3])
+        #@inbounds A[I[1], I[2], I[3]] *= getnormalization(spb, I[1]) * getnormalization(spb, I[2]) * getnormalization(spb, I[3])
         @inbounds A[I[3], I[1], I[2]]  = A[I[1], I[2], I[3]]
         @inbounds A[I[2], I[3], I[1]]  = A[I[1], I[2], I[3]]
         @inbounds A[I[2], I[1], I[3]]  = A[I[1], I[2], I[3]]

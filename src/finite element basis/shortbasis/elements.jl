@@ -14,8 +14,8 @@ struct P1Elements{T} <: AbstractShortElements{T}
     binf::T
     bsup::T
     function P1Elements(T::Type = Float64; left::Bool = false, right::Bool = false, binf::Real = -1, bsup::Real = 1)
-        hfup = LaurentPolynomial([one(T),one(T)], 0, false, T(0))
-        hfdown = LaurentPolynomial([one(T),-one(T)], 0, false, T(0))
+        hfup    = LaurentPolynomial([one(T),one(T)], 0, false, T(0))
+        hfdown  = LaurentPolynomial([one(T),-one(T)], 0, false, T(0))
         dhfup   = -one(T)
         dhfdown = one(T)
         new{T}(hfup, hfdown, dhfup, dhfdown, 2, left, right, binf, bsup)

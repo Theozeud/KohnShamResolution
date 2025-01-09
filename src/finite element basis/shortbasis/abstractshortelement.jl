@@ -8,4 +8,3 @@ abstract type AbstractShortElements{T} end
 @inline getpolynomial(elem::AbstractShortElements, n::Int) = elem[n]
 @inline getderivpolynomial(elem::AbstractShortElements, n::Int) = getderivpolynomial(elem)[n]
 @inline Base.first(elem::AbstractShortElements) = elem[firstindex(elem)]
-@inline getnormalization(elem::AbstractShortElements, n::Int) = elem.normalization[n]
