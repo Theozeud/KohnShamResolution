@@ -55,7 +55,7 @@ module KohnShamResolution
     include("finite element basis/shortbasis/utils_computations.jl")
 
     export AbstractShortElements
-    export getpolynomial, isnormalized
+    export getpolynomial, getderivpolynomial
     include("finite element basis/shortbasis/abstractshortelement.jl")
 
     export InfoElement

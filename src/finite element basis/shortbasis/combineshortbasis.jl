@@ -247,11 +247,3 @@ function build_on_basis(cb::CombineShortPolynomialBasis, coeffs)
     end
     poly
 end
-
-function deriv(cb::CombineShortPolynomialBasis)
-    derivBasisVector = [deriv(first(cb))]
-    for i ∈ eachindex(cb.basisVector)[2:end]
-        push!(derivBasisVector, deriv(getbasis(cb, i)))
-    end
-    CombineShortPolynomialBasis(derivBasisVector, cb.size, cb.blocks, cb.blocks3, cb.cumul_index)
-end

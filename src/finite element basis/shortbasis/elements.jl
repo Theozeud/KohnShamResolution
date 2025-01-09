@@ -1,23 +1,3 @@
-########################################################################################
-#                                  Default Elements
-########################################################################################
-struct DefaultElements{T} <: AbstractShortElements{T}
-    polynomials::Vector{LaurentPolynomial{T}}
-    size::Int
-    binf::T
-    bsup::T
-    function DefaultElements(N, T, polynomials, size, binf, bsup)
-        new{N,T}(polynomials, size, binf, bsup,)
-    end
-end
-
-@inline Base.firstindex(::DefaultElements) = 1
-@inline Base.lastindex(delem::DefaultElements) = delem.size
-@inline Base.eachindex(delem::DefaultElements) = eachindex(delem.polynomials)
-@inline Base.getindex(delem::DefaultElements, n::Int) =  delem.polynomials[n] 
-@inline Base.first(delem::DefaultElements) = delem.polynomials[firstindex(delem)]
-@inline Base.last(delem::DefaultElements) = delem.polynomials[lastindex(delem)]
-@inline getpolynomial(delem::DefaultElements) = delem.polynomials
 
 ########################################################################################
 #                                   P1 Elements

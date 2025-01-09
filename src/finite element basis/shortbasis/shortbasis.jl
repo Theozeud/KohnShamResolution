@@ -242,11 +242,3 @@ function eval_basis(spb::ShortPolynomialBasis, i::Int, x)
     end
     val
 end
-
-
-
-function deriv(spb::ShortPolynomialBasis)
-    deriv_polynomials = deriv.(getpolynomial(spb.elements))
-    deriv_elements = DefaultElements(isnormalized(spb.elements), eltype(spb.elements), deriv_polynomials, spb.elements.size, spb.elements.binf, spb.elements.bsup, spb.elements.normalization)
-    ShortPolynomialBasis(deriv_elements, spb.mesh, spb.size, spb.infos, spb.coupling_index, spb.coupling_index3, spb.deriv_order+1)
-end
