@@ -14,7 +14,9 @@ struct KohnShamSolution
     
     log::LogBook            # LogBook of all recorded quantities
 
-    function KohnShamSolution(solver::KhonShamSolver)
+    name::String            # Name of the solution
+
+    function KohnShamSolution(solver::KhonShamSolver, name::String)
 
         success = solver.niter == solver.opts.maxiter ? "MAXITERS" : "SUCCESS"
 
@@ -26,11 +28,12 @@ struct KohnShamSolution
         new_index = index[index_sort]
         occupation_number = [(string(i[2], convert_into_l(i[1]-1)), solver.ϵ[i], solver.n[i]) for i ∈ new_index]
 
-        new(success, solver.opts, solver.niter, solver.stopping_criteria, solver.energy, occupation_number, ϵ, solver.logbook)
+        new(success, solver.opts, solver.niter, solver.stopping_criteria, solver.energy, occupation_number, ϵ, solver.logbook, name)
     end
 end
 
 function Base.show(io::IO, sol::KohnShamSolution)
+    printstyled(io, "Name : \n $(sol.name)"; bold = true)
     printstyled(io, "Sucess = "; bold = true)
     if sol.success == "SUCCESS"
         printstyled(io, string(sol.success)*"\n"; bold = true, color = :green)

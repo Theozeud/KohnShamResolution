@@ -1,8 +1,8 @@
 
-function groundstate(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::SCFMethod; kwargs...)
+function groundstate(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::SCFMethod; name = "", kwargs...)
     solver = init(model, discretization, method; kwargs...)
     solve!(solver)
-    makesolution(solver)
+    makesolution(solver, name)
 end
 
 groundstate(problem::DFTProblem; kwargs...) =  groundstate(model(problem), discretization(problem), method(problem); kwargs...)
@@ -85,8 +85,8 @@ function stopping_criteria(solver::KhonShamSolver)
     norm(solver.D - solver.Dprev)
 end
     
-function makesolution(solver::KhonShamSolver)
-    KohnShamSolution(solver)
+function makesolution(solver::KhonShamSolver, name::String)
+    KohnShamSolution(solver, name)
 end
 
 function update_solver!(solver::KhonShamSolver)
