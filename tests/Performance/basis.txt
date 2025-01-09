@@ -1,2 +1,2 @@
 Elements
-  0.000035 seconds (27 allocations: 1.141 KiB)
+  0.000030 seconds (14 allocations: 656 bytes)

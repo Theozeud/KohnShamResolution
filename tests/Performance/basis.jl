@@ -9,7 +9,7 @@ T = Float64
 
 # Tests integrals on elements
 println("Elements")
-@time intLeg = IntLegendreElements(T; ordermin = 2, ordermax = 2, normalize = false, binf = -T(1), bsup = T(1))
+@time intLeg = IntLegendreElements(T; ordermin = 2, ordermax = 2, binf = -T(1), bsup = T(1))
 
 
 
