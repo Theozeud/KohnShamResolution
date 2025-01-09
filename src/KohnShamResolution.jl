@@ -47,7 +47,7 @@ module KohnShamResolution
 
 
     export LaurentPolynomialBasis
-    export mass_matrix, weight_mass_matrix, weight_mass_vector, vector_mass_matrix, vectorweight_mass_matrix,
+    export mass_matrix, stiffness_matrix, weight_mass_matrix, weight_mass_vector, vector_mass_matrix, vectorweight_mass_matrix,
            weight_mass_3tensor
     export build_on_basis
 
