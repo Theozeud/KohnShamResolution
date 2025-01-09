@@ -26,15 +26,19 @@ end
 struct P1Elements{T} <: AbstractShortElements{T}
     hfup::LaurentPolynomial{T}
     hfdown::LaurentPolynomial{T}
+    dhfup::T
+    dhfdown::T
     size::Int
     left::Bool
     right::Bool
     binf::T
     bsup::T
     function P1Elements(T::Type = Float64; left::Bool = false, right::Bool = false, binf::Real = -1, bsup::Real = 1)
-        hfup = LaurentPolynomial([T(1),T(1)], 0, false, T(0))
-        hfdown = LaurentPolynomial([T(1),T(-1)], 0, false, T(0))
-        new{T}(hfup, hfdown, 2, left, right, binf, bsup)
+        hfup = LaurentPolynomial([one(T),one(T)], 0, false, T(0))
+        hfdown = LaurentPolynomial([one(T),-one(T)], 0, false, T(0))
+        dhfup   = -one(T)
+        dhfdown = one(T)
+        new{T}(hfup, hfdown, dhfup, dhfdown, 2, left, right, binf, bsup)
     end
 end
 
@@ -91,13 +95,14 @@ end
     end
 end
 @inline getpolynomial(p1::P1Elements) = [p1.hfup,p1.hfdown]
-
+@inline getderivpolynomial(p1::P1Elements) = [p1.dhfup,p1.dhfdown]
 ########################################################################################
 #                                  Integrated Legendre Elements
 ########################################################################################
 
 struct IntLegendreElements{T} <: AbstractShortElements{T}
     polynomials::Vector{LaurentPolynomial{T}}
+    derivpolynomials::Vector{LaurentPolynomial{T}}
     size::Int
     ordermin::Int
     ordermax::Int
@@ -106,12 +111,15 @@ struct IntLegendreElements{T} <: AbstractShortElements{T}
 
     function IntLegendreElements(T::Type = Float64; ordermin::Int = 2, ordermax = 2, binf::Real = -T(1), bsup::Real = T(1))
         @assert ordermin ≥ 1
-        polynomials = LaurentPolynomial{T}[]  
+        polynomials = LaurentPolynomial{T}[]
+        derivpolynomials = LaurentPolynomial{T}[]  
         for n ∈ ordermin:ordermax
+            Pₙ = Legendre(n-1; T = T, a = T(binf), b = T(bsup))
+            push!(derivpolynomials, Pₙ)
             Qₙ = intLegendre(n-1; T = T, a = T(binf), b = T(bsup))
             push!(polynomials, Qₙ)
         end
-        new{T}(polynomials, ordermax - ordermin + 1, ordermin, ordermax, T(binf), T(bsup))
+        new{T}(polynomials, derivpolynomials, ordermax - ordermin + 1, ordermin, ordermax, T(binf), T(bsup))
     end
 end
 
@@ -119,6 +127,7 @@ end
 @inline Base.eachindex(ilb::IntLegendreElements) = eachindex(ilb.polynomials)
 @inline Base.getindex(ilb::IntLegendreElements, n::Int) =  ilb.polynomials[n] 
 @inline getpolynomial(ilb::IntLegendreElements) = ilb.polynomials
+@inline getderivpolynomial(ilb::IntLegendreElements) = ilb.derivpolynomials
 
 function ShortIntLegendreBasis(mesh::Mesh, T::Type = Float64; Rcut::Real = last(mesh), normalize::Bool = false, kwargs...)
     intlegelement = IntLegendreElements(T; kwargs...)
