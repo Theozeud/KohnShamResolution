@@ -1,0 +1,48 @@
+# STRUCTURE ATOM PROBLEM
+struct AtomProblem
+    T           # Type of numbers
+    lh          # Truncation of orbital
+    method      # SCF Method
+    model       # Model
+    Rmax        # Spatial cut-off
+    Nmesh       # Number of points of the discretization
+    typemesh    # Type of the Mesh
+    optsmesh    # Options for the Mesh
+    typebasis   # Type of the basis
+    optsbasis   # Options for the basis
+    name        # Name of the problem
+    solveropts  # Option for the solvers
+
+    AtomProblem(;T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, name = "", kwargs...) = 
+        new(T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, name, kwargs)
+
+    function AtomProblem(prob; 
+        T = prob.T, lh = prob.lh, method = prob.method, model = prob.model, Rmax = prob.Rmax, Nmesh = prob.Nmesh,
+        typemesh = prob.typemesh, optsmesh = prob.optsmesh, typebasis = prob.typebasis, 
+        optsbasis = prob.optsbasis, name = prob.name, kwargs = prob.solveropts) 
+        new(T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, name, kwargs)
+    end
+end
+
+function KohnShamResolution.groundstate(prob::AtomProblem)
+    mesh = prob.typemesh(zero(prob.T), prob.Rmax, prob.Nmesh; T = prob.T, prob.optsmesh...)
+    basis = prob.typebasis(mesh, prob.T; prob.optsbasis...)
+    discretization = KohnShamRadialDiscretization(prob.lh, basis, mesh)
+    groundstate(prob.model, discretization, prob.method; prob.solveropts...)
+end
+
+
+# STRUCTURE ATOM FOR ANALYSING CONVERGENCE
+struct AtomConvergenceNmesh
+    vecNmesh        # Set of Nmesh used
+    Error           # Dict of errors on orbitals energy : for each problem,
+                    # there is a vector of errors depending on Nmesh
+    num             # Number of orbitals energy used 
+end
+
+struct AtomConvergenceRmax
+    vecRmax         # Set of Nmesh used
+    Error           # Dict of errors on orbitals energy : for each problem,
+                    # there is a vector of errors depending on Rmax
+    num             # Number of orbitals energy used 
+end
