@@ -8,14 +8,14 @@ struct RationalFraction{T} <: AbstractPolynomial{T}
             return new{NewT}(p, q)
         else
             degm = min(degmin(p), degmin(q))
-            num = convert(NewT, shift(p , -degm))
-            denom = convert(NewT, shift(q , -degm))
+            num = _convert(NewT, shift(p , -degm))
+            denom = _convert(NewT, shift(q , -degm))
             return new{NewT}(num, denom)
         end
     end
 end
 
-@inline convert(::Type{T}, rf::RationalFraction) where T  = RationalFraction(convert(T, rf.num), convert(T, rf.denom))
+@inline _convert(::Type{T}, rf::RationalFraction) where T  = RationalFraction(_convert(T, rf.num), _convert(T, rf.denom))
 
 function (rf::RationalFraction)(x)
     rf.num(x)/rf.denom(x)
