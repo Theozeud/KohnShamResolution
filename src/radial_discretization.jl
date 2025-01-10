@@ -47,7 +47,7 @@ function create_cache(lₕ, Nₕ, T, lmin)
     Energy  = zero(T)
 
     # Initialization of array for temporary stockage of computations
-    tmp_H           = zeros(T, Nₕ, Nₕ)
+    tmp_H           = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
     tmp_D           = zeros(T, Nₕ, Nₕ) 
     tmp_Dstar       = zeros(T, Nₕ, Nₕ) 
     tmp_U           = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
@@ -147,11 +147,11 @@ function find_orbital!(discretization::KohnShamRadialDiscretization, solver::Kho
     end
 
     # STEP 3 : Solve the generalized eigenvalue problem for each section l
-    for l ∈ lmin:lₕ
+    @threads for l ∈ lmin:lₕ
         # building the hamiltonian of the lᵗʰ section
-        @. tmp_H = Hfix[l+1-lmin,:,:] + Exc + Hartree
+        @. tmp_H[l+1-lmin,:,:] = Hfix[l+1-lmin,:,:] + Exc + Hartree
         # solving
-        tmp_ϵ[l+1-lmin,:], tmp_U[l+1-lmin,:,:] = solve_generalized_eigenvalue_problem(tmp_H, M₀)
+        tmp_ϵ[l+1-lmin,:], tmp_U[l+1-lmin,:,:] = solve_generalized_eigenvalue_problem(tmp_H[l+1-lmin,:,:], M₀)
         # normalization of eigenvector
         
     end

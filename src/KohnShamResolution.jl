@@ -7,6 +7,7 @@ module KohnShamResolution
     using Memoize
     using HypergeometricFunctions
     using TensorOperations
+    using Base.Threads
 
     # ANNEXE
     include("utils.jl")
