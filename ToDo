@@ -40,12 +40,14 @@
  
 - Réfléchir à l'organisation en bloc
 
+- Ajout des Static Array et cleaning Polynomial pour aller plus vite !
+
 
 ## TODO DFT
 
 - Investiguer la nouvelle discrétisation
 
-- Investiguer si on prend inteL que sur le bord
+- Investiguer si on prend intLeg que sur le bord
 
 - Passer à LDA
 
