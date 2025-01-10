@@ -2,8 +2,8 @@ include("../../../../../benchmarktools/atoms/setup.jl")
 using KohnShamResolution
 
 # MODEL
-z = 1
-N = 1
+z = 3
+N = 3
 model = ReducedHartreeFock(z, N)
 
 # LOG CONFIG

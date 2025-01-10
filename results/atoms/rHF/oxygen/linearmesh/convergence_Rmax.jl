@@ -16,21 +16,19 @@ problem = AtomProblem(;
                 lh              = 0, 
                 method          = CDA(0.7), 
                 model           = ReducedHartreeFock(z, N), 
-                Rmax            = 60.0, 
+                Rmax            = 40.0, 
                 Nmesh           = 50,
-                typemesh        = geometricmesh, 
-                optsmesh        = (s=0.9,), 
+                typemesh        = linmesh, 
+                optsmesh        = (;), 
                 typebasis       = ShortP1IntLegendreBasis, 
-                optsbasis       = (ordermax = 4,), 
+                optsbasis       = (ordermax = 3,), 
                 name            = "test", 
                 scftol          = 1e-10,
                 maxiter         = 100,
                 hartree         = true,
                 logconfig       = logconfig)
                         
-error = convergenceNmesh(2 .^(2:7), [problem])
+error = convergenceRmax(LinRange(5,60,20), [problem])
 
-convergencePlotNmesh(error)
-
-
+convergencePlotRmax(error)
 

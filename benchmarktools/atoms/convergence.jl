@@ -20,7 +20,7 @@ function convergenceNmesh(vecNmesh::AbstractVector, problems; nums = [1])
 end
 
 
-function convergencePlotNmesh(sols::AtomConvergenceNmesh, nums = first(sols.num))
+function convergencePlotNmesh(sols::AtomConvergenceNmesh, nums = firstindex(sols.num))
     plt = plot( size = (650,500), margin = 0.5Plots.cm, legend = :outertopright, yaxis=:log,
                 legendfontsize  = 12,  
                 titlefontsize   = 12,

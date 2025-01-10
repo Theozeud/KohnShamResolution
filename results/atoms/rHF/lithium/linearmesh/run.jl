@@ -2,22 +2,19 @@ include("../../../../../benchmarktools/atoms/setup.jl")
 using KohnShamResolution
 
 # MODEL
-z = 1
-N = 1
-model = ReducedHartreeFock(z, N)
+z = 3
+N = 3
 
 # LOG CONFIG
-logconfig = LogConfig(energy = false)
-
-# CONVERGENCE WITH RESPECT TO NMESH
+logconfig = LogConfig()
 
 problem = AtomProblem(;
                 T               = Float64, 
-                lh              = 0, 
+                lh              = 4, 
                 method          = CDA(0.7), 
                 model           = ReducedHartreeFock(z, N), 
                 Rmax            = 60.0, 
-                Nmesh           = 50,
+                Nmesh           = 60,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s=0.9,), 
                 typebasis       = ShortP1IntLegendreBasis, 
@@ -27,10 +24,9 @@ problem = AtomProblem(;
                 maxiter         = 100,
                 hartree         = true,
                 logconfig       = logconfig)
-                        
-error = convergenceNmesh(2 .^(2:7), [problem])
-
-convergencePlotNmesh(error)
 
 
+# RESOLUTION
+@time sol = groundstate(problem)
 
+plot_stopping_criteria([sol])
