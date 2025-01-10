@@ -2,8 +2,8 @@ include("../../../../../benchmarktools/atoms/setup.jl")
 using KohnShamResolution
 
 # MODEL
-z = 1
-N = 1
+z = 8
+N = 8
 model = ReducedHartreeFock(z, N)
 
 # LOG CONFIG
@@ -13,7 +13,7 @@ logconfig = LogConfig(energy = false)
 
 problem = AtomProblem(;
                 T               = Float64, 
-                lh              = 0, 
+                lh              = 1, 
                 method          = CDA(0.7), 
                 model           = ReducedHartreeFock(z, N), 
                 Rmax            = 60.0, 
@@ -28,7 +28,7 @@ problem = AtomProblem(;
                 hartree         = true,
                 logconfig       = logconfig)
                         
-error = convergenceNmesh(2 .^(2:7), [problem])
+error = convergenceNmesh(2 .^(2:7), [problem]; nums = [2])
 
 convergencePlotNmesh(error)
 

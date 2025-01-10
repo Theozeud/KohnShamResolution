@@ -2,8 +2,8 @@ include("../../../../../benchmarktools/atoms/setup.jl")
 using KohnShamResolution
 
 # MODEL
-z = 1
-N = 1
+z = 8
+N = 8
 
 # LOG CONFIG
 logconfig = LogConfig()
@@ -13,14 +13,14 @@ problem = AtomProblem(;
                 lh              = 0, 
                 method          = CDA(0.7), 
                 model           = ReducedHartreeFock(z, N), 
-                Rmax            = 40.0, 
-                Nmesh           = 40,
-                typemesh        = linmesh, 
-                optsmesh        = (;), 
+                Rmax            = 80.0, 
+                Nmesh           = 90,
+                typemesh        = geometricmesh, 
+                optsmesh        = (s=0.9,), 
                 typebasis       = ShortP1IntLegendreBasis, 
-                optsbasis       = (ordermax = 3,), 
+                optsbasis       = (ordermax = 4,), 
                 name            = "test", 
-                scftol          = 1e-10,
+                scftol          = 1e-8,
                 maxiter         = 100,
                 hartree         = true,
                 logconfig       = logconfig)
