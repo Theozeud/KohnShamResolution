@@ -125,7 +125,7 @@ function fill_mass_matrix!(spb::ShortPolynomialBasis, A)
     try 
         fill_mass_matrix!(elements, mesh, A)
     catch
-        for I ∈ spb.coupling_index
+        @threads for I ∈ spb.coupling_index
             for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
                 P = getpolynomial(spb, I[1], i)
                 Q = getpolynomial(spb, I[2], j)
@@ -155,7 +155,7 @@ function fill_stiffness_matrix!(spb::ShortPolynomialBasis, A)
     try 
         fill_stiffness_matrix!(elements, mesh, A)
     catch
-        for I ∈ spb.coupling_index
+        @threads for I ∈ spb.coupling_index
             for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
                 P = getderivpolynomial(spb, I[1], i)
                 Q = getderivpolynomial(spb, I[2], j)
@@ -184,7 +184,7 @@ function weight_mass_matrix(spb::ShortPolynomialBasis, n::Int)
 end
 
 function fill_weight_mass_matrix!(spb::ShortPolynomialBasis, weight, A)
-    for I ∈ spb.coupling_index
+    @threads for I ∈ spb.coupling_index
         for (i,j) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]))
             P = getpolynomial(spb, I[1], i)
             Q = getpolynomial(spb, I[2], j)
@@ -208,7 +208,7 @@ function weight_mass_vector(spb::ShortPolynomialBasis, weight)
 end
 
 function fill_weight_mass_vector!(spb::ShortPolynomialBasis, weight, A)
-    for i ∈ eachindex(spb)
+    @threads for i ∈ eachindex(spb)
         for j ∈ eachindex(spb.infos[i])
             P = getpolynomial(spb, i, j)
             invϕ = getinvshift(spb, i, j)
@@ -229,7 +229,7 @@ function weight_mass_3tensor(spb::ShortPolynomialBasis, weight)
 end
 
 function fill_weight_mass_3tensor!(spb::ShortPolynomialBasis, weight, A)
-    for I ∈ spb.coupling_index3
+    @threads for I ∈ spb.coupling_index3
         for (i,j,k) ∈ intersection_with_indices(getsegments(spb, I[1]), getsegments(spb, I[2]), getsegments(spb, I[3]))
             P = getpolynomial(spb, I[1], i)
             Q = getpolynomial(spb, I[2], j)
