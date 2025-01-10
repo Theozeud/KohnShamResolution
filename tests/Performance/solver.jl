@@ -21,7 +21,7 @@ Rmax = 41
 
 @timeit to "Create mesh" m = linmesh(Rmin, Rmax, Nₕ)
 
-@timeit to "Create basis" basis = ShortP1IntLegendreBasis(m; left = false, right = false, normalize = true, ordermin = 2, ordermax = 3)
+@timeit to "Create basis" basis = ShortP1IntLegendreBasis(m; left = false, right = false, ordermin = 2, ordermax = 3)
 
 @timeit to "init Discretization" D = KohnShamRadialDiscretization(lₕ, basis, m)
 
@@ -43,7 +43,7 @@ end
 
 @timeit to "Loop footer" KohnShamResolution.loopfooter!(solver)
 
-@timeit to "Make Solution" KohnShamResolution.makesolution(solver)
+@timeit to "Make Solution" KohnShamResolution.makesolution(solver, "")
 
 #@timeit to "Build Density in Solution" KohnShamResolution.build_density2!(solver.discretization, solver.D)
 
