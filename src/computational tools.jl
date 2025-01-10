@@ -1,11 +1,11 @@
 # Solving linear problem
 function solve_linear_problem(A::AbstractMatrix, b::AbstractVector)
-    A\b
+    return A\b
 end
 
 # Solve Generalized Eigenvalue problem
 function solve_generalized_eigenvalue_problem(A,B)
-    eigen(inv(B) * A)
+    return eigen(inv(B) * A)
 end
 
 # Approximate integral

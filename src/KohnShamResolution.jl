@@ -1,30 +1,23 @@
 module KohnShamResolution
 
+    # DEPENDANCES
     using LinearAlgebra
     using UnPack
     using Integrals
     using Memoize
-    using LambertW
     using HypergeometricFunctions
     using TensorOperations
+    using Base.Threads
 
-    # To remove ???
-    using SparseArrays
-    using TimerOutputs
-    using ProgressMeter
-
-    ########
     # ANNEXE
     include("utils.jl")
     include("computational tools.jl")
 
-    ######
     # MESH
-    export OneDMesh
-    export mesh, find_index, linmesh, LogRange, logmesh, LinearExpRange, linearexpmesh, geometricmesh
+    export Mesh, linmesh, geometricmesh
     include("mesh.jl")
 
-    ####################
+
     # LAURENT POLYNOMIAL
     export AbstractPolynomial
     include("laurentpolynomial/abstract polynomial.jl")
@@ -48,26 +41,22 @@ module KohnShamResolution
     export get_support
     include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
-    ######################
+    
     # FINITE ELEMENT BASIS
     export Basis, AbstractLaurentPolynomialBasis
     include("finite element basis/abstract polynomial basis.jl")
-    
+
+
     export LaurentPolynomialBasis
-    export mass_matrix, weight_mass_matrix, weight_mass_vector, vector_mass_matrix, vectorweight_mass_matrix,
+    export mass_matrix, stiffness_matrix, weight_mass_matrix, weight_mass_vector, vector_mass_matrix, vectorweight_mass_matrix,
            weight_mass_3tensor
     export build_on_basis
-    include("finite element basis/completebasis/laurentpolynomialbasis.jl")
-
-    export HatBasis, P1Basis, BubbleBasis, IntLegendreBasis
-    export HatFunctionP1, FunctionP2_node, FunctionP2_mid, P2Basis, IntLegendre_element
-    include("finite element basis/completebasis/complete basis.jl")
 
     # SHORT BASIS
     include("finite element basis/shortbasis/utils_computations.jl")
 
     export AbstractShortElements
-    export getpolynomial, isnormalized
+    export getpolynomial, getderivpolynomial
     include("finite element basis/shortbasis/abstractshortelement.jl")
 
     export InfoElement
@@ -86,42 +75,34 @@ module KohnShamResolution
     export ShortP1IntLegendreBasis
     include("finite element basis/shortbasis/combined elements.jl")
 
-    #################
+    
     # KOHN-SHAM MODEL
     export AbstractExchangeCorrelation, ExchangeCorrelation, NoExchangeCorrelation, KohnShamExtended
     export build_SlaterXα, exc_SlaterXα, vxc_SlaterXα
-    export exchcorr, charge, nbelec, potential
     export ReducedHartreeFock, SlaterXα
-    include("model/kohnsham_model.jl")
-
-    ##########################
-    # KOHN-SHAM DISCRETIZATION
-    export KohnShamDiscretization, KohnShamRadialDiscretization
-    export RadialCache
-    include("model discretization/abstract_discretization.jl")
-    include("model discretization/radial_discretization.jl")
-
-    ###################
-    # KOHN-SHAM METHODS
-    include("methods/abstractmethods.jl")
-
-    ###############
-    # SOLVER AND CO
-    export DFTProblem
-    include("problem.jl")
+    include("models.jl")
+    
+    # SOLVER &CO
+    export LogConfig, LogBook
+    include("log.jl")
 
     include("solver.jl")
 
-    include("performstep.jl")
+    export KohnShamRadialDiscretization
+    include("radial_discretization.jl")
+
+    abstract type SCFMethod end
+
+    export DFTProblem
+    include("problem.jl")
 
     export aufbau!
     include("aufbau.jl")
 
-    export ODA, ConstantODA
-    include("methods/oda.jl")
+    export CDA
+    include("methods.jl")
 
     export KohnShamSolution
-    export eigenvalue, eigenvector, occup
     include("solution.jl")
 
     export groundstate

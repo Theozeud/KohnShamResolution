@@ -1,0 +1,59 @@
+
+## REVIEW OF THE CODE
+- aufbau                    
+- computationals tools      
+- groundstate                    
+- KohnShamResolution
+- log                       
+- mesh          
+- methods                   
+- models                    
+- problem                   
+- radial_discretization
+- solution
+- solver
+- utils   
+
+## PROBLEM
+
+- si Rmin ≠ 0 -> problème dans le calcul du relèvement
+
+- geomesh 
+    --> Corrigé mais il faut réimplémenter une manière de mieux 
+        conditionner la matrice, notamment avec la possibilité de multiplier avec des coefficients
+
+- C'est très long de générer la base, il faudrait pouvoir améliorer cela, potentiellement avec du mutli-threading.
+    --> voir pour fixer à l'avance l'ordre de rangement puis rajouter une option pour permutter les lignes et colonnes si besoin
+    --> on range les éléments dans l'ordre croissant des éléments de la maille
+
+
+## TO DO CODE
+
+- Fichier pour analyser le calcul des éléments des matrices
+    --> analyser la création des élements
+        --> coder à la main les premiers éléments polynomes de Legendre intégrés
+        --> stratégie rationnel pour les autres cas de figure ?
+
+- Réfléchir aux partie de codes qui pourrait etre parallélisé
+        --> la création des matrices                DONE MAIS CA MARCHE PAS TROP, A ETUDIER EN DETAILS
+        --> la résolution des problèmes aux valeurs propres DONE
+ 
+- Réfléchir à l'organisation en bloc
+
+
+## TODO DFT
+
+- Investiguer la nouvelle discrétisation
+
+- Investiguer si on prend inteL que sur le bord
+
+- Passer à LDA
+
+- Regarder ce qu'il faudra pour les ions
+
+- Regarder ApproxFun
+
+- Etudier les méthodes de résolution des problèmes linéaires (les différentes méthodes et les préconditionneurs).
+
+- Réfléchir à améliorer le conditionnnement
+
