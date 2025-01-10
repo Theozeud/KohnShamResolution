@@ -63,16 +63,16 @@ function performstep!(solver::KhonShamSolver)
     # This is done after aufbau to normalize only eigenvectors we need
     normalization!(solver.discretization)
 
-    # STEP 3 : Compute density star
+    # STEP 4 : Compute density star
     density_matrix!(solver.discretization)
 
-    # STEP 4 : Compute new density
+    # STEP 5 : Compute new density
     update_density!(solver.method, solver)
 
-    # STEP 5 : Compute the total energy
+    # STEP 6 : Compute the total energy
     compute_energy!(solver.discretization)
 
-    # STEP 6 : Update Solver
+    # STEP 7 : Update Solver
     update_solver!(solver)
 end
 
