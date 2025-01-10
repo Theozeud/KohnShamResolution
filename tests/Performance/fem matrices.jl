@@ -3,7 +3,7 @@ using LinearAlgebra
 using BenchmarkTools
 
 original_stdout = stdout
-output_file = open("tests/Performance/fem.txt", "w")
+output_file = open("tests/Performance/fem_$(Threads.nthreads())_threads.txt", "w")
 redirect_stdout(output_file)
 
 
@@ -16,11 +16,10 @@ Rmin = 0.0
 Rmax = 50.0
 m = linmesh(Rmin, Rmax, Nmesh; T = T)
 println("basis")
-@time basis = ShortP1IntLegendreBasis(m, T; normalize = false, ordermax = 2)
-deriv_basis = deriv(basis)
+@time basis = ShortIntLegendreBasis(m, T; ordermax = 2)
 
 println("A")
-@time A   = mass_matrix(deriv_basis)
+@time A   = stiffness_matrix(basis)
 println("M0")
 @time M₀  = mass_matrix(basis)
 println("M₋₁")
@@ -38,11 +37,10 @@ Rmin = 0.0
 Rmax = 50.0
 m = linmesh(Rmin, Rmax, Nmesh; T = T)
 println("basis")
-@time basis = ShortP1IntLegendreBasis(m, T; normalize = false, ordermax = 5)
-deriv_basis = deriv(basis)
+@time basis = ShortIntLegendreBasis(m, T; ordermax = 5)
 
 println("A")
-@time A   = mass_matrix(deriv_basis)
+@time A   = stiffness_matrix(basis)
 println("M0")
 @time M₀  = mass_matrix(basis)
 println("M₋₁")
@@ -60,11 +58,10 @@ Rmin = 0.0
 Rmax = 50.0
 m = linmesh(Rmin, Rmax, Nmesh; T = T)
 println("basis")
-@time basis = ShortP1IntLegendreBasis(m, T; normalize = false, ordermax = 5)
-deriv_basis = deriv(basis)
+@time basis = ShortIntLegendreBasis(m, T; ordermax = 5)
 
 println("A")
-@time A   = mass_matrix(deriv_basis)
+@time A   = stiffness_matrix(basis)
 println("M0")
 @time M₀  = mass_matrix(basis)
 println("M₋₁")
