@@ -59,6 +59,10 @@ function performstep!(solver::KhonShamSolver)
     # STEP 2 : Build the n matrix using the Aufbau principle
     aufbau!(solver)
 
+    # STEP 3 : Normaization of eigenvectors
+    # This is done after aufbau to normalize only eigenvectors we need
+    normalization!(solver.discretization)
+
     # STEP 3 : Compute density star
     density_matrix!(solver.discretization)
 

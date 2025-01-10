@@ -158,6 +158,25 @@ function find_orbital!(discretization::KohnShamRadialDiscretization, solver::Kho
 end
 
 #####################################################################
+#               Normamisation of eigenvector
+#####################################################################
+
+function normalization!(discretization)
+    @unpack M₀ = discretization.cache
+    @unpack tmp_U, tmp_n = discretization.tmp_cache
+    @unpack lₕ, Nₕ  = discretization
+    @inbounds for l ∈ 1:lₕ+1   # potentiellement, il faut rajouter un lmin
+        @inbounds for k ∈ 1:Nₕ
+            if !iszero(tmp_n[l,k])
+                normalization = sqrt(sum([tmp_U[l,i,k] * tmp_U[l,j,k] * M₀[i,j] for i∈1:Nₕ for j∈1:Nₕ]))
+                tmp_U[l,:,k] .= tmp_U[l,:,k] .* 1/normalization
+            end
+        end
+    end
+    nothing
+end
+
+#####################################################################
 #                          Kinetic Matrix
 #####################################################################
 
@@ -248,15 +267,13 @@ end
 #####################################################################
 
 function density_matrix!(discretization::KohnShamRadialDiscretization)
-    @unpack M₀ = discretization.cache
     @unpack tmp_Dstar, tmp_U, tmp_n = discretization.tmp_cache
     @unpack lₕ, Nₕ  = discretization
-    @inbounds for l ∈ 1:lₕ+1 
+    @inbounds for l ∈ 1:lₕ+1   # potentiellement, il faut rajouter un lmin
         @inbounds for k ∈ 1 :Nₕ
             if !iszero(tmp_n[l,k])
-                normalization = sum([tmp_U[l,i,k] * tmp_U[l,j,k] * M₀[i,j] for i∈1:Nₕ for j∈1:Nₕ])
                 @inbounds for i ∈ 1:Nₕ
-                    val = tmp_n[l,k] * tmp_U[l,i,k] * 1/normalization
+                    val = tmp_n[l,k] * tmp_U[l,i,k] 
                     @inbounds @simd for j ∈ 1:i
                         tmp_Dstar[i,j] += val * tmp_U[l,j,k]
                     end
