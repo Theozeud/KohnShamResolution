@@ -43,8 +43,8 @@ module KohnShamResolution
 
     
     # FINITE ELEMENT BASIS
-    export Basis, AbstractLaurentPolynomialBasis
-    include("finite element basis/abstract polynomial basis.jl")
+    abstract type Basis end
+    abstract type AbstractLaurentPolynomialBasis <: Basis end 
 
 
     export LaurentPolynomialBasis
@@ -59,13 +59,28 @@ module KohnShamResolution
     export getpolynomial, getderivpolynomial
     include("finite element basis/shortbasis/abstractshortelement.jl")
 
+    #### NEW
+    abstract type AbstractGenerator{T} end
+    @inline Base.eltype(::AbstractGenerator{T}) where T = T
+    @inline Base.length(gen::AbstractGenerator) = gen.size
+    @inline getpolynomial(gen::AbstractGenerator, n::Int) = gen[n]
+    @inline getderivpolynomial(gen::AbstractGenerator, n::Int) = getderivpolynomial(gen)[n]
+
     export InfoElement
     export ShortPolynomialBasis, build_basis
     export bottom_type
     include("finite element basis/shortbasis/shortbasis.jl")
 
-    export DefaultElements, P1Elements, ShortP1Basis, IntLegendreElements, ShortIntLegendreBasis, DiffLegendreElements, ShortDiffLegendreBasis
+    #### NEW
+    export PolynomialBasis
+    include("finite element basis/newbasis/basis.jl")
+
+    export P1Elements, ShortP1Basis, IntLegendreElements, ShortIntLegendreBasis, DiffLegendreElements, ShortDiffLegendreBasis
     include("finite element basis/shortbasis/elements.jl")
+
+    #### NEW
+    export IntLegendreGenerator
+    include("finite element basis/newbasis/generators.jl")
 
     include("finite element basis/shortbasis/fill_mass_matrix.jl")
 
