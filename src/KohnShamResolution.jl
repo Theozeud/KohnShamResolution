@@ -17,7 +17,6 @@ module KohnShamResolution
     export Mesh, linmesh, geometricmesh
     include("mesh.jl")
 
-
     # LAURENT POLYNOMIAL
     export AbstractPolynomial
     include("laurentpolynomial/abstract polynomial.jl")
@@ -42,7 +41,7 @@ module KohnShamResolution
     include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
     
-    # FINITE ELEMENT BASIS
+    # fem
     abstract type Basis end
     abstract type AbstractLaurentPolynomialBasis <: Basis end 
 
@@ -50,14 +49,13 @@ module KohnShamResolution
     export LaurentPolynomialBasis
     export mass_matrix, stiffness_matrix, weight_mass_matrix, weight_mass_vector, vector_mass_matrix, vectorweight_mass_matrix,
            weight_mass_3tensor
-    export build_on_basis
 
     # SHORT BASIS
-    include("finite element basis/shortbasis/utils_computations.jl")
+    include("fem/shortbasis/utils_computations.jl")
 
     export AbstractShortElements
     export getpolynomial, getderivpolynomial
-    include("finite element basis/shortbasis/abstractshortelement.jl")
+    include("fem/shortbasis/abstractshortelement.jl")
 
     #### NEW
     abstract type AbstractGenerator{T} end
@@ -67,28 +65,29 @@ module KohnShamResolution
     @inline getderivpolynomial(gen::AbstractGenerator, n::Int) = getderivpolynomial(gen)[n]
 
     export InfoElement
-    export ShortPolynomialBasis, build_basis
+    export ShortPolynomialBasis
     export bottom_type
-    include("finite element basis/shortbasis/shortbasis.jl")
+    include("fem/shortbasis/shortbasis.jl")
 
     #### NEW
     export PolynomialBasis
-    include("finite element basis/newbasis/basis.jl")
+    include("fem/newbasis/basis.jl")
+    include("fem/newbasis/matrices.jl")
 
     export P1Elements, ShortP1Basis, IntLegendreElements, ShortIntLegendreBasis, DiffLegendreElements, ShortDiffLegendreBasis
-    include("finite element basis/shortbasis/elements.jl")
+    include("fem/shortbasis/elements.jl")
 
     #### NEW
     export IntLegendreGenerator
-    include("finite element basis/newbasis/generators.jl")
+    include("fem/newbasis/generators.jl")
 
-    include("finite element basis/shortbasis/fill_mass_matrix.jl")
+    include("fem/shortbasis/fill_mass_matrix.jl")
 
     export InfoBlock, CombineShortPolynomialBasis
-    include("finite element basis/shortbasis/combineshortbasis.jl")
+    include("fem/shortbasis/combineshortbasis.jl")
 
     export ShortP1IntLegendreBasis
-    include("finite element basis/shortbasis/combined elements.jl")
+    include("fem/shortbasis/combined elements.jl")
 
     
     # KOHN-SHAM MODEL
@@ -101,6 +100,7 @@ module KohnShamResolution
     export LogConfig, LogBook
     include("log.jl")
 
+    export Solver, SolverOptions
     include("solver.jl")
 
     export KohnShamRadialDiscretization

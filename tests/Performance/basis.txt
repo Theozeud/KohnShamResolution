@@ -1,4 +1,6 @@
 Elements
-  0.000025 seconds (14 allocations: 656 bytes)
+  0.000050 seconds (14 allocations: 656 bytes)
 IntLegBasis
-  1.239722 seconds (52.89 M allocations: 3.741 GiB, 32.43% gc time)
+  8.284117 seconds (331.42 M allocations: 23.444 GiB, 25.83% gc time)
+IntLegGenerator
+  0.532383 seconds (40.12 M allocations: 1.202 GiB, 23.92% gc time)
