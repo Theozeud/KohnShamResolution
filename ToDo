@@ -31,6 +31,8 @@
     --> Ajout des Static Array et cleaning Polynomial pour aller plus vite !
     --> utilisation d'une bibliothèque annexe ? 
 
+- Utilisation des sparse array pour le tenseur ? -> ca semblerait très utile, mais faut bien faire attention à la fin pour le problème aux valeurs propres
+
 ## TO THINK NUMERICAL METHOD
 
 - Réfléchir à l'organisation en bloc
