@@ -2,14 +2,7 @@
 #############################################################################################
 #                                     PLOT EIGENVECTOR
 #############################################################################################
-function eval_on_basis(U, basis, x)
-    T = bottom_type(basis)
-    ux = zero(T)
-    for i ∈ eachindex(U)
-        ux += U[i] * KohnShamResolution.eval_basis(basis, i, x)
-    end
-    ux
-end
+
 
 function plot_eigenvector(n, U, hydro)
     @unpack z, l, mesh, basis, name = hydro
