@@ -1,11 +1,3 @@
-# Plot convergence avec Nmesh et Rmax !
-    # en terme de valeurs propres
-    # en terme de vecteurs propres
-        # -> il faut une norme
-
-
-# Courbe convergence avec Nmesh et Rmax
-# On veut pouvoir comparer pour différentes bases et mesh (typebase, typemesh)
 
 #############################################################################################
 #                                     PLOT EIGENVECTOR
@@ -39,11 +31,3 @@ function plot_eigenvector(n, U, hydro)
     plot!(X, solnum, label = "Numérique", lw = 3)
     plot!(X, eigvect_theo(n, z, l, T).(X), lw = 2, label = "Théorique", ls = :dash, color = :black)
 end
-
-
-
-# z,L
-
-# basis <- mesh <- Rmax, Nmesh, typemesh, opts_mesh
-#       <- T
-#       <- opts_basis
