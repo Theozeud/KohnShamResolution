@@ -11,24 +11,58 @@ logconfig = LogConfig(energy = false)
 
 # CONVERGENCE WITH RESPECT TO NMESH
 
-problem = AtomProblem(;
+problem1 = AtomProblem(;
+                T               = Float64, 
+                lh              = 1, 
+                method          = CDA(0.2), 
+                model           = ReducedHartreeFock(z, N), 
+                Rmax            = 100.0, 
+                Nmesh           = 50,
+                typemesh        = geometricmesh, 
+                optsmesh        = (s = 0.9,), 
+                typebasis       = ShortP1IntLegendreBasis, 
+                optsbasis       = (ordermax = 5,), 
+                name            = "0.2", 
+                scftol          = 1e-9,
+                maxiter         = 100,
+                hartree         = true,
+                logconfig       = logconfig)
+
+problem2 = AtomProblem(;
+                T               = Float64, 
+                lh              = 1, 
+                method          = CDA(0.5), 
+                model           = ReducedHartreeFock(z, N), 
+                Rmax            = 100.0, 
+                Nmesh           = 50,
+                typemesh        = geometricmesh, 
+                optsmesh        = (s = 0.9,), 
+                typebasis       = ShortP1IntLegendreBasis, 
+                optsbasis       = (ordermax = 5,), 
+                name            = "0.5", 
+                scftol          = 1e-9,
+                maxiter         = 100,
+                hartree         = true,
+                logconfig       = logconfig)
+
+problem3 = AtomProblem(;
                 T               = Float64, 
                 lh              = 1, 
                 method          = CDA(0.7), 
                 model           = ReducedHartreeFock(z, N), 
-                Rmax            = 60.0, 
+                Rmax            = 100.0, 
                 Nmesh           = 50,
                 typemesh        = geometricmesh, 
-                optsmesh        = (s=0.9,), 
+                optsmesh        = (s = 0.9,), 
                 typebasis       = ShortP1IntLegendreBasis, 
-                optsbasis       = (ordermax = 4,), 
-                name            = "test", 
-                scftol          = 1e-10,
+                optsbasis       = (ordermax = 5,), 
+                name            = "0.7", 
+                scftol          = 1e-9,
                 maxiter         = 100,
                 hartree         = true,
                 logconfig       = logconfig)
                         
-error = convergenceNmesh(2 .^(2:7), [problem]; nums = [2])
+error = convergenceNmesh(2 .^(2:7), [problem1,problem2,problem3]; nums = [2])
 
 convergencePlotNmesh(error)
 
