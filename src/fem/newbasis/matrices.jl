@@ -1,3 +1,18 @@
+# Utils for intersection
+function find_intersection_indices(A, B)
+    # Find intersection of A and B excluding 0
+    intersect_elements = filter(x -> x != 0, intersect(A, B))
+    # Create a vector of tuples (index_in_A, index_in_B)
+    return [(findfirst(x -> x == el, A), findfirst(x -> x == el, B)) for el in intersect_elements]
+end
+
+function find_intersection_indices(A, B, C)
+    # Find intersection of A and B
+    intersect_elements = filter(x -> x != 0, intersect(A, B, C))
+    # Create a vector of tuples (element, index_in_A, index_in_B)
+    return  [(findfirst(x -> x == el, A), findfirst(x -> x == el, B), findfirst(x -> x == el, C)) for el in intersect_elements]
+end
+
 ########################       Generation of FEM Matrices       ########################
 
 # Mass matrix
@@ -12,7 +27,7 @@ end
 function fill_mass_matrix!(pb::PolynomialBasis, A)
     @unpack generators, mesh = pb
     @threads for I ∈ pb.matrix_fill_indices
-        for (i,j) ∈ intersection_with_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
+        for (i,j) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
             P = getgenerator(pb, I[1], i)
             Q = getgenerator(pb, I[2], j)
             invϕ = getinvshift(pb, I[1], i)
@@ -36,7 +51,7 @@ end
 function fill_stiffness_matrix!(pb::PolynomialBasis, A)
     @unpack generators, mesh = pb
     @threads for I ∈ pb.matrix_fill_indices
-        for (i,j) ∈ intersection_with_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
+        for (i,j) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
             P = getderivgenerator(pb, I[1], i)
             Q = getderivgenerator(pb, I[2], j)
             ϕ = getshift(pb, I[1], i)
@@ -61,7 +76,7 @@ end
 
 function fill_weight_mass_matrix!(pb::PolynomialBasis, weight, A)
     @threads for I ∈ pb.matrix_fill_indices
-        for (i,j) ∈ intersection_with_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
+        for (i,j) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
             P = getgenerator(pb, I[1], i)
             Q = getgenerator(pb, I[2], j)
             invϕ = getinvshift(pb, I[1], i)
@@ -108,7 +123,7 @@ end
 
 function fill_weight_mass_3tensor!(pb::PolynomialBasis, weight, A)
     @threads for I ∈ pb.tensor_fill_indices
-        for (i,j,k) ∈ intersection_with_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:], pb.indices_cells[I[3],:])
+        for (i,j,k) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:], pb.indices_cells[I[3],:])
             P = getgenerator(pb, I[1], i)
             Q = getgenerator(pb, I[2], j)
             L = getgenerator(pb, I[3], k)

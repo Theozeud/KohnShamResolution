@@ -8,6 +8,7 @@ module KohnShamResolution
     using HypergeometricFunctions
     using TensorOperations
     using Base.Threads
+    using SparseArrays
 
     # ANNEXE
     include("utils.jl")
@@ -78,7 +79,7 @@ module KohnShamResolution
     include("fem/shortbasis/elements.jl")
 
     #### NEW
-    export IntLegendreGenerator
+    export IntLegendreGenerator, P1IntLegendreGenerator
     include("fem/newbasis/generators.jl")
 
     include("fem/shortbasis/fill_mass_matrix.jl")

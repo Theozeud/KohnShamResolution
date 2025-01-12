@@ -6,6 +6,7 @@ struct PolynomialBasis{T, TB <: AbstractGenerator} <: Basis
     size::Int                                       # Size of the basis
     indices_cells::Matrix{Int}                      # Matrix index basis -> indices support
     indices_generators::Matrix{Int}                 # Matrix index basis -> indices generators
+    cells_to_indices::Matrix{Int}                   # Matrix index cells -> indices basis
     normalisation::Vector{T}                        # Coefficients of normalisation
     shifts::Vector{LaurentPolynomial{T}}            # Translation to each cells of the mesh
     invshifts::Vector{LaurentPolynomial{T}}         # Inverse of the translation 
@@ -13,14 +14,14 @@ struct PolynomialBasis{T, TB <: AbstractGenerator} <: Basis
     tensor_fill_indices::Vector{CartesianIndex{3}}  # Vector of indices filled in fem tensors
 
     function PolynomialBasis(generators, mesh, size, indices_cells, indices_generators,
-         normalisation, shifts, invshifts, matrix_fill_indices, tensor_fill_indices) 
+        cells_to_indices, normalisation, shifts, invshifts, matrix_fill_indices, tensor_fill_indices) 
         new{eltype(generators), typeof(generators)}(generators, mesh, size, indices_cells, 
-        indices_generators, normalisation, shifts, invshifts, matrix_fill_indices, 
-        tensor_fill_indices)
+        indices_generators, cells_to_indices, normalisation, shifts, invshifts, 
+        matrix_fill_indices, tensor_fill_indices)
     end
 
     function PolynomialBasis(generators, mesh, size, indices_cells, indices_generators, 
-        normalisation; _matrix_fill_indices = nothing, _tensor_fill_indices = nothing) 
+        cells_to_indices, normalisation; _matrix_fill_indices = nothing, _tensor_fill_indices = nothing) 
         
         T = eltype(generators)
         shifts    = Vector{LaurentPolynomial{T}}(undef, length(mesh)-1)
@@ -69,7 +70,7 @@ struct PolynomialBasis{T, TB <: AbstractGenerator} <: Basis
         end
 
         new{eltype(generators), typeof(generators)}(generators, mesh, size, indices_cells, 
-        indices_generators, normalisation, shifts, invshifts, matrix_fill_indices, 
+        indices_generators, cells_to_indices, normalisation, shifts, invshifts, matrix_fill_indices, 
         tensor_fill_indices)
     end
 end
@@ -91,11 +92,13 @@ function (pb::PolynomialBasis)(i::Int, x)
     localisation_x = findindex(pb.mesh, x)
     newT = promote_type(eltype(pb), typeof(x))
     y = zero(newT)
-    if localisation_x ∈ pb.cells_indices[i]
+    if localisation_x ∈ pb.indices_cells[i,:]
         for j ∈ axes(pb.indices_generators,2)
-            P = getgenerator(pb, i, j)
-            ϕ = getshift(pb, i, j)
-            y += P(ϕ(x))
+            if !iszero(j) && pb.indices_cells[i,j] == localisation_x
+                P = getgenerator(pb, i, j)
+                ϕ = getshift(pb, i, j)
+                y += P(ϕ(x))
+            end
         end
         y *= getnormalization(pb, i)
     end
@@ -104,10 +107,30 @@ end
 
 function (pb::PolynomialBasis)(coeffs::AbstractVector, x)
     @assert length(coeffs) == pb.size
-    T = eltype(basis)
+    localisation_x = KohnShamResolution.findindex(pb.mesh, x)
+    T = eltype(pb)
     y = zero(T)
-    for i ∈ eachindex(U)
-        y += U[i] * pb(i, x)
+    for i ∈ pb.cells_to_indices[localisation_x,:]
+        if !iszero(i)
+            y += coeffs[i] * pb(i, x)
+        end
     end
     y
+end
+
+function eval_derivative(pb::PolynomialBasis, i::Int, x)
+    localisation_x = findindex(pb.mesh, x)
+    newT = promote_type(eltype(pb), typeof(x))
+    y = zero(newT)
+    if localisation_x ∈ pb.indices_cells[i,:]
+        for j ∈ axes(pb.indices_generators,2)
+            if !iszero(j) && pb.indices_cells[i,j] == localisation_x
+                P = getderivgenerator(pb, i, j)
+                ϕ = getshift(pb, i, j)
+                y += P(ϕ(x))
+            end
+        end
+        y *= getnormalization(pb, i)
+    end
+    return y
 end
