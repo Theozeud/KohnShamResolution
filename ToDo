@@ -5,6 +5,10 @@
 
 - erreurs numériques sur les shifts ?? -> pourrait causé des problèmes numériques ultérieurement
 
+- problème sur la normalisation par 1/sqrt(4Pi) des U ??
+
+- corriger les cells_to_indices
+
 ## UPDGRADE CODE
 
 #### PRIORITE

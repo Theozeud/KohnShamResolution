@@ -20,7 +20,7 @@ problem1 = AtomProblem(;
                 Nmesh           = 50,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
-                typebasis       = ShortP1IntLegendreBasis, 
+                typebasis       = P1IntLegendreGenerator, 
                 optsbasis       = (ordermax = 5,), 
                 name            = "0.2", 
                 scftol          = 1e-9,
@@ -37,7 +37,7 @@ problem2 = AtomProblem(;
                 Nmesh           = 50,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
-                typebasis       = ShortP1IntLegendreBasis, 
+                typebasis       = P1IntLegendreGenerator, 
                 optsbasis       = (ordermax = 5,), 
                 name            = "0.5", 
                 scftol          = 1e-9,
@@ -54,7 +54,7 @@ problem3 = AtomProblem(;
                 Nmesh           = 50,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
-                typebasis       = ShortP1IntLegendreBasis, 
+                typebasis       = P1IntLegendreGenerator, 
                 optsbasis       = (ordermax = 5,), 
                 name            = "0.7", 
                 scftol          = 1e-9,
@@ -62,7 +62,7 @@ problem3 = AtomProblem(;
                 hartree         = true,
                 logconfig       = logconfig)
                         
-error = convergenceNmesh(2 .^(2:7), [problem1,problem2,problem3]; nums = [2])
+error = convergenceNmesh(2 .^(2:7), [problem1,problem2,problem3]; nums = [1])
 
 convergencePlotNmesh(error)
 

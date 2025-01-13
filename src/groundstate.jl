@@ -70,7 +70,7 @@ function performstep!(solver::KhonShamSolver)
     # STEP 5 : Compute new density
     update_density!(solver.method, solver)
 
-    # STEP 6 : Compute the total energy
+    # STEP 6 : Compute the energies
     compute_energy!(solver.discretization)
 
     # STEP 7 : Update Solver
@@ -101,7 +101,7 @@ function update_solver!(solver::KhonShamSolver)
     solver.ϵ .= tmp_ϵ
     solver.n .= tmp_n 
     solver.energy       = solver.discretization.cache.Energy
-    solver.energy_kin   = solver.discretization.cache.
+    solver.energy_kin   = solver.discretization.cache.Energy_kin
     tmp_D       .= zero(tmp_D)
     tmp_Dstar   .= zero(tmp_Dstar)
     nothing

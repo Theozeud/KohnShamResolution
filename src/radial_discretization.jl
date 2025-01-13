@@ -238,7 +238,7 @@ end
 #                             Energy
 #####################################################################
 
-function compute_energy(discretization::KohnShamRadialDiscretization)
+function compute_energy!(discretization::KohnShamRadialDiscretization)
     compute_total_energy!(discretization)
     compute_kinetic_energy!(discretization)
 end
@@ -257,26 +257,6 @@ function compute_kinetic_energy!(discretization::KohnShamRadialDiscretization)
     nothing
 end
 
-#####################################################################
-#                         Eigenvector
-#####################################################################
-
-function build_eigenvector(kd::KohnShamRadialDiscretization, U; Index = CartesianIndices((1:lₕ+1, 1:Nₕ)))
-    @unpack lₕ, Nₕ, basis, mesh = kd
-    # First computation is done separately to well instantiate the array of eigenvector
-    Ifirst = first(Index)
-    lfirst = Ifirst[1]
-    kfirst = Ifirst[2]
-    eiglkfirst = build_on_basis(basis, U[lfirst,:,kfirst])
-    eigenvectors = [1/sqrt(4π)* eiglkfirst / normL2(eiglkfirst, mesh) * Monomial(-1)]
-    for I ∈ Index[begin+1:end]
-        l = I[1]
-        k = I[2]
-        eiglk = build_on_basis(basis, U[l,:,k]) 
-        push!(eigenvectors,  1/sqrt(4π)* eiglk / normL2(eiglk, mesh) * Monomial(-1)) 
-    end
-    eigenvectors
-end
 
 #####################################################################
 #                             Density
@@ -305,31 +285,18 @@ function density_matrix!(discretization::KohnShamRadialDiscretization)
     nothing
 end
 
-function build_density!(discretization::KohnShamRadialDiscretization, D)
+function compute_density(discretization::KohnShamRadialDiscretization, D, x)
     @unpack basis = discretization
-    ρ = Monomial(0,0)
-    Basis = [build_basis(basis, i) for i∈axes(D,1)]
-    for i ∈ axes(D,1)
-        for j ∈ axes(D,2)
-            ρ += D[i,j]  * Basis[i] * Basis[j]
+    newT = promote_type(eltype(basis), typeof(x))
+    val = zero(newT)
+    eval_basis = zeros(newT, basis.size)
+    @inbounds for i ∈ eachindex(basis)
+        eval_basis[i] = basis(i,x)
+    end
+    @inbounds for i ∈ eachindex(basis)
+        @inbounds for j ∈ eachindex(basis)
+            val += D[i,j]  * eval_basis[i] * eval_basis[j] 
         end
     end
-    ρ* 1/4π * Monomial(-2)
+    return val* 1/4π * 1/(x^2)
 end
-
-function eval_density_as_function(discretization::KohnShamRadialDiscretization, D, x)
-    @unpack basis, mesh = discretization
-
-    val = 0
-    for i ∈ axes(D,1)
-        vx = eval_basis(basis, i, x)
-        for j ∈ axes(D,2)
-            vy = eval_basis(basis, j, x)
-            val += D[i,j]  * vx * vy
-        end
-    end
-    return val* 1/4π * 1/x^2
-end
-
-
-
