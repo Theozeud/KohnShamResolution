@@ -15,7 +15,7 @@ mutable struct RadialCache
     Coulomb         # Matrix VF of Coulomb
     Hfix            # Part of Hamilotnian not needing to be recomputed (Kinetic + Colombial)         
     Hartree         # Matrix VF of hartree 
-    Exc             # Matrix VF of Exc
+    Vxc             # Matrix VF of Echange-correlation
     Energy          # Total Energy
     Energy_kin      # Kinetic Energy
 end
@@ -44,7 +44,7 @@ function create_cache(lₕ, Nₕ, T, lmin)
     Coulomb     = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
     Hfix        = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
     Hartree     = zeros(T, Nₕ, Nₕ)
-    Exc         = zeros(T, Nₕ, Nₕ)
+    Vxc         = zeros(T, Nₕ, Nₕ)
     Energy      = zero(T)
     Energy_kin  = zero(T)
 
@@ -57,7 +57,7 @@ function create_cache(lₕ, Nₕ, T, lmin)
     tmp_ϵ           = zeros(T, lₕ+1 - lmin, Nₕ)
     tmp_n           = zeros(T, lₕ+1 - lmin, Nₕ)   
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1 - lmin))
-    RadialCache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Exc, Energy, Energy_kin),  Radial_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
+    RadialCache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Vxc, Energy, Energy_kin),  Radial_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
 end
 
 
@@ -228,9 +228,9 @@ end
 #####################################################################
 
 function exchange_corr_matrix!(discretization::KohnShamRadialDiscretization, model, D)
-    @unpack Exc = discretization.cache
-    ρ(x) = eval_density_as_function(discretization, D, x)
-    Exc .= weight_mass_matrix(discretization.basis, model.exc.vxc∘ρ)
+    @unpack Vxc = discretization.cache
+    #ρ(x) = eval_density_as_function(discretization, D, x)
+    #Vxc .= weight_mass_matrix(discretization.basis, model.exc.vxc∘ρ)
     nothing
 end
 
