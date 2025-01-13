@@ -22,5 +22,6 @@ mutable struct KhonShamSolver
     ϵ                               # Orbitals energy at current time
     n                               # Occupation number at current time 
     energy                          # Total energy at current time
+    energy_kin                      # Kinetic energy at current time
     logbook                         # LogBook
 end

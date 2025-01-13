@@ -1,24 +1,20 @@
 include("../../../../../benchmarktools/atoms/setup.jl")
 using KohnShamResolution
 
-# MODEL
-z = 1
-N = 1
-
 # LOG CONFIG
 logconfig = LogConfig()
 
 problem = AtomProblem(;
                 T               = Float64, 
-                lh              = 0, 
-                method          = CDA(0.7), 
-                model           = ReducedHartreeFock(z, N), 
-                Rmax            = 40.0, 
-                Nmesh           = 40,
+                lh              = 3, 
+                method          = CDA(0.2), 
+                model           = ReducedHartreeFock(54, 54), 
+                Rmax            = 150.0, 
+                Nmesh           = 100,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
-                typebasis       = ShortP1IntLegendreBasis, 
-                optsbasis       = (ordermax = 3,), 
+                typebasis       = P1IntLegendreGenerator, 
+                optsbasis       = (ordermax = 5,), 
                 name            = "test", 
                 scftol          = 1e-10,
                 maxiter         = 100,

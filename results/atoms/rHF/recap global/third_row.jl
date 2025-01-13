@@ -4,197 +4,197 @@ using KohnShamResolution
 # LOG CONFIG
 logconfig = LogConfig()
 
-# Lithium
-Lithium     = AtomProblem(;
+# Sodium
+Sodium      = AtomProblem(;
                 T               = Float64, 
-                lh              = 0, 
-                method          = CDA(0.4), 
-                model           = ReducedHartreeFock(3, 3), 
-                Rmax            = 40.0, 
-                Nmesh           = 60,
+                lh              = 1, 
+                method          = CDA(0.3), 
+                model           = ReducedHartreeFock(11, 11), 
+                Rmax            = 80.0, 
+                Nmesh           = 80,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s=0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
-                optsbasis       = (ordermax = 4,), 
-                name            = "Li", 
+                optsbasis       = (ordermax = 5,), 
+                name            = "Na", 
                 scftol          = 1e-10,
                 maxiter         = 100,
                 hartree         = true,
                 logconfig       = logconfig)
 
-# Beryllium 
-Beryllium   = AtomProblem(;
+# Magnesium 
+Magnesium   = AtomProblem(;
                 T               = Float64, 
-                lh              = 0, 
-                method          = CDA(0.4), 
-                model           = ReducedHartreeFock(4, 4), 
-                Rmax            = 40.0, 
-                Nmesh           = 60,
+                lh              = 1, 
+                method          = CDA(0.3), 
+                model           = ReducedHartreeFock(12, 12), 
+                Rmax            = 80.0, 
+                Nmesh           = 80,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s=0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
-                optsbasis       = (ordermax = 4,), 
+                optsbasis       = (ordermax = 5,), 
                 name            = "Be", 
                 scftol          = 1e-10,
                 maxiter         = 100,
                 hartree         = true,
                 logconfig       = logconfig)
 
-# Bore 
-Bore        = AtomProblem(;
-                T               = Float64, 
-                lh              = 1, 
-                method          = CDA(0.4), 
-                model           = ReducedHartreeFock(5, 5), 
-                Rmax            = 40.0, 
-                Nmesh           = 60,
-                typemesh        = geometricmesh, 
-                optsmesh        = (s=0.9,), 
-                typebasis       = P1IntLegendreGenerator, 
-                optsbasis       = (ordermax = 4,), 
-                name            = "B", 
-                scftol          = 1e-10,
-                maxiter         = 100,
-                hartree         = true,
-                logconfig       = logconfig)
-
-# Carbon 
-Carbon      = AtomProblem(;
-                T               = Float64, 
-                lh              = 1, 
-                method          = CDA(0.4), 
-                model           = ReducedHartreeFock(6, 6), 
-                Rmax            = 40.0, 
-                Nmesh           = 60,
-                typemesh        = geometricmesh, 
-                optsmesh        = (s=0.9,), 
-                typebasis       = P1IntLegendreGenerator, 
-                optsbasis       = (ordermax = 5,), 
-                name            = "C", 
-                scftol          = 1e-10,
-                maxiter         = 100,
-                hartree         = true,
-                logconfig       = logconfig)
-
-# Azote
-Azote       = AtomProblem(;
-                T               = Float64, 
-                lh              = 1, 
-                method          = CDA(0.4), 
-                model           = ReducedHartreeFock(7, 7), 
-                Rmax            = 80.0, 
-                Nmesh           = 80,
-                typemesh        = geometricmesh, 
-                optsmesh        = (s=0.9,), 
-                typebasis       = P1IntLegendreGenerator, 
-                optsbasis       = (ordermax = 5,), 
-                name            = "N", 
-                scftol          = 1e-10,
-                maxiter         = 100,
-                hartree         = true,
-                logconfig       = logconfig)
-
-# Oxygen
-Oxygen      = AtomProblem(;
+# ALumininum 
+Alumininum  = AtomProblem(;
                 T               = Float64, 
                 lh              = 1, 
                 method          = CDA(0.3), 
-                model           = ReducedHartreeFock(z, N), 
+                model           = ReducedHartreeFock(13, 13), 
                 Rmax            = 80.0, 
                 Nmesh           = 80,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s=0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
                 optsbasis       = (ordermax = 5,), 
-                name            = "O", 
-                scftol          = 1e-8,
-                maxiter         = 100,
-                hartree         = true,
-                logconfig       = logconfig)
-
-# Fer
-Fer         = AtomProblem(;
-                T               = Float64, 
-                lh              = 1, 
-                method          = CDA(0.3), 
-                model           = ReducedHartreeFock(9, 9), 
-                Rmax            = 80.0, 
-                Nmesh           = 80,
-                typemesh        = geometricmesh, 
-                optsmesh        = (s=0.9,), 
-                typebasis       = P1IntLegendreGenerator, 
-                optsbasis       = (ordermax = 5,), 
-                name            = "F", 
+                name            = "Al", 
                 scftol          = 1e-10,
                 maxiter         = 100,
                 hartree         = true,
                 logconfig       = logconfig)
 
-# Neon
-Neon        = AtomProblem(;
+# Silicium 
+Silicium    = AtomProblem(;
                 T               = Float64, 
                 lh              = 1, 
                 method          = CDA(0.3), 
-                model           = ReducedHartreeFock(10, 10), 
+                model           = ReducedHartreeFock(14, 14), 
                 Rmax            = 80.0, 
                 Nmesh           = 80,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s=0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
                 optsbasis       = (ordermax = 5,), 
-                name            = "Ne", 
+                name            = "Si", 
+                scftol          = 1e-10,
+                maxiter         = 100,
+                hartree         = true,
+                logconfig       = logconfig)
+
+# Phosphore
+Phosphore   = AtomProblem(;
+                T               = Float64, 
+                lh              = 1, 
+                method          = CDA(0.3), 
+                model           = ReducedHartreeFock(15, 15), 
+                Rmax            = 80.0, 
+                Nmesh           = 80,
+                typemesh        = geometricmesh, 
+                optsmesh        = (s=0.9,), 
+                typebasis       = P1IntLegendreGenerator, 
+                optsbasis       = (ordermax = 5,), 
+                name            = "P", 
+                scftol          = 1e-10,
+                maxiter         = 100,
+                hartree         = true,
+                logconfig       = logconfig)
+
+# Soufre
+Soufre      = AtomProblem(;
+                T               = Float64, 
+                lh              = 1, 
+                method          = CDA(0.3), 
+                model           = ReducedHartreeFock(16, 16), 
+                Rmax            = 80.0, 
+                Nmesh           = 80,
+                typemesh        = geometricmesh, 
+                optsmesh        = (s=0.9,), 
+                typebasis       = P1IntLegendreGenerator, 
+                optsbasis       = (ordermax = 5,), 
+                name            = "S", 
+                scftol          = 1e-10,
+                maxiter         = 100,
+                hartree         = true,
+                logconfig       = logconfig)
+
+# Chlore
+Chlore      = AtomProblem(;
+                T               = Float64, 
+                lh              = 1, 
+                method          = CDA(0.3), 
+                model           = ReducedHartreeFock(17, 17), 
+                Rmax            = 80.0, 
+                Nmesh           = 80,
+                typemesh        = geometricmesh, 
+                optsmesh        = (s=0.9,), 
+                typebasis       = P1IntLegendreGenerator, 
+                optsbasis       = (ordermax = 5,), 
+                name            = "Cl", 
+                scftol          = 1e-10,
+                maxiter         = 100,
+                hartree         = true,
+                logconfig       = logconfig)
+
+# Argon
+Argon       = AtomProblem(;
+                T               = Float64, 
+                lh              = 1, 
+                method          = CDA(0.3), 
+                model           = ReducedHartreeFock(18, 18), 
+                Rmax            = 80.0, 
+                Nmesh           = 80,
+                typemesh        = geometricmesh, 
+                optsmesh        = (s=0.9,), 
+                typebasis       = P1IntLegendreGenerator, 
+                optsbasis       = (ordermax = 5,), 
+                name            = "Ar", 
                 scftol          = 1e-10,
                 maxiter         = 100,
                 hartree         = true,
                 logconfig       = logconfig)
 
 # RESOLUTION
-@time "Lithium"     sol_lithium     = groundstate(Lithium)
-@time "Beryllium"   sol_beryllium   = groundstate(Beryllium)
-@time "Bore"        sol_bore        = groundstate(Bore)
-@time "Carbon"      sol_carbon      = groundstate(Carbon)
-@time "Azote"       sol_azote       = groundstate(Azote)
-@time "Oxygen"      sol_oxygen      = groundstate(Oxygen)
-@time "Fer"         sol_fer         = groundstate(Fer)
-@time "Neon"        sol_neon        = groundstate(Neon)
+@time "Sodium"      sol_sodium      = groundstate(Sodium)
+@time "Magnesium"   sol_magnesium   = groundstate(Magnesium)
+@time "Alumininum"  sol_aluminium   = groundstate(Alumininum)
+@time "Silicium"    sol_silicium    = groundstate(Silicium)
+@time "Phosphore"   sol_phosphore   = groundstate(Phosphore)
+@time "Soufre"      sol_soufre      = groundstate(Soufre)
+@time "Chlore"      sol_chlore      = groundstate(Chlore)
+@time "Argon"       sol_argon       = groundstate(Argon)
 
 # Print Results
 original_stdout = stdout
-output_file = open("results/atoms/rHF/recap global/first_rows.txt", "w")
+output_file = open("results/atoms/rHF/recap global/second_row.txt", "w")
 redirect_stdout(output_file)
 
 
-println("Lithium")
-orb_li = sol_lithium.orbitals_energy
-println("1s : $(orb_li[1,1]) ; 2s : $(orb_li[1,2])")
+println("Sodium")
+orb_na = sol_sodium.orbitals_energy
+println("1s : $(orb_na[1,1]) ; 2s : $(orb_na[1,2]); 2p : $(orb_na[2,1]); 3s : $(orb_na[1,3])")
 
-println("Beryllium")
-orb_be = sol_beryllium.orbitals_energy
-println("1s : $(orb_be[1,1]) ; 2s : $(orb_be[1,2])")
+println("Magnesium")
+orb_mg = sol_magnesium.orbitals_energy
+println("1s : $(orb_mg[1,1]) ; 2s : $(orb_mg[1,2]); 2p : $(orb_mg[2,1]); 3s : $(orb_mg[1,3])")
 
-println("Bore")
-orb_b = sol_bore.orbitals_energy
-println("1s : $(orb_b[1,1]) ; 2s : $(orb_b[1,2]) ; 2p : $(orb_b[2,1])")
+println("Alumininum")
+orb_al = sol_aluminium.orbitals_energy
+println("1s : $(orb_al[1,1]) ; 2s : $(orb_al[1,2]); 2p : $(orb_al[2,1]); 3s : $(orb_al[1,3]); 3p : $(orb_al[2,2])")
 
-println("Carbon")
-orb_c = sol_carbon.orbitals_energy
-println("1s : $(orb_c[1,1]) ; 2s : $(orb_c[1,2]) ; 2p : $(orb_c[2,1])")
+println("Silicium")
+orb_si = sol_silicium.orbitals_energy
+println("1s : $(orb_si[1,1]) ; 2s : $(orb_si[1,2]); 2p : $(orb_si[2,1]); 3s : $(orb_si[1,3]); 3p : $(orb_si[2,2])")
 
-println("Azote")
-orb_n = sol_azote.orbitals_energy
-println("1s : $(orb_n[1,1]) ; 2s : $(orb_n[1,2]) ; 2p : $(orb_n[2,1])")
+println("Phosphore")
+orb_p = sol_phosphore.orbitals_energy
+println("1s : $(orb_p[1,1]) ; 2s : $(orb_p[1,2]); 2p : $(orb_p[2,1]); 3s : $(orb_p[1,3]); 3p : $(orb_p[2,2])")
 
-println("Oxygen")
-orb_o = sol_oxygen.orbitals_energy
-println("1s : $(orb_o[1,1]) ; 2s : $(orb_o[1,2]) ; 2p : $(orb_o[2,1])")
+println("Soufre")
+orb_s = sol_soufre.orbitals_energy
+println("1s : $(orb_s[1,1]) ; 2s : $(orb_s[1,2]); 2p : $(orb_s[2,1]); 3s : $(orb_s[1,3]); 3p : $(orb_s[2,2])")
 
-println("Fer")
-orb_f = sol_fer.orbitals_energy
-println("1s : $(orb_f[1,1]) ; 2s : $(orb_f[1,2]) ; 2p : $(orb_f[2,1])")
+println("Chlore")
+orb_cl = sol_chlore.orbitals_energy
+println("1s : $(orb_cl[1,1]) ; 2s : $(orb_cl[1,2]); 2p : $(orb_cl[2,1]); 3s : $(orb_cl[1,3]); 3p : $(orb_cl[2,2])")
 
-println("Neon")
-orb_ne = sol_neon.orbitals_energy
-println("1s : $(orb_ne[1,1]) ; 2s : $(orb_ne[1,2]) ; 2p : $(orb_ne[2,1])")
+println("Argon")
+orb_ar = sol_argon.orbitals_energy
+println("1s : $(orb_ar[1,1]) ; 2s : $(orb_ar[1,2]); 2p : $(orb_ar[2,1]); 3s : $(orb_ar[1,3]); 3p : $(orb_ar[2,2])")
 
 
 redirect_stdout(original_stdout)

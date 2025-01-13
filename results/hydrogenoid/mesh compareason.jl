@@ -7,12 +7,12 @@ const problinmesh = HydrogenoidProblem(;
                             T             = Float64, 
                             z             = 1, 
                             l             = 0, 
-                            Rmax          = 60, 
+                            Rmax          = 90, 
                             Nmesh         = 70,
-                            typemesh      = linmesh, 
+                            typemesh      = geometricmesh, 
                             typebasis     = ShortP1IntLegendreBasis, 
-                            optsmesh      = (;),  
-                            optsbasis     = (ordermax = 4, ),                           
+                            optsmesh      = (s=0.9,),  
+                            optsbasis     = (ordermax = 5, ),                           
                             name          = "IntLeg2-linmesh",
                             nU            = nothing)
 
@@ -20,12 +20,12 @@ const probgeomesh = HydrogenoidProblem(;
                             T             = Float64, 
                             z             = 1, 
                             l             = 0, 
-                            Rmax          = 60, 
+                            Rmax          = 90, 
                             Nmesh         = 70,
                             typemesh      = geometricmesh, 
-                            typebasis     = ShortP1IntLegendreBasis, 
+                            typebasis     = P1IntLegendreGenerator, 
                             optsmesh      = (s = 0.9,),  
-                            optsbasis     = (ordermax = 4, ),                           
+                            optsbasis     = (ordermax = 5, ),                           
                             name          = "IntLeg2-geomesh",
                             nU            = nothing)
 #@time λgeo = eigvals_hydro(problinmesh)

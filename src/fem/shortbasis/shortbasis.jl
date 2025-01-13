@@ -272,7 +272,7 @@ function eval_basis(spb::ShortPolynomialBasis, i::Int, x)
     for (j,seg,ϕ,_) ∈ spb.infos[i]
         if index_x == seg
             P = getpolynomial(spb.elements, j)
-            val += getnormalization(spb,i) * P(ϕ(x))
+            val += P(ϕ(x))
         end
     end
     val
