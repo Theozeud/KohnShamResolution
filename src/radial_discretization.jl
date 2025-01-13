@@ -293,10 +293,6 @@ function compute_density(discretization::KohnShamRadialDiscretization, D, x)
     @inbounds for i ∈ eachindex(basis)
         eval_basis[i] = basis(i,x)
     end
-    @inbounds for i ∈ eachindex(basis)
-        @inbounds for j ∈ eachindex(basis)
-            val += D[i,j]  * eval_basis[i] * eval_basis[j] 
-        end
-    end
+    val = (eval_basis)' * D * eval_basis
     return val* 1/4π * 1/(x^2)
 end

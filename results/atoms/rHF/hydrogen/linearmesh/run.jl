@@ -10,7 +10,7 @@ problem = AtomProblem(;
                 method          = CDA(0.7), 
                 model           = ReducedHartreeFock(1, 1), 
                 Rmax            = 40.0, 
-                Nmesh           = 40,
+                Nmesh           = 60,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
