@@ -40,12 +40,6 @@
 
 ## TO THINK NUMERICAL METHOD
 
-- Réfléchir à l'organisation en bloc
-
-- Idées vagues :
-    --> Investiguer la nouvelle discrétisation
-    --> Investiguer si on prend intLeg que sur le bord
-
 - Etudier les méthodes de résolution des problèmes linéaires (les différentes méthodes et les préconditionneurs).
 
 - Réfléchir à améliorer le conditionnnement

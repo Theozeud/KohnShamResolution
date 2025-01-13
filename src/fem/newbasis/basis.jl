@@ -76,6 +76,10 @@ struct PolynomialBasis{T, TB <: AbstractGenerator} <: Basis
 end
 
 @inline Base.eltype(::PolynomialBasis{T, TB}) where {T,TB} = T
+
+# Just for compatibility with ShortBasis for the test period
+@inline bottom_type(::PolynomialBasis{T, TB}) where {T,TB} = T
+
 @inline Base.length(pb::PolynomialBasis) = pb.size
 @inline Base.eachindex(pb::PolynomialBasis) = 1:pb.size
 
