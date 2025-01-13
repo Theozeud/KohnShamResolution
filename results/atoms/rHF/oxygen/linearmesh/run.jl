@@ -8,7 +8,7 @@ N = 8
 # LOG CONFIG
 logconfig = LogConfig()
 
-problem = AtomProblem(;
+oxygen  = AtomProblem(;
                 T               = Float64, 
                 lh              = 1, 
                 method          = CDA(0.3), 
@@ -17,9 +17,9 @@ problem = AtomProblem(;
                 Nmesh           = 100,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s=0.9,), 
-                typebasis       = ShortP1IntLegendreBasis, 
+                typebasis       = P1IntLegendreGenerator, 
                 optsbasis       = (ordermax = 5,), 
-                name            = "test", 
+                name            = "O", 
                 scftol          = 1e-8,
                 maxiter         = 100,
                 hartree         = true,
@@ -27,6 +27,6 @@ problem = AtomProblem(;
 
 
 # RESOLUTION
-@time sol = groundstate(problem)
+@time sol = groundstate(oxygen)
 
 plot_stopping_criteria([sol])
