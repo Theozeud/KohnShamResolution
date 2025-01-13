@@ -114,10 +114,8 @@ function (pb::PolynomialBasis)(coeffs::AbstractVector, x)
     localisation_x = KohnShamResolution.findindex(pb.mesh, x)
     T = eltype(pb)
     y = zero(T)
-    for i ∈ pb.cells_to_indices[localisation_x,:]
-        if !iszero(i)
-            y += coeffs[i] * pb(i, x)
-        end
+    for i ∈ eachindex(pb)
+        y += coeffs[i] * pb(i, x)
     end
     y
 end

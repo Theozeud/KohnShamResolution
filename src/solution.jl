@@ -55,7 +55,10 @@ function Base.show(io::IO, sol::KohnShamSolution)
         printstyled(io, string(sol.success)*"\n"; bold = true, color = :red)
     end
     printstyled(io, "Energy = $(sol.Energy) \n"; bold = true, color = :green)
-    printstyled(io, "Occupation number = $(sol.occupation_number) \n"; bold = true, color = :blue)
+    printstyled(io, "Occupation number = \n"; bold = true, color = :blue)
+    for i ∈ eachindex(sol.occupation_number)
+        printstyled(io, "            $(sol.occupation_number[i][1]) : ($(sol.occupation_number[i][2]),$(sol.occupation_number[i][3])) \n"; bold = true, color = :blue)
+    end
     printstyled(io, "niter = "; bold = true)
     println(io, string(sol.niter))
     printstyled(io, "Stopping criteria = "; bold = true)
