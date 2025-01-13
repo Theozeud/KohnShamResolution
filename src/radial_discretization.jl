@@ -17,6 +17,7 @@ mutable struct RadialCache
     Hartree         # Matrix VF of hartree 
     Exc             # Matrix VF of Exc
     Energy          # Total Energy
+    Energy_kin      # Kinetic Energy
 end
 
 mutable struct Radial_tmp_Cache
@@ -31,20 +32,21 @@ mutable struct Radial_tmp_Cache
 end
 
 function create_cache(lₕ, Nₕ, T, lmin)
-    A       = zeros(T, Nₕ, Nₕ) 
-    M₀      = zeros(T, Nₕ, Nₕ)
-    M₋₁     = zeros(T, Nₕ, Nₕ)
-    M₋₂     = zeros(T, Nₕ, Nₕ)
-    F       = zeros(T, Nₕ, Nₕ, Nₕ)
-    B       = zeros(T, Nₕ)
-    C       = zeros(T, Nₕ)
-    Cᵨ      = zero(T)
-    Kin     = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
-    Coulomb = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
-    Hfix    = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
-    Hartree = zeros(T, Nₕ, Nₕ)
-    Exc     = zeros(T, Nₕ, Nₕ)
-    Energy  = zero(T)
+    A           = zeros(T, Nₕ, Nₕ) 
+    M₀          = zeros(T, Nₕ, Nₕ)
+    M₋₁         = zeros(T, Nₕ, Nₕ)
+    M₋₂         = zeros(T, Nₕ, Nₕ)
+    F           = zeros(T, Nₕ, Nₕ, Nₕ)
+    B           = zeros(T, Nₕ)
+    C           = zeros(T, Nₕ)
+    Cᵨ          = zero(T)
+    Kin         = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
+    Coulomb     = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
+    Hfix        = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
+    Hartree     = zeros(T, Nₕ, Nₕ)
+    Exc         = zeros(T, Nₕ, Nₕ)
+    Energy      = zero(T)
+    Energy_kin  = zero(T)
 
     # Initialization of array for temporary stockage of computations
     tmp_H           = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
@@ -55,7 +57,7 @@ function create_cache(lₕ, Nₕ, T, lmin)
     tmp_ϵ           = zeros(T, lₕ+1 - lmin, Nₕ)
     tmp_n           = zeros(T, lₕ+1 - lmin, Nₕ)   
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1 - lmin))
-    RadialCache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Exc, Energy),  Radial_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
+    RadialCache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Exc, Energy, Energy_kin),  Radial_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
 end
 
 
@@ -76,7 +78,11 @@ struct KohnShamRadialDiscretization{T} <: KohnShamDiscretization
     cache::RadialCache
     tmp_cache::Radial_tmp_Cache
     function KohnShamRadialDiscretization(lₕ::Int, basis::Basis, mesh::Mesh; lmin = 0)
-        elT = bottom_type(basis)
+        elT = try
+             bottom_type(basis)
+        catch
+            eltype(basis)
+        end
         Nₕ = length(basis)
         @assert lmin ≤ lₕ
         new{eltype(mesh)}(lmin, lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache(lₕ, Nₕ, elT, lmin)...)
@@ -232,12 +238,22 @@ end
 #                             Energy
 #####################################################################
 
-function compute_energy!(discretization::KohnShamRadialDiscretization)
+function compute_energy(discretization::KohnShamRadialDiscretization)
+    compute_total_energy!(discretization)
+    compute_kinetic_energy!(discretization)
+end
+
+function compute_total_energy!(discretization::KohnShamRadialDiscretization)
     @unpack Rmin, Rmax = discretization
     @unpack B, C, Cᵨ = discretization.cache
     @unpack tmp_n, tmp_ϵ = discretization.tmp_cache
     @tensor energy = tmp_n[l,n] * tmp_ϵ[l,n] 
     discretization.cache.Energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/(Rmax-Rmin))
+    nothing
+end
+
+function compute_kinetic_energy!(discretization::KohnShamRadialDiscretization)
+
     nothing
 end
 
