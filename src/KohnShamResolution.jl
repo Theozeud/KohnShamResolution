@@ -42,10 +42,9 @@ module KohnShamResolution
     include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
     
-    # fem
+    # FEM
     abstract type Basis end
     abstract type AbstractLaurentPolynomialBasis <: Basis end 
-
 
     export LaurentPolynomialBasis
     export mass_matrix, stiffness_matrix, weight_mass_matrix, weight_mass_vector, vector_mass_matrix, vectorweight_mass_matrix,
@@ -54,6 +53,7 @@ module KohnShamResolution
     # SHORT BASIS
     include("fem/shortbasis/utils_computations.jl")
 
+    #### OLD
     export AbstractShortElements
     export getpolynomial, getderivpolynomial
     include("fem/shortbasis/abstractshortelement.jl")
@@ -65,6 +65,7 @@ module KohnShamResolution
     @inline getpolynomial(gen::AbstractGenerator, n::Int) = gen[n]
     @inline getderivpolynomial(gen::AbstractGenerator, n::Int) = getderivpolynomial(gen)[n]
 
+    #### OLD
     export InfoElement
     export ShortPolynomialBasis
     export bottom_type
@@ -75,12 +76,16 @@ module KohnShamResolution
     include("fem/newbasis/basis.jl")
     include("fem/newbasis/matrices.jl")
 
+
+    #### OLD
     export P1Elements, ShortP1Basis, IntLegendreElements, ShortIntLegendreBasis, DiffLegendreElements, ShortDiffLegendreBasis
     include("fem/shortbasis/elements.jl")
 
     #### NEW
     export IntLegendreGenerator, P1IntLegendreGenerator
     include("fem/newbasis/generators.jl")
+
+    #### OLD
 
     include("fem/shortbasis/fill_mass_matrix.jl")
 
@@ -92,9 +97,8 @@ module KohnShamResolution
 
     
     # KOHN-SHAM MODEL
-    export AbstractExchangeCorrelation, ExchangeCorrelation, NoExchangeCorrelation, KohnShamExtended
-    export build_SlaterXα, exc_SlaterXα, vxc_SlaterXα
-    export ReducedHartreeFock, SlaterXα
+    export ExchangeCorrelation,NoExchangeCorrelation, SlaterXα, LSDA
+    export KohnShamExtended, ReducedHartreeFock, SlaterXα
     include("models.jl")
     
     # SOLVER &CO

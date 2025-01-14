@@ -1,8 +1,4 @@
-@inline function shift(T::Type, a::Real, b::Real, mᵢ::Real, mᵢ₊₁::Real)
-    c1 = (T(mᵢ₊₁) - T(mᵢ))/(T(b) - T(a))
-    c0 = -T(a) * T(c1) + T(mᵢ)
-    LaurentPolynomial([c0, c1], 0, false, T(0))
-end
+
 
 ############################################################################
 # Fast Scalar Product
