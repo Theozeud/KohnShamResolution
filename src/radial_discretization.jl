@@ -136,7 +136,7 @@ init_occupation(kd::KohnShamRadialDiscretization)            = zeros(kd.elT, kd.
 function find_orbital!(discretization::KohnShamRadialDiscretization, solver::KhonShamSolver)
 
     @unpack lmin, lₕ = discretization
-    @unpack M₀, Hfix, Hartree, Exc = discretization.cache
+    @unpack M₀, Hfix, Hartree, Vxc = discretization.cache
     @unpack tmp_H, tmp_U, tmp_ϵ = discretization.tmp_cache
     @unpack Dprev = solver
     @unpack hartree = solver.opts
@@ -155,7 +155,7 @@ function find_orbital!(discretization::KohnShamRadialDiscretization, solver::Kho
     # STEP 3 : Solve the generalized eigenvalue problem for each section l
     @threads for l ∈ lmin:lₕ
         # building the hamiltonian of the lᵗʰ section
-        @. tmp_H[l+1-lmin,:,:] = Hfix[l+1-lmin,:,:] + Exc + Hartree
+        @. tmp_H[l+1-lmin,:,:] = Hfix[l+1-lmin,:,:] + Vxc + Hartree
         # solving
         tmp_ϵ[l+1-lmin,:], tmp_U[l+1-lmin,:,:] = solve_generalized_eigenvalue_problem(tmp_H[l+1-lmin,:,:], M₀)
         # normalization of eigenvector
@@ -229,8 +229,9 @@ end
 
 function exchange_corr_matrix!(discretization::KohnShamRadialDiscretization, model, D)
     @unpack Vxc = discretization.cache
-    #ρ(x) = eval_density_as_function(discretization, D, x)
-    #Vxc .= weight_mass_matrix(discretization.basis, model.exc.vxc∘ρ)
+    ρ(x) = compute_density(discretization, D, x)
+    weight(x) = vxc(model.exc, ρ(x))
+    Vxc .= weight_mass_matrix(discretization.basis, weight)
     nothing
 end
 
