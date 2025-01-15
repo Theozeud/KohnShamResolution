@@ -108,8 +108,11 @@ module KohnShamResolution
     export Solver, SolverOptions
     include("solver.jl")
 
-    export KohnShamRadialDiscretization
-    include("radial_discretization.jl")
+    abstract type KohnShamDiscretization end
+
+    export LDADiscretization, LSDADiscretization
+    include("lda_discretization.jl")
+    include("lsda_discretization.jl")
 
     abstract type SCFMethod end
 
