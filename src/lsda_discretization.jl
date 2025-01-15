@@ -44,19 +44,19 @@ function create_cache_lsda(lₕ, Nₕ, T)
     Coulomb     = zeros(T, lₕ+1, Nₕ, Nₕ)
     Hfix        = zeros(T, lₕ+1, Nₕ, Nₕ)
     Hartree     = zeros(T, Nₕ, Nₕ)
-    Vxc         = zeros(T, 2, Nₕ, Nₕ)
+    Vxc         = zeros(T, Nₕ, Nₕ, 2)
     Energy      = zero(T)
     Energy_kin  = zero(T)
 
     # Initialization of array for temporary stockage of computations
-    tmp_H           = zeros(T, 2, lₕ+1, Nₕ, Nₕ)
-    tmp_D           = zeros(T, 2, Nₕ, Nₕ)
-    tmp_Dstar       = zeros(T, 2, Nₕ, Nₕ)
-    tmp_U           = zeros(T, 2, lₕ+1, Nₕ, Nₕ)
+    tmp_H           = zeros(T, lₕ+1, Nₕ, Nₕ, 2)
+    tmp_D           = zeros(T, Nₕ, Nₕ, 2)
+    tmp_Dstar       = zeros(T, Nₕ, Nₕ, 2)
+    tmp_U           = zeros(T, lₕ+1, Nₕ, Nₕ, 2)
     tmp_MV          = zeros(T, Nₕ, Nₕ)
-    tmp_ϵ           = zeros(T, 2, lₕ+1, Nₕ)
-    tmp_n           = zeros(T, 2, lₕ+1, Nₕ)   
-    tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
+    tmp_ϵ           = zeros(T, lₕ+1, Nₕ, 2)
+    tmp_n           = zeros(T, lₕ+1, Nₕ, 2)   
+    tmp_index_sort  = zeros(Int, 2*Nₕ*(lₕ+1))
     LSDACache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Vxc, Energy, Energy_kin),  
     LSDA_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
 end
@@ -122,10 +122,10 @@ end
 #                          Init for Solver
 #####################################################################
 
-init_density_matrix(kd::LSDADiscretization)        = zeros(kd.elT, 2, kd.Nₕ, kd.Nₕ)  
-init_coeffs_discretization(kd::LSDADiscretization) = zeros(kd.elT, 2, kd.lₕ+1, kd.Nₕ, kd.Nₕ)
-init_energy(kd::LSDADiscretization)                = zeros(kd.elT, 2, kd.lₕ+1, kd.Nₕ)
-init_occupation(kd::LSDADiscretization)            = zeros(kd.elT, 2, kd.lₕ+1, kd.Nₕ)
+init_density_matrix(kd::LSDADiscretization)        = 0.1 .* ones(kd.elT,  kd.Nₕ, kd.Nₕ, 2)  
+init_coeffs_discretization(kd::LSDADiscretization) = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, kd.Nₕ, 2)
+init_energy(kd::LSDADiscretization)                = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, 2)
+init_occupation(kd::LSDADiscretization)            = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, 2)
 
 #####################################################################
 #               Find Orbital : Solve the eigen problems
@@ -154,9 +154,9 @@ function find_orbital!(discretization::LSDADiscretization, solver::KhonShamSolve
     @threads for σ ∈ 1:2
         @threads for l ∈ 0:lₕ
             # building the hamiltonian of the lᵗʰ section
-            @. tmp_H[σ, l+1,:,:] = Hfix[l+1,:,:] + Vxc[σ,:,:] + Hartree
+            @. tmp_H[l+1,:,:,σ] = Hfix[l+1,:,:] + Vxc[:,:,σ] + Hartree
             # solving
-            tmp_ϵ[σ, l+1,:], tmp_U[σ, l+1,:,:] = solve_generalized_eigenvalue_problem(tmp_H[σ, l+1,:,:], M₀)
+            tmp_ϵ[l+1,:,σ], tmp_U[l+1,:,:,σ] = solve_generalized_eigenvalue_problem(tmp_H[l+1,:,:,σ], M₀)
         end
     end
 end
@@ -172,9 +172,9 @@ function normalization!(discretization::LSDADiscretization)
     @inbounds for σ ∈ 1:2
         @inbounds for l ∈ 1:lₕ+1
             @inbounds for k ∈ 1:Nₕ
-                if !iszero(tmp_n[l,k])
-                    normalization = sqrt(tmp_U[σ,l,:,k]' * M₀ * tmp_U[σ,l,:,k])
-                    tmp_U[σ,l,:,k] .= tmp_U[σ,l,:,k] .* 1/normalization
+                if !iszero(tmp_n[l,k,σ])
+                    normalization = sqrt(tmp_U[l,:,k,σ]' * M₀ * tmp_U[l,:,k,σ])
+                    tmp_U[l,:,k,σ] .= tmp_U[l,:,k,σ] .* 1/normalization
                 end
             end
         end
@@ -214,8 +214,8 @@ function hartree_matrix!(discretization::LSDADiscretization, D)
     @unpack A, M₀, F, B, C, Hartree = discretization.cache
     @unpack tmp_MV = discretization.tmp_cache
     @unpack basis, Rmin, Rmax = discretization
-    @views DUP = D[1,:,:]   
-    @views DDOWN = D[2,:,:]
+    @views DUP = D[:,:,1]   
+    @views DDOWN = D[:,:,2]
     DD = DUP .+ DDOWN 
     @tensor B[m] = DD[i,j] * F[i,j,m]
     C .= A\B
@@ -231,28 +231,30 @@ end
 #####################################################################
 
 function exchange_corr_matrix!(discretization::LSDADiscretization, model, D)
-    @views DUP = D[1,:,:]   
-    @views DDOWN = D[2,:,:]
-    exchange_corr_matrixUP!(discretization, model, DUP)
-    exchange_corr_matrixDOWN!(discretization, model, DDOWN)
+    exchange_corr_matrixUP!(discretization, model, D)
+    exchange_corr_matrixDOWN!(discretization, model, D)
     nothing
 end
 
-function exchange_corr_matrixUP!(discretization::LSDADiscretization, model, DUP)
+function exchange_corr_matrixUP!(discretization::LSDADiscretization, model, D)
     @unpack Vxc = discretization.cache
+    @views DUP = D[:,:,1]   
+    @views DDOWN = D[:,:,2]
     ρUP(x) = compute_densityUP(discretization, DUP, x)
     ρDOWN(x) = compute_densityUP(discretization, DDOWN, x)
     weightUP(x) = vxcUP(model.exc, ρUP(x), ρDOWN(x))
-    fill_weight_mass_matrix!(Vxc[1,:,:], discretization.basis, weightUP)
+    fill_weight_mass_matrix!(discretization.basis, weightUP, Vxc[:,:,1])
     nothing
 end
 
-function exchange_corr_matrixDOWN!(discretization::LSDADiscretization, model, DDOWN)
+function exchange_corr_matrixDOWN!(discretization::LSDADiscretization, model, D)
     @unpack Vxc = discretization.cache
+    @views DUP = D[:,:,1]   
+    @views DDOWN = D[:,:,2]
     ρUP(x) = compute_densityUP(discretization, DUP, x)
     ρDOWN(x) = compute_densityUP(discretization, DDOWN, x)
     weightDOWN(x) = vxcDOWN(model.exc, ρUP(x), ρDOWN(x))
-    fill_weight_mass_matrix!(Vxc[2,:,:], discretization.basis, weightDOWN)
+    fill_weight_mass_matrix!(discretization.basis, weightDOWN, Vxc[:,:,2])
     nothing
 end
 
@@ -269,7 +271,7 @@ function compute_total_energy!(discretization::LSDADiscretization)
     @unpack Rmin, Rmax = discretization
     @unpack B, C, Cᵨ = discretization.cache
     @unpack tmp_n, tmp_ϵ = discretization.tmp_cache
-    @tensor energy = tmp_n[σ, l,n] * tmp_ϵ[σ, l,n] 
+    @tensor energy = tmp_n[l,n,σ] * tmp_ϵ[l,n,σ] 
     discretization.cache.Energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/(Rmax-Rmin))
     nothing
 end
@@ -290,11 +292,11 @@ function density_matrix!(discretization::LSDADiscretization)
     @inbounds for σ ∈ 1:2
         @inbounds for l ∈ 1:lₕ+1 
             @inbounds for k ∈ 1 :Nₕ
-                if !iszero(tmp_n[σ, l,k])
+                if !iszero(tmp_n[l,k,σ])
                     @inbounds for i ∈ 1:Nₕ
-                        val = tmp_n[σ,l,k] * tmp_U[σ,l,i,k] 
+                        val = tmp_n[l,k,σ] * tmp_U[l,i,k,σ] 
                         @inbounds @simd for j ∈ 1:i
-                            tmp_Dstar[σ,i,j] += val * tmp_U[σ,l,j,k]
+                            tmp_Dstar[i,j,σ] += val * tmp_U[l,j,k,σ]
                         end
                     end
                 end
@@ -303,7 +305,7 @@ function density_matrix!(discretization::LSDADiscretization)
     end
     @inbounds for i in 1:Nₕ
         @inbounds @simd for j in 1:i-1
-            tmp_Dstar[:,j,i] = tmp_Dstar[:,i,j]
+            tmp_Dstar[j,i,:] = tmp_Dstar[i,j,:]
         end
     end
     nothing
@@ -317,8 +319,8 @@ function compute_density(discretization::LSDADiscretization, D, x)
     @inbounds for i ∈ eachindex(basis)
         eval_basis[i] = basis(i,x)
     end
-    @views DUP = D[1,:,:]   
-    @views DDOWN = D[2,:,:]
+    @views DUP = D[:,:,1]   
+    @views DDOWN = D[:,:,2]
     val = (eval_basis)' * (DUP + DDOWN) * eval_basis
     return val* 1/4π * 1/(x^2)
 end

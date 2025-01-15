@@ -131,6 +131,6 @@ end
 
 isthereExchangeCorrelation(km::KohnShamExtended) = isthereExchangeCorrelation(km.exc)
 
-ReducedHartreeFock(z::Real, N::Int) = KohnShamExtended(z = z, N = N)
-SlaterXα(z::Real, N::Int) = KohnShamExtended(z = z, N = N, exc = SlaterXα())
-LDSA(z::Real, N::Int) = KohnShamExtended(z = z, N = N, exc = LDSA())
+ReducedHartreeFock(z::Real, N) = KohnShamExtended(z = z, N = N)
+SlaterXα(z::Real, N) = KohnShamExtended(z = z, N = N, exc = SlaterXα())
+LSDA(z::Real, N) = KohnShamExtended(z = z, N = N, exc = LSDA())
