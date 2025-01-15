@@ -1,15 +1,11 @@
 # Utils for intersection
 function find_intersection_indices(A, B)
-    # Find intersection of A and B excluding 0
     intersect_elements = filter(x -> x != 0, intersect(A, B))
-    # Create a vector of tuples (index_in_A, index_in_B)
     return [(findfirst(x -> x == el, A), findfirst(x -> x == el, B)) for el in intersect_elements]
 end
 
 function find_intersection_indices(A, B, C)
-    # Find intersection of A and B
     intersect_elements = filter(x -> x != 0, intersect(A, B, C))
-    # Create a vector of tuples (element, index_in_A, index_in_B)
     return  [(findfirst(x -> x == el, A), findfirst(x -> x == el, B), findfirst(x -> x == el, C)) for el in intersect_elements]
 end
 

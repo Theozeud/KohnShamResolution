@@ -90,6 +90,13 @@ end
 @inline getinvshift(pb::PolynomialBasis, i::Int, j::Int) = pb.invshifts[pb.indices_cells[i,j]]
 
 
+@inline function shift(T::Type, a::Real, b::Real, mᵢ::Real, mᵢ₊₁::Real)
+    # Linear function that maps [a,b] to [mᵢ, mᵢ₊₁]
+    c1 = (T(mᵢ₊₁) - T(mᵢ))/(T(b) - T(a))
+    c0 = -T(a) * T(c1) + T(mᵢ)
+    Polynomial([c0, c1], 0)
+end
+
 ########################       Evaluation tools       ########################
 
 function (pb::PolynomialBasis)(i::Int, x)
@@ -111,7 +118,7 @@ end
 
 function (pb::PolynomialBasis)(coeffs::AbstractVector, x)
     @assert length(coeffs) == pb.size
-    localisation_x = KohnShamResolution.findindex(pb.mesh, x)
+    #localisation_x = KohnShamResolution.findindex(pb.mesh, x)
     T = eltype(pb)
     y = zero(T)
     for i ∈ eachindex(pb)

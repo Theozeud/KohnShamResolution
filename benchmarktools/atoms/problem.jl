@@ -28,7 +28,7 @@ function KohnShamResolution.groundstate(prob::AtomProblem)
     mesh = prob.typemesh(zero(prob.T), prob.Rmax, prob.Nmesh; T = prob.T, prob.optsmesh...)
     basis = prob.typebasis(mesh, prob.T; prob.optsbasis...)
     discretization = KohnShamRadialDiscretization(prob.lh, basis, mesh)
-    groundstate(prob.model, discretization, prob.method; prob.solveropts...)
+    groundstate(prob.model, discretization, prob.method; name = prob.name, prob.solveropts...)
 end
 
 

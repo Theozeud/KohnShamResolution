@@ -47,7 +47,7 @@ end
 # Show function to print a summary of the solution in the stream
 
 function Base.show(io::IO, sol::KohnShamSolution)
-    printstyled(io, "Name : \n" * (sol.name); bold = true)
+    printstyled(io, "Name : " * (sol.name) * "\n"; bold = true)
     printstyled(io, "Sucess = "; bold = true)
     if sol.success == "SUCCESS"
         printstyled(io, string(sol.success)*"\n"; bold = true, color = :green)
