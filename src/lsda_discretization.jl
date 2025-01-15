@@ -83,7 +83,6 @@ struct LSDADiscretization{T} <: KohnShamDiscretization
             eltype(basis)
         end
         Nₕ = length(basis)
-        @assert lmin ≤ lₕ
         new{eltype(mesh)}(lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache_lsda(lₕ, Nₕ, elT)...)
     end
 end
@@ -134,8 +133,8 @@ init_occupation(kd::LSDADiscretization)            = zeros(kd.elT, 2, kd.lₕ+1,
 
 function find_orbital!(discretization::LSDADiscretization, solver::KhonShamSolver)
 
-    @unpack lmin, lₕ = discretization
-    @unpack M₀, Hfix, Hartree, VxcUP, VxcDOWN = discretization.cache
+    @unpack lₕ = discretization
+    @unpack M₀, Hfix, Hartree, Vxc = discretization.cache
     @unpack tmp_H, tmp_U, tmp_ϵ = discretization.tmp_cache
     @unpack Dprev = solver
     @unpack hartree = solver.opts
@@ -215,11 +214,11 @@ function hartree_matrix!(discretization::LSDADiscretization, D)
     @unpack A, M₀, F, B, C, Hartree = discretization.cache
     @unpack tmp_MV = discretization.tmp_cache
     @unpack basis, Rmin, Rmax = discretization
-    @tensor B[m] = D[σ,i,j] * F[i,j,m]
-    C .= A\B
     @views DUP = D[1,:,:]   
     @views DDOWN = D[2,:,:]
     DD = DUP .+ DDOWN 
+    @tensor B[m] = DD[i,j] * F[i,j,m]
+    C .= A\B
     @tensor newCᵨ = DD[i,j] * M₀[i,j]
     @tensor tmp_MV[i,j] = C[k] * F[i,j,k]
     @. Hartree = tmp_MV + newCᵨ/(Rmax-Rmin) * M₀

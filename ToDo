@@ -50,8 +50,4 @@
 
 ## TODO DFT
 
-- Passer à LDA
-    --> calcul de la matrice d'échange corrélation
-
-- Regarder ce qu'il faudra pour les ions
-    --> surtout la matrice d'échange corrélation
+- Tester LSDA

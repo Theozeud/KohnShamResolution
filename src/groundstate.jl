@@ -99,11 +99,12 @@ function update_solver!(solver::KhonShamSolver)
     solver.D .= tmp_D
     solver.U .= tmp_U
     solver.ϵ .= tmp_ϵ
-    solver.n .= tmp_n 
+    solver.n .= tmp_n
     solver.energy       = solver.discretization.cache.Energy
     solver.energy_kin   = solver.discretization.cache.Energy_kin
     tmp_D       .= zero(tmp_D)
     tmp_Dstar   .= zero(tmp_Dstar)
+    tmp_n       .= zero(tmp_n) 
     nothing
 end
 
