@@ -217,7 +217,10 @@ function hartree_matrix!(discretization::LSDADiscretization, D)
     @unpack basis, Rmin, Rmax = discretization
     @tensor B[m] = D[σ,i,j] * F[i,j,m]
     C .= A\B
-    @tensor newCᵨ = D[σ,i,j] * M₀[i,j]
+    @views DUP = D[1,:,:]   
+    @views DDOWN = D[2,:,:]
+    DD = DUP .+ DDOWN 
+    @tensor newCᵨ = DD[i,j] * M₀[i,j]
     @tensor tmp_MV[i,j] = C[k] * F[i,j,k]
     @. Hartree = tmp_MV + newCᵨ/(Rmax-Rmin) * M₀
     discretization.cache.Cᵨ = newCᵨ
@@ -239,15 +242,17 @@ end
 function exchange_corr_matrixUP!(discretization::LSDADiscretization, model, DUP)
     @unpack Vxc = discretization.cache
     ρUP(x) = compute_densityUP(discretization, DUP, x)
-    weightUP(x) = vxcUP(model.exc, ρUP(x))
+    ρDOWN(x) = compute_densityUP(discretization, DDOWN, x)
+    weightUP(x) = vxcUP(model.exc, ρUP(x), ρDOWN(x))
     fill_weight_mass_matrix!(Vxc[1,:,:], discretization.basis, weightUP)
     nothing
 end
 
 function exchange_corr_matrixDOWN!(discretization::LSDADiscretization, model, DDOWN)
     @unpack Vxc = discretization.cache
-    ρDOWN(x) = compute_densityDOWN(discretization, DDOWN, x)
-    weightDOWN(x) = vxcDOWN(model.exc, ρDOWN(x))
+    ρUP(x) = compute_densityUP(discretization, DUP, x)
+    ρDOWN(x) = compute_densityUP(discretization, DDOWN, x)
+    weightDOWN(x) = vxcDOWN(model.exc, ρUP(x), ρDOWN(x))
     fill_weight_mass_matrix!(Vxc[2,:,:], discretization.basis, weightDOWN)
     nothing
 end

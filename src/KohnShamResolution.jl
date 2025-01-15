@@ -98,7 +98,8 @@ module KohnShamResolution
     
     # KOHN-SHAM MODEL
     export ExchangeCorrelation,NoExchangeCorrelation, SlaterXα, LSDA
-    export KohnShamExtended, ReducedHartreeFock, SlaterXα
+    export exc, vxc, vxcUP, vxcDOWN
+    export KohnShamExtended, ReducedHartreeFock
     include("models.jl")
     
     # SOLVER &CO
