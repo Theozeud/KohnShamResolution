@@ -68,9 +68,12 @@ function aufbau!(discretization::LSDADiscretization, N; tol = eps(eltype(ϵ)))
             end
             remain -= total_degen
         else
+            tmp_n[1] = remain
+            #=
             for i in indices_degen
                 tmp_n[i] = remain/length(indices_degen)
             end
+            =#
             #=
             if length(indices_degen) == 1
                 # First case, if no degeneracy

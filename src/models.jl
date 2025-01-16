@@ -7,6 +7,8 @@ struct NoExchangeCorrelation <: ExchangeCorrelation end
 isthereExchangeCorrelation(::ExchangeCorrelation) = true
 isthereExchangeCorrelation(::NoExchangeCorrelation) = false
 
+isLSDA(::ExchangeCorrelation) = false
+
 # SlaterXα MODEL
 
 struct SlaterXα <: ExchangeCorrelation end
@@ -18,6 +20,8 @@ vxc(::SlaterXα, rho) = - (3/π)^(1/3) * rho^(1/3)
 ## LSDA MODEL
 
 struct LSDA <: ExchangeCorrelation end
+
+isLSDA(::LSDA) = true
 
 exc(lsda::LSDA, rhoUP, rhoDOWN) = ex(lsda, rhoUP,rhoDOWN) + ec(lsda, rhoUP,rhoDOWN)
 vxcUP(lsda::LSDA, rhoUP, rhoDOWN) = vxUP(lsda, rhoUP) + vcUP(lsda, rhoUP, rhoDOWN)
@@ -130,6 +134,7 @@ struct KohnShamExtended{TEXCH <: ExchangeCorrelation, TZ <: Real, TN <: Real} <:
 end
 
 isthereExchangeCorrelation(km::KohnShamExtended) = isthereExchangeCorrelation(km.exc)
+isLSDA(km::KohnShamExtended) = isLSDA(km.exc)
 
 ReducedHartreeFock(z::Real, N) = KohnShamExtended(z = z, N = N)
 SlaterXα(z::Real, N) = KohnShamExtended(z = z, N = N, exc = SlaterXα())

@@ -18,6 +18,7 @@ struct KohnShamSolution
     Energy_cou              # Final Coulomb energy
     Energy_har              # Final Hartree energy
     Energy_exc              # Final Exchange-correlation energy
+    Energy_kincor           # Final Kinetic-correlation energy
 
     occupation_number       # Final occupation number
     orbitals_energy         # Final orbitals energy
@@ -44,7 +45,7 @@ struct KohnShamSolution
                                 solver.n[i]) for i ∈ new_index]
 
         new(problem, success, solver.opts, solver.niter, solver.stopping_criteria, 
-            solver.energy,solver.energy_kin, solver.energy_cou, solver.energy_har, solver.energy_exc, 
+            solver.energy,solver.energy_kin, solver.energy_cou, solver.energy_har, solver.energy_exc, solver.energy_kincor,
             occupation_number, ϵ, solver.U, solver.D, solver.logbook, name)
     end
 end

@@ -262,25 +262,102 @@ end
 #                             Energy
 #####################################################################
 
-function compute_energy!(discretization::LSDADiscretization)
-    compute_total_energy!(discretization)
-    compute_kinetic_energy!(discretization)
+function compute_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+    compute_kinetic_energy!(discretization,solver)
+    compute_coulomb_energy!(discretization,solver)
+    compute_hartree_energy!(discretization,solver)
+    if isthereExchangeCorrelation(solver.model)
+        #compute_exchangecorrelation_energy!(discretization,solver)
+    end
+    if isLSDA(solver.model)
+        #compute_kinetic_correlation_energy!(discretization,solver)
+    end
+    compute_total_energy!(discretization,solver)
 end
 
-function compute_total_energy!(discretization::LSDADiscretization)
-    @unpack Rmin, Rmax = discretization
+function compute_total_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+    @unpack Rmax = discretization
+    @unpack B, C, Cᵨ, Vxc = discretization.cache
+    @unpack n, ϵ, D = solver
+    @tensor energy = n[l,n,σ] * ϵ[l,n,σ] 
+    if isthereExchangeCorrelation(solver.model)
+        @tensor energy_correction = Vxc[i,j,σ] * D[i,j,σ]
+        solver.energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax) + solver.energy_exc - energy_correction
+    else
+        solver.energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax)
+    end
+    nothing
+end
+
+function compute_kinetic_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+    @unpack A, M₋₂ = discretization.cache
+    @unpack U, n = solver
+    @unpack lₕ, Nₕ, elT  = discretization
+    solver.energy_kin = zero(solver.energy_kin)
+    @inbounds for σ ∈ 1:2
+        @inbounds for l ∈ 1:lₕ+1   
+            @inbounds for k ∈ 1:Nₕ
+                if !iszero(n[l,k,σ])
+                    solver.energy_kin += n[l,k,σ] * elT(0.5) * U[l,:,k,σ]' * (A + l*(l+1)*M₋₂) * U[l,:,k,σ]
+                end
+            end
+        end
+    end
+    nothing
+end
+
+function compute_coulomb_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+    @unpack M₋₁ = discretization.cache
+    @unpack U, n = solver
+    @unpack lₕ, Nₕ  = discretization
+    solver.energy_cou = zero(solver.energy_cou)
+    @inbounds for σ ∈ 1:2
+        @inbounds for l ∈ 1:lₕ+1   
+            @inbounds for k ∈ 1:Nₕ
+                if !iszero(n[l,k,σ])
+                    solver.energy_cou -= solver.model.z * n[l,k,σ] * U[l,:,k,σ]' * M₋₁ * U[l,:,k,σ]
+                end
+            end
+        end
+    end
+    nothing
+end
+
+function compute_hartree_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+    @unpack Rmax, elT = discretization
     @unpack B, C, Cᵨ = discretization.cache
-    @unpack tmp_n, tmp_ϵ = discretization.tmp_cache
-    @tensor energy = tmp_n[l,n,σ] * tmp_ϵ[l,n,σ] 
-    discretization.cache.Energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/(Rmax-Rmin))
+    solver.energy_har = elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax)
     nothing
 end
 
-function compute_kinetic_energy!(discretization::LSDADiscretization)
-
+function compute_exchangecorrelation_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+    @unpack D = solver
+    @unpack Rmax = discretization
+    @views DUP = D[:,:,1]   
+    @views DDOWN = D[:,:,2]
+    ρUP(x) = compute_densityUP(discretization, DUP, x)
+    ρDOWN(x) = compute_densityDOWN(discretization, DDOWN, x)
+    f(x,p) = exc(solver.model.exc, ρUP(x), ρDOWN(x)) * x^2
+    prob = IntegralProblem(f, (zero(Rmax),Rmax))
+    solver.energy_exc = 4π * solve(prob, QuadGKJL(); reltol = 1e-3, abstol = 1e-3).u
     nothing
 end
 
+function compute_kinetic_correlation_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+    @unpack D = solver
+    @unpack Rmax = discretization
+    @views DUP = D[:,:,1]   
+    @views DDOWN = D[:,:,2]
+    ρUP(x) = compute_densityUP(discretization, DUP, x)
+    ρDOWN(x) = compute_densityDOWN(discretization, DDOWN, x)
+    ρ(x) = ρDOWN(x) + ρUP(x)
+    ξ(x) = (ρUP(x) - ρDOWN(x))/ρ(x)
+    rs(x) = (3/(4π * ρ(x)))^(1/3)
+    tc(x,p) =  - 4 * ec(solver.model.exc, ρUP(x), ρDOWN(x)) * ρ(x) * x^2 + 3 * x^2 * ( ρUP(x)* vcUP(solver.model.exc, ρUP(x), ρDOWN(x))+ ρDOWN(x) * vcDOWN(solver.model.exc, ρUP(x), ρDOWN(x))) #
+    prob = IntegralProblem(tc, (zero(Rmax),Rmax))
+    solver.energy_kincor = 4π * solve(prob, QuadGKJL(); reltol = 1e-10, abstol = 1e-10).u
+    nothing
+end
 
 #####################################################################
 #                             Density

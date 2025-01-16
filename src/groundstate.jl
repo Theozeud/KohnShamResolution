@@ -24,17 +24,18 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     init_cache!(discretization, model, hartree)
 
     # Init storage array
-    D           = init_density_matrix(discretization)
-    Dprev       = init_density_matrix(discretization)
-    U           = init_coeffs_discretization(discretization)
-    ϵ           = init_energy(discretization)
-    n           = init_occupation(discretization)
-    energy      = zero(T)
-    energy_kin  = zero(T)
-    energy_cou  = zero(T)
-    energy_har  = zero(T)
-    energy_exc  = zero(T)
-
+    D               = init_density_matrix(discretization)
+    Dprev           = init_density_matrix(discretization)
+    U               = init_coeffs_discretization(discretization)
+    ϵ               = init_energy(discretization)
+    n               = init_occupation(discretization)
+    energy          = zero(T)
+    energy_kin      = zero(T)
+    energy_cou      = zero(T)
+    energy_har      = zero(T)
+    energy_exc      = zero(T)
+    energy_kincor   = zero(T)
+    
     #  SolverOptions
     opts = SolverOptions(T(scftol), maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), T(degen_tol))
 
@@ -44,7 +45,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     logbook = LogBook(logconfig, T)
     
     KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, 
-                   energy, energy_kin, energy_cou, energy_har, energy_exc, logbook)
+                   energy, energy_kin, energy_cou, energy_har, energy_exc, energy_kincor, logbook)
 end
 
 
