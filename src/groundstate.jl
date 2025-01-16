@@ -31,7 +31,10 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     n           = init_occupation(discretization)
     energy      = zero(T)
     energy_kin  = zero(T)
-    
+    energy_cou  = zero(T)
+    energy_har  = zero(T)
+    energy_exc  = zero(T)
+
     #  SolverOptions
     opts = SolverOptions(T(scftol), maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), T(degen_tol))
 
@@ -40,7 +43,8 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     stopping_criteria = zero(T)
     logbook = LogBook(logconfig, T)
     
-    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, energy, energy_kin, logbook)
+    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, 
+                   energy, energy_kin, energy_cou, energy_har, energy_exc, logbook)
 end
 
 
@@ -70,10 +74,7 @@ function performstep!(solver::KhonShamSolver)
     # STEP 5 : Compute new density
     update_density!(solver.method, solver)
 
-    # STEP 6 : Compute the energies
-    compute_energy!(solver.discretization)
-
-    # STEP 7 : Update Solver
+    # STEP 6 : Update Solver
     update_solver!(solver)
 end
 
@@ -100,8 +101,7 @@ function update_solver!(solver::KhonShamSolver)
     solver.U .= tmp_U
     solver.ϵ .= tmp_ϵ
     solver.n .= tmp_n
-    solver.energy       = solver.discretization.cache.Energy
-    solver.energy_kin   = solver.discretization.cache.Energy_kin
+    compute_energy!(solver.discretization, solver)
     tmp_D       .= zero(tmp_D)
     tmp_Dstar   .= zero(tmp_Dstar)
     tmp_n       .= zero(tmp_n) 
@@ -113,6 +113,6 @@ function update_log!(solver::KhonShamSolver)
     @unpack occupation_number, orbitals_energy, stopping_criteria, energy, density = logbook.config
     stopping_criteria ? push!(solver.logbook.stopping_criteria_log, solver.stopping_criteria)  : nothing     # STORE THE STOPPING CRITERIA 
     orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ[1,:]))         : nothing     # STORE THE ORBITALS ENERGY
-    energy ?            push!(solver.logbook.energy_log, solver.discretization.cache.Energy)   : nothing     # STORE THE TOTAL ENERGY
+    energy ?            push!(solver.logbook.energy_log, solver.energy)                        : nothing     # STORE THE TOTAL ENERGY
     nothing
 end

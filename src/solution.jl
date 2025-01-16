@@ -15,6 +15,10 @@ struct KohnShamSolution
               
     Energy                  # Final energy
     Energy_kin              # Final Kinertic energy
+    Energy_cou              # Final Coulomb energy
+    Energy_har              # Final Hartree energy
+    Energy_exc              # Final Exchange-correlation energy
+
     occupation_number       # Final occupation number
     orbitals_energy         # Final orbitals energy
     orbitals                # Final coefficients of orbitals
@@ -39,8 +43,9 @@ struct KohnShamSolution
         occupation_number = [(string(i[2]+ i[1] -1, L_QUANTUM_LABELS[i[1]]), solver.ϵ[i], 
                                 solver.n[i]) for i ∈ new_index]
 
-        new(problem, success, solver.opts, solver.niter, solver.stopping_criteria, solver.energy,
-         solver.energy_kin, occupation_number, ϵ, solver.U, solver.D, solver.logbook, name)
+        new(problem, success, solver.opts, solver.niter, solver.stopping_criteria, 
+            solver.energy,solver.energy_kin, solver.energy_cou, solver.energy_har, solver.energy_exc, 
+            occupation_number, ϵ, solver.U, solver.D, solver.logbook, name)
     end
 end
 
