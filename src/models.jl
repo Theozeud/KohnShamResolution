@@ -32,20 +32,20 @@ vxUP(::LSDA, rhoUP) = -(6/π * rhoUP )^(1/3)
 vxDOWN(::LSDA, rhoDOWN) = -(6/π * rhoDOWN )^(1/3)
 
 
-function G(p, rs, A, α₁, β₁, β₂, β₃, β₄)
+function G(rs, p, A, α₁, β₁, β₂, β₃, β₄)
     # Spin interpolation formula
     tmp = 2*A*(β₁*rs^(1/2) + β₂*rs + β₃*rs^(3/2) + β₄^(1+p))
     -2*A*(1+α₁*rs) * (log(tmp +1) - log(tmp))
 end
 
-function ∂G(p, rs, A, α₁, β₁, β₂, β₃, β₄)
+function ∂G(rs, p, A, α₁, β₁, β₂, β₃, β₄)
     rs12    = rs^(1/2)
     rs32    = rs * rs^(1/2)
     rsp     = rs^p
     Q0      = -2*A*(1+α₁*rs)
     Q1      = 2*A*(β₁*rs12 + β₂*rs + β₃*rs32 + β₄*rsp * rs)
     derivQ1 = A*(β₁*rs^(-1/2) + 2*β₂ + 3*β₃*rs12 + 2*(p+1)*β₄ *rsp)
-    return -2 * A * α₁ * (log(Q1+1) -log(Q1)) - (Q0*derivQ1)/(Q1^2 + Q1)
+    return -2 * A * α₁ * (log(1+1/Q1)) - (Q0*derivQ1)/(Q1^2 + Q1)
 end
 
 
@@ -85,18 +85,23 @@ function vcUP(::LSDA, rhoUP, rhoDOWN)
     rho = rhoDOWN + rhoUP                                   # Density
     ξ   = (rhoUP - rhoDOWN)/rho                             # Relative spin polarization
     rs  = (3/(4π*rho))^(1/3)                                # Density parameter
+    fξ    = f(ξ)                                            
+    ξ4    = ξ^4
+
     εcPW0 =  G(rs, LSDA_CORRELATION_PARAMETERS[:,1]...)     # Correlation energy densioty for ξ = 0
     εcPW1 =  G(rs, LSDA_CORRELATION_PARAMETERS[:,2]...)     # Correlation energy densioty for ξ = 1
     αc    = -G(rs, LSDA_CORRELATION_PARAMETERS[:,3]...)     # Spin stiffness
-    εcPWξ  =  εcPW(rs, ξ)
+    εcPWξ  =  εcPW0 + αc * (1 - ξ4) * fξ * invd2f0 + (εcPW1 - εcPW0) * ξ4 * fξ
+    ΔεcPW10  = εcPW1 - εcPW0
+
     ∂rs∂εcPW0 =  ∂G(rs, LSDA_CORRELATION_PARAMETERS[:,1]...)
     ∂rs∂εcPW1 =  ∂G(rs, LSDA_CORRELATION_PARAMETERS[:,2]...)
     dαc       = -∂G(rs, LSDA_CORRELATION_PARAMETERS[:,3]...)
-    fξ    = f(ξ)                                            # f(ξ)
-    ξ4    = ξ^4                                             # ξ4
+                                                 
     ∂rs∂εcPW =  ∂rs∂εcPW0 + (∂rs∂εcPW1 - ∂rs∂εcPW0) * fξ * ξ4 + dαc * f(ξ) * (1 - ξ4) * invd2f0
-    ΔεcPW10  = εcPW1 - εcPW0
-    ∂ξ∂εcPW  = 4ξ^3 *fξ * (ΔεcPW10 - αc * invd2f0) + derivf(ξ) * (ξ4 * ΔεcPW10 + (1 - ξ4) * αc * invd2f0)
+    
+    ∂ξ∂εcPW  = 4*ξ^3 *fξ * (ΔεcPW10 - αc * invd2f0) + derivf(ξ) * (ξ4 * ΔεcPW10 + (1 - ξ4) * αc * invd2f0)
+
     return εcPWξ - rs/3 * ∂rs∂εcPW - (ξ - 1) * ∂ξ∂εcPW
 end
 
@@ -115,7 +120,7 @@ function vcDOWN(::LSDA, rhoUP, rhoDOWN)
     ξ4    = ξ^4 
     ∂rs∂εcPW = ∂rs∂εcPW0 * (1 - fξ * ξ4) + ∂rs∂εcPW1 * fξ * ξ4 + dαc * f(ξ) * (1 - ξ^4) * invd2f0
     ΔεcPW10  = εcPW1 - εcPW0
-    ∂ξ∂εcPW  = 4ξ^3 *fξ * (ΔεcPW10 - αc * invd2f0) + derivf(ξ) * (ξ4 * ΔεcPW10 + (1 - ξ4) * αc * invd2f0)
+    ∂ξ∂εcPW  = 4*ξ^3 *fξ * (ΔεcPW10 - αc * invd2f0) + derivf(ξ) * (ξ4 * ΔεcPW10 + (1 - ξ4) * αc * invd2f0)
     return εcPWξ - rs/3 * ∂rs∂εcPW - (ξ + 1) * ∂ξ∂εcPW
 end
 

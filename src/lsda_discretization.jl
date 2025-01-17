@@ -151,8 +151,8 @@ function find_orbital!(discretization::LSDADiscretization, solver::KhonShamSolve
     end
 
     # STEP 3 : Solve the generalized eigenvalue problem for each section l and spin up and down
-    @threads for σ ∈ 1:2
-        @threads for l ∈ 0:lₕ
+    for σ ∈ 1:2
+        for l ∈ 0:lₕ
             # building the hamiltonian of the lᵗʰ section
             @. tmp_H[l+1,:,:,σ] = Hfix[l+1,:,:] + Vxc[:,:,σ] + Hartree
             # solving
@@ -241,9 +241,10 @@ function exchange_corr_matrixUP!(discretization::LSDADiscretization, model, D)
     @views DUP = D[:,:,1]   
     @views DDOWN = D[:,:,2]
     ρUP(x) = compute_densityUP(discretization, DUP, x)
-    ρDOWN(x) = compute_densityUP(discretization, DDOWN, x)
+    ρDOWN(x) = compute_densityDOWN(discretization, DDOWN, x)
     weightUP(x) = vxcUP(model.exc, ρUP(x), ρDOWN(x))
-    fill_weight_mass_matrix!(discretization.basis, weightUP, Vxc[:,:,1])
+    @views VxcUP = Vxc[:,:,1]
+    fill_weight_mass_matrix!(discretization.basis, weightUP, VxcUP)
     nothing
 end
 
@@ -252,9 +253,10 @@ function exchange_corr_matrixDOWN!(discretization::LSDADiscretization, model, D)
     @views DUP = D[:,:,1]   
     @views DDOWN = D[:,:,2]
     ρUP(x) = compute_densityUP(discretization, DUP, x)
-    ρDOWN(x) = compute_densityUP(discretization, DDOWN, x)
+    ρDOWN(x) = compute_densityDOWN(discretization, DDOWN, x)
     weightDOWN(x) = vxcDOWN(model.exc, ρUP(x), ρDOWN(x))
-    fill_weight_mass_matrix!(discretization.basis, weightDOWN, Vxc[:,:,2])
+    @views VxcDOWN = Vxc[:,:,2]
+    fill_weight_mass_matrix!(discretization.basis, weightDOWN, VxcDOWN)
     nothing
 end
 
@@ -267,10 +269,10 @@ function compute_energy!(discretization::LSDADiscretization, solver::KhonShamSol
     compute_coulomb_energy!(discretization,solver)
     compute_hartree_energy!(discretization,solver)
     if isthereExchangeCorrelation(solver.model)
-        #compute_exchangecorrelation_energy!(discretization,solver)
+        compute_exchangecorrelation_energy!(discretization,solver)
     end
     if isLSDA(solver.model)
-        #compute_kinetic_correlation_energy!(discretization,solver)
+        compute_kinetic_correlation_energy!(discretization,solver)
     end
     compute_total_energy!(discretization,solver)
 end

@@ -2,15 +2,15 @@ include("../../../../benchmarktools/atoms/setup.jl")
 using KohnShamResolution
 
 # LOG CONFIG
-logconfig = LogConfig()
+logconfig = LogConfig(orbitals_energy = true)
 
 problem = AtomProblem(;
                 T               = Float64, 
                 lh              = 0, 
-                method          = CDA(0.7), 
+                method          = CDA(0.5), 
                 model           = LSDA(1, 1), 
-                Rmax            = 40.0, 
-                Nmesh           = 40,
+                Rmax            = 30.0, 
+                Nmesh           = 50,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
@@ -18,7 +18,7 @@ problem = AtomProblem(;
                 typediscre      = LSDADiscretization, 
                 name            = "test", 
                 scftol          = 1e-6,
-                maxiter         = 1,
+                maxiter         = 50,
                 hartree         = true,
                 logconfig       = logconfig)
 

@@ -52,13 +52,15 @@ end
 
 function solve!(solver::KhonShamSolver)
     while (solver.stopping_criteria > solver.opts.scftol || iszero(solver.niter)) && solver.niter < solver.opts.maxiter
+        println("Iteration : $(solver.niter)")
+        loopheader!(solver)
         performstep!(solver)
         loopfooter!(solver)
     end
+    compute_energy!(solver.discretization, solver)
 end
 
 function performstep!(solver::KhonShamSolver)
-
     # STEP 1 : Resolution of the generalized eigenvalue problem to find atomic orbitals and corresonding energies
     find_orbital!(solver.discretization, solver)
 
@@ -79,6 +81,12 @@ function performstep!(solver::KhonShamSolver)
     update_solver!(solver)
 end
 
+function loopheader!(solver::KhonShamSolver)
+    @unpack tmp_D, tmp_Dstar, tmp_n = solver.discretization.tmp_cache
+    tmp_D       .= zero(tmp_D)
+    tmp_Dstar   .= zero(tmp_Dstar)
+    tmp_n       .= zero(tmp_n)                                          
+end 
 
 function loopfooter!(solver::KhonShamSolver)
     solver.stopping_criteria = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA 
@@ -97,15 +105,11 @@ function makesolution(solver::KhonShamSolver, name::String)
 end
 
 function update_solver!(solver::KhonShamSolver)
-    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_ϵ, tmp_n = solver.discretization.tmp_cache
+    @unpack tmp_D, tmp_U, tmp_ϵ, tmp_n = solver.discretization.tmp_cache
     solver.D .= tmp_D
     solver.U .= tmp_U
     solver.ϵ .= tmp_ϵ
     solver.n .= tmp_n
-    compute_energy!(solver.discretization, solver)
-    tmp_D       .= zero(tmp_D)
-    tmp_Dstar   .= zero(tmp_Dstar)
-    tmp_n       .= zero(tmp_n) 
     nothing
 end
 
@@ -113,7 +117,7 @@ function update_log!(solver::KhonShamSolver)
     @unpack logbook = solver
     @unpack occupation_number, orbitals_energy, stopping_criteria, energy, density = logbook.config
     stopping_criteria ? push!(solver.logbook.stopping_criteria_log, solver.stopping_criteria)  : nothing     # STORE THE STOPPING CRITERIA 
-    orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ[1,:]))         : nothing     # STORE THE ORBITALS ENERGY
+    orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ))              : nothing     # STORE THE ORBITALS ENERGY
     energy ?            push!(solver.logbook.energy_log, solver.energy)                        : nothing     # STORE THE TOTAL ENERGY
     nothing
 end
