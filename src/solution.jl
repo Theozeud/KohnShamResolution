@@ -1,6 +1,7 @@
 # Structure Solution 
 
 const L_QUANTUM_LABELS = ("s", "p", "d", "f", "g", "h", "i")
+const SPIN_LABELS = ("↑", "↓")
 
 struct KohnShamSolution
     problem                 # Problem solved
@@ -35,19 +36,31 @@ struct KohnShamSolution
 
         success = solver.niter == solver.opts.maxiter ? "MAXITERS" : "SUCCESS"
 
-        @unpack ϵ, n = solver
-
-        index = findall(x->x ≠ 0, n)
-        ϵ_full = solver.ϵ[index]
-        index_sort = sortperm(ϵ_full)
-        new_index = index[index_sort]
-        occupation_number = [(string(i[2]+ i[1] -1, L_QUANTUM_LABELS[i[1]]), solver.ϵ[i], 
-                                solver.n[i]) for i ∈ new_index]
+        occupation_number = make_occupation_number(solver.discretization, solver)
 
         new(problem, success, solver.opts, solver.niter, solver.stopping_criteria, 
             solver.energy,solver.energy_kin, solver.energy_cou, solver.energy_har, solver.energy_exc, solver.energy_kincor,
-            occupation_number, ϵ, solver.U, solver.D, solver.logbook, name)
+            occupation_number, solver.ϵ, solver.U, solver.D, solver.logbook, name)
     end
+end
+
+
+# Make occupation number
+
+function make_occupation_number(::LDADiscretization, solver::KhonShamSolver)
+    @unpack ϵ, n = solver
+    index = findall(x->x ≠ 0, n)
+    index_sort = sortperm(solver.ϵ[index])
+    new_index = index[index_sort]
+    return [(string(i[2]+ i[1] -1, L_QUANTUM_LABELS[i[1]]), solver.ϵ[i], solver.n[i]) for i ∈ new_index]
+end
+
+function make_occupation_number(::LSDADiscretization, solver::KhonShamSolver)
+    @unpack ϵ, n = solver
+    index = findall(x->x ≠ 0, n)
+    index_sort = sortperm(solver.ϵ[index])
+    new_index = index[index_sort]
+    return [(string(i[2]+ i[1] -1, L_QUANTUM_LABELS[i[1]],SPIN_LABELS[i[3]]), solver.ϵ[i], solver.n[i]) for i ∈ new_index]
 end
 
 # Show function to print a summary of the solution in the stream
@@ -63,7 +76,7 @@ function Base.show(io::IO, sol::KohnShamSolution)
     printstyled(io, "Energy = $(sol.Energy) \n"; bold = true, color = :green)
     printstyled(io, "Occupation number = \n"; bold = true, color = :blue)
     for i ∈ eachindex(sol.occupation_number)
-        printstyled(io, "            $(sol.occupation_number[i][1]) : ($(sol.occupation_number[i][2]),$(sol.occupation_number[i][3])) \n"; bold = true, color = :blue)
+        display_occupation_number(io, sol.problem.discretization, sol.occupation_number[i])
     end
     printstyled(io, "niter = "; bold = true)
     println(io, string(sol.niter))
@@ -71,11 +84,22 @@ function Base.show(io::IO, sol::KohnShamSolution)
     println(io, string(sol.stopping_criteria ))
 end
 
+function display_occupation_number(io::IO, ::LDADiscretization, occupation_number)
+    printstyled(io, "            $(occupation_number[1]) : ($(occupation_number[2]),$(occupation_number[3])) \n"; bold = true, color = :blue)
+end
+
+function display_occupation_number(io::IO, ::LSDADiscretization, occupation_number)
+    printstyled(io, "            $(occupation_number[1]) : ($(occupation_number[2]),$(occupation_number[3])) \n"; bold = true, color = :blue)
+end
 
 # Compute eigenvector
-function eigenvector(sol::KohnShamSolution, n::Int, l::Int, x)
+function eigenvector(sol::KohnShamSolution, n::Int, l::Int, σ::Int, x)
+    eigenvector(sol.problem.discretization, sol, n, l, σ, x)
+end
+
+function eigenvector(discretization::LDADiscretization, sol::KohnShamSolution, n::Int, l::Int, σ::Int, x)
     @assert 0 ≤ l ≤ n-1
-    tmp = sol.problem.discretization.basis(sol.orbitals[l+1,:, n-l], x)
+    tmp = discretization.basis(sol.orbitals[l+1,:, n-l], x)
     if iszero(x) && tmp ≈ zero(tmp)
         return zero(tmp)
     else
@@ -83,10 +107,18 @@ function eigenvector(sol::KohnShamSolution, n::Int, l::Int, x)
     end
 end
 
+function eigenvector(discretization::LSDADiscretization, sol::KohnShamSolution, n::Int, l::Int, σ::Int, x)
+    @assert 0 ≤ l ≤ n-1
+    tmp = discretization.basis(sol.orbitals[l+1,:, n-l,σ], x)
+    if iszero(x) && tmp ≈ zero(tmp)
+        return zero(tmp)
+    else
+        return  1/sqrt(4π * x) * tmp 
+    end
+end
+
+
 # Compute density
 function density(sol::KohnShamSolution, x)
     compute_density(sol.problem.discretization, sol.density_coeffs, x)
 end
-
-
-
