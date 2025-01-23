@@ -126,7 +126,7 @@ module KohnShamResolution
     export CDA
     include("methods.jl")
 
-    export KohnShamSolution, eigenvector, density
+    export KohnShamSolution, eigenvector, density, total_charge
     include("solution.jl")
 
     export groundstate

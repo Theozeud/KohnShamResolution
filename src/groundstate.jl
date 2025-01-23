@@ -49,7 +49,6 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
 end
 
 
-
 function solve!(solver::KhonShamSolver)
     while (solver.stopping_criteria > solver.opts.scftol || iszero(solver.niter)) && solver.niter < solver.opts.maxiter
         println("Iteration : $(solver.niter)")
@@ -116,8 +115,19 @@ end
 function update_log!(solver::KhonShamSolver)
     @unpack logbook = solver
     @unpack occupation_number, orbitals_energy, stopping_criteria, energy, density = logbook.config
-    stopping_criteria ? push!(solver.logbook.stopping_criteria_log, solver.stopping_criteria)  : nothing     # STORE THE STOPPING CRITERIA 
-    orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ))              : nothing     # STORE THE ORBITALS ENERGY
-    energy ?            push!(solver.logbook.energy_log, solver.energy)                        : nothing     # STORE THE TOTAL ENERGY
-    nothing
+
+    # STORE THE STOPPING CRITERIA 
+    stopping_criteria ? push!(solver.logbook.stopping_criteria_log, solver.stopping_criteria)  : nothing     
+    
+    # STORE THE ORBITALS ENERGY
+    orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ))              : nothing     
+    
+    # STORE THE TOTAL ENERGY
+    if energy
+        if isthereExchangeCorrelation(solver.model)
+            compute_exchangecorrelation_energy!(solver.discretization, solver)
+        end
+        compute_total_energy!(solver.discretization, solver)
+        push!(solver.logbook.energy_log, solver.energy)                           
+    end
 end

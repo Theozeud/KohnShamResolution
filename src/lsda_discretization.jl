@@ -122,7 +122,12 @@ end
 #                          Init for Solver
 #####################################################################
 
-init_density_matrix(kd::LSDADiscretization)        = 0.1 .* ones(kd.elT,  kd.Nₕ, kd.Nₕ, 2)  
+function init_density_matrix(kd::LSDADiscretization)
+    D = zeros(kd.elT,  kd.Nₕ, kd.Nₕ, 2)
+    D[:,:,2] .= Matrix(I,kd.Nₕ, kd.Nₕ)
+    D[:,:,1] .= Matrix(I,kd.Nₕ, kd.Nₕ)
+    return D
+end
 init_coeffs_discretization(kd::LSDADiscretization) = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, kd.Nₕ, 2)
 init_energy(kd::LSDADiscretization)                = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, 2)
 init_occupation(kd::LSDADiscretization)            = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, 2)
@@ -213,7 +218,7 @@ end
 function hartree_matrix!(discretization::LSDADiscretization, D)
     @unpack A, M₀, F, B, C, Hartree = discretization.cache
     @unpack tmp_MV = discretization.tmp_cache
-    @unpack basis, Rmin, Rmax = discretization
+    @unpack basis, Rmax = discretization
     @views DUP = D[:,:,1]   
     @views DDOWN = D[:,:,2]
     DD = DUP .+ DDOWN 
@@ -221,7 +226,7 @@ function hartree_matrix!(discretization::LSDADiscretization, D)
     C .= A\B
     @tensor newCᵨ = DD[i,j] * M₀[i,j]
     @tensor tmp_MV[i,j] = C[k] * F[i,j,k]
-    @. Hartree = tmp_MV + newCᵨ/(Rmax-Rmin) * M₀
+    @. Hartree = tmp_MV + newCᵨ/Rmax * M₀
     discretization.cache.Cᵨ = newCᵨ
     nothing
 end
@@ -341,7 +346,7 @@ function compute_exchangecorrelation_energy!(discretization::LSDADiscretization,
     ρDOWN(x) = compute_densityDOWN(discretization, DDOWN, x)
     f(x,p) = exc(solver.model.exc, ρUP(x), ρDOWN(x)) * x^2
     prob = IntegralProblem(f, (zero(Rmax),Rmax))
-    solver.energy_exc = 4π * solve(prob, QuadGKJL(); reltol = 1e-3, abstol = 1e-3).u
+    solver.energy_exc = 4π * solve(prob, QuadGKJL(); reltol = 1e-10, abstol = 1e-10).u
     nothing
 end
 
@@ -355,7 +360,7 @@ function compute_kinetic_correlation_energy!(discretization::LSDADiscretization,
     ρ(x) = ρDOWN(x) + ρUP(x)
     ξ(x) = (ρUP(x) - ρDOWN(x))/ρ(x)
     rs(x) = (3/(4π * ρ(x)))^(1/3)
-    tc(x,p) =  - 4 * ec(solver.model.exc, ρUP(x), ρDOWN(x)) * ρ(x) * x^2 + 3 * x^2 * ( ρUP(x)* vcUP(solver.model.exc, ρUP(x), ρDOWN(x))+ ρDOWN(x) * vcDOWN(solver.model.exc, ρUP(x), ρDOWN(x))) #
+    tc(x,p) =  -4 * ec(solver.model.exc, ρUP(x), ρDOWN(x)) * ρ(x) * x^2 + 3 * x^2 * ( ρUP(x)* vcUP(solver.model.exc, ρUP(x), ρDOWN(x))+ ρDOWN(x) * vcDOWN(solver.model.exc, ρUP(x), ρDOWN(x))) #
     prob = IntegralProblem(tc, (zero(Rmax),Rmax))
     solver.energy_kincor = 4π * solve(prob, QuadGKJL(); reltol = 1e-10, abstol = 1e-10).u
     nothing
@@ -370,7 +375,7 @@ function density_matrix!(discretization::LSDADiscretization)
     @unpack lₕ, Nₕ  = discretization
     @inbounds for σ ∈ 1:2
         @inbounds for l ∈ 1:lₕ+1 
-            @inbounds for k ∈ 1 :Nₕ
+            @inbounds for k ∈ 1:Nₕ
                 if !iszero(tmp_n[l,k,σ])
                     @inbounds for i ∈ 1:Nₕ
                         val = tmp_n[l,k,σ] * tmp_U[l,i,k,σ] 
