@@ -15,4 +15,16 @@ end
 
 # Optimal Dampling Algotithm
 
+struct ODA <: SCFMethod end
 
+function update_density!(::ODA, solver::KhonShamSolver)
+    @unpack tmp_D, tmp_Dstar = solver.discretization.tmp_cache
+
+    if isthereExchangeCorrelation(solver.model)
+        
+    else
+
+    end
+    tmp_D .= t * tmp_Dstar + (1 - t) * solver.Dprev
+    nothing
+end
