@@ -2,22 +2,23 @@ include("../../../../benchmarktools/atoms/setup.jl")
 using KohnShamResolution
 
 # LOG CONFIG
-logconfig = LogConfig()
+logconfig = LogConfig(orbitals_energy = true, energy = true)
 
 problem = AtomProblem(;
                 T               = Float64, 
-                lh              = 2, 
-                method          = CDA(0.4), 
-                model           = SlaterXα(40, 40), 
-                Rmax            = 80.0, 
-                Nmesh           = 100,
+                lh              = 0, 
+                method          = CDA(0.7), 
+                model           = ReducedHartreeFock(1, 1), 
+                Rmax            = 50.0, 
+                Nmesh           = 40,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
-                optsbasis       = (ordermax = 4,), 
+                optsbasis       = (ordermax = 2,),
+                typediscre      = LSDADiscretization, 
                 name            = "test", 
-                scftol          = 1e-10,
-                maxiter         = 100,
+                scftol          = 1e-6,
+                maxiter         = 50,
                 hartree         = true,
                 logconfig       = logconfig)
 

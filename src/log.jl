@@ -5,7 +5,7 @@ struct LogConfig
     energy::Bool
     density::Bool
 
-    function LogConfig(;occupation_number = false, orbitals_energy = false, stopping_criteria = true, energy = true, density = false)
+    function LogConfig(;occupation_number = false, orbitals_energy = false, stopping_criteria = true, energy = false, density = false)
         new(occupation_number, orbitals_energy, stopping_criteria, energy, density)
     end
 end

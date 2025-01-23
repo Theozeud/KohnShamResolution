@@ -1,8 +1,8 @@
 #####################################################################
-#                          Radial Cache
+#                          LDA Cache
 #####################################################################
 
-mutable struct RadialCache
+mutable struct LDACache
     A               # Matrix of Qᵢ'Qⱼ'
     M₀              # Matrix of QᵢQⱼ
     M₋₁             # Matrix of 1/x QᵢQⱼ
@@ -16,11 +16,9 @@ mutable struct RadialCache
     Hfix            # Part of Hamilotnian not needing to be recomputed (Kinetic + Colombial)         
     Hartree         # Matrix VF of hartree 
     Vxc             # Matrix VF of Echange-correlation
-    Energy          # Total Energy
-    Energy_kin      # Kinetic Energy
 end
 
-mutable struct Radial_tmp_Cache
+mutable struct LDA_tmp_Cache
     tmp_H           # Store Hₗ
     tmp_D           # Store ρ
     tmp_Dstar       # Store ρ*
@@ -31,7 +29,7 @@ mutable struct Radial_tmp_Cache
     tmp_index_sort
 end
 
-function create_cache(lₕ, Nₕ, T, lmin)
+function create_cache_lda(lₕ, Nₕ, T, lmin)
     A           = zeros(T, Nₕ, Nₕ) 
     M₀          = zeros(T, Nₕ, Nₕ)
     M₋₁         = zeros(T, Nₕ, Nₕ)
@@ -45,8 +43,6 @@ function create_cache(lₕ, Nₕ, T, lmin)
     Hfix        = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
     Hartree     = zeros(T, Nₕ, Nₕ)
     Vxc         = zeros(T, Nₕ, Nₕ)
-    Energy      = zero(T)
-    Energy_kin  = zero(T)
 
     # Initialization of array for temporary stockage of computations
     tmp_H           = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
@@ -57,16 +53,17 @@ function create_cache(lₕ, Nₕ, T, lmin)
     tmp_ϵ           = zeros(T, lₕ+1 - lmin, Nₕ)
     tmp_n           = zeros(T, lₕ+1 - lmin, Nₕ)   
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1 - lmin))
-    RadialCache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Vxc, Energy, Energy_kin),  Radial_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
+    LDACache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Vxc),  
+    LDA_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
 end
 
 
 #####################################################################
-#                          Radial Discretization
+#                          LDA Discretization
 #####################################################################
-abstract type KohnShamDiscretization end
 
-struct KohnShamRadialDiscretization{T} <: KohnShamDiscretization
+
+struct LDADiscretization{T} <: KohnShamDiscretization
     lmin::Int
     lₕ::Int
     Nₕ::Int
@@ -75,9 +72,9 @@ struct KohnShamRadialDiscretization{T} <: KohnShamDiscretization
     Rmin::T
     Rmax::T
     elT::Type
-    cache::RadialCache
-    tmp_cache::Radial_tmp_Cache
-    function KohnShamRadialDiscretization(lₕ::Int, basis::Basis, mesh::Mesh; lmin = 0)
+    cache::LDACache
+    tmp_cache::LDA_tmp_Cache
+    function LDADiscretization(lₕ::Int, basis::Basis, mesh::Mesh; lmin = 0)
         elT = try
              bottom_type(basis)
         catch
@@ -85,7 +82,7 @@ struct KohnShamRadialDiscretization{T} <: KohnShamDiscretization
         end
         Nₕ = length(basis)
         @assert lmin ≤ lₕ
-        new{eltype(mesh)}(lmin, lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache(lₕ, Nₕ, elT, lmin)...)
+        new{eltype(mesh)}(lmin, lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache_lda(lₕ, Nₕ, elT, lmin)...)
     end
 end
 
@@ -93,7 +90,7 @@ end
 #                          Init Cache
 #####################################################################
 
-function init_cache!(discretization::KohnShamRadialDiscretization, model::AbstractDFTModel, hartree)
+function init_cache!(discretization::LDADiscretization, model::AbstractDFTModel, hartree)
 
     @unpack lₕ, basis  = discretization
     @unpack A, M₀, M₋₁, M₋₂, F, Kin, Coulomb, Hfix = discretization.cache
@@ -124,16 +121,16 @@ end
 #                          Init for Solver
 #####################################################################
 
-init_density_matrix(kd::KohnShamRadialDiscretization)        = zeros(kd.elT, kd.Nₕ, kd.Nₕ)  
-init_coeffs_discretization(kd::KohnShamRadialDiscretization) = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, kd.Nₕ)
-init_energy(kd::KohnShamRadialDiscretization)                = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
-init_occupation(kd::KohnShamRadialDiscretization)            = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
+init_density_matrix(kd::LDADiscretization)        = zeros(kd.elT, kd.Nₕ, kd.Nₕ)  
+init_coeffs_discretization(kd::LDADiscretization) = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, kd.Nₕ)
+init_energy(kd::LDADiscretization)                = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
+init_occupation(kd::LDADiscretization)            = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
 
 #####################################################################
 #               Find Orbital : Solve the eigen problems
 #####################################################################
 
-function find_orbital!(discretization::KohnShamRadialDiscretization, solver::KhonShamSolver)
+function find_orbital!(discretization::LDADiscretization, solver::KhonShamSolver)
 
     @unpack lmin, lₕ = discretization
     @unpack M₀, Hfix, Hartree, Vxc = discretization.cache
@@ -167,11 +164,11 @@ end
 #               Normamisation of eigenvector
 #####################################################################
 
-function normalization!(discretization)
+function normalization!(discretization::LDADiscretization)
     @unpack M₀ = discretization.cache
     @unpack tmp_U, tmp_n = discretization.tmp_cache
     @unpack lₕ, Nₕ  = discretization
-    @inbounds for l ∈ 1:lₕ+1   # potentiellement, il faut rajouter un lmin
+    @inbounds for l ∈ 1:lₕ+1   
         @inbounds for k ∈ 1:Nₕ
             if !iszero(tmp_n[l,k])
                 normalization = sqrt(sum([tmp_U[l,i,k] * tmp_U[l,j,k] * M₀[i,j] for i∈1:Nₕ for j∈1:Nₕ]))
@@ -186,7 +183,7 @@ end
 #                          Kinetic Matrix
 #####################################################################
 
-function kinetic_matrix!(discretization::KohnShamRadialDiscretization)
+function kinetic_matrix!(discretization::LDADiscretization)
     @unpack A, M₋₂, Kin = discretization.cache
     for l ∈ discretization.lmin:discretization.lₕ
         @. Kin[l+1-discretization.lmin,:,:] =  1/2 * (A + l*(l+1)*M₋₂)
@@ -198,7 +195,7 @@ end
 #                          Coulomb Matrix
 #####################################################################
 
-function coulomb_matrix!(discretization::KohnShamRadialDiscretization, model)
+function coulomb_matrix!(discretization::LDADiscretization, model)
     @unpack M₋₁, Coulomb = discretization.cache
     for l ∈ discretization.lmin:discretization.lₕ
         Coulomb[l+1-discretization.lmin,:,:] .= - model.z .* M₋₁
@@ -210,7 +207,7 @@ end
 #                          Hartree Matrix
 #####################################################################
 
-function hartree_matrix!(discretization::KohnShamRadialDiscretization, D)
+function hartree_matrix!(discretization::LDADiscretization, D)
     @unpack A, M₀, F, B, C, Hartree = discretization.cache
     @unpack tmp_MV = discretization.tmp_cache
     @unpack basis, Rmin, Rmax = discretization
@@ -227,7 +224,7 @@ end
 #                   Exchange Correlation Matrix
 #####################################################################
 
-function exchange_corr_matrix!(discretization::KohnShamRadialDiscretization, model, D)
+function exchange_corr_matrix!(discretization::LDADiscretization, model, D)
     @unpack Vxc = discretization.cache
     ρ(x) = compute_density(discretization, D, x)
     weight(x) = vxc(model.exc, ρ(x))
@@ -239,31 +236,82 @@ end
 #                             Energy
 #####################################################################
 
-function compute_energy!(discretization::KohnShamRadialDiscretization)
-    compute_total_energy!(discretization)
-    compute_kinetic_energy!(discretization)
+function compute_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
+    compute_kinetic_energy!(discretization,solver)
+    compute_coulomb_energy!(discretization,solver)
+    compute_hartree_energy!(discretization,solver)
+    if isthereExchangeCorrelation(solver.model)
+        compute_exchangecorrelation_energy!(discretization,solver)
+    end
+    compute_total_energy!(discretization,solver)
 end
 
-function compute_total_energy!(discretization::KohnShamRadialDiscretization)
-    @unpack Rmin, Rmax = discretization
+function compute_total_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
+    @unpack Rmax = discretization
+    @unpack B, C, Cᵨ, Vxc = discretization.cache
+    @unpack n, ϵ, D = solver
+    @tensor energy = n[l,n] * ϵ[l,n] 
+    if isthereExchangeCorrelation(solver.model)
+        @tensor energy_correction = Vxc[i,j] * D[i,j]
+        solver.energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax) + solver.energy_exc - energy_correction
+    else
+        solver.energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax)
+    end
+    nothing
+end
+
+function compute_kinetic_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
+    @unpack A, M₋₂ = discretization.cache
+    @unpack U, n = solver
+    @unpack lₕ, Nₕ, elT  = discretization
+    solver.energy_kin = zero(solver.energy_kin)
+    @inbounds for l ∈ 1:lₕ+1   
+        @inbounds for k ∈ 1:Nₕ
+            if !iszero(n[l,k])
+                solver.energy_kin += n[l,k] * elT(0.5) * U[l,:,k]' * (A + l*(l+1)*M₋₂) * U[l,:,k]
+            end
+        end
+    end
+    nothing
+end
+
+function compute_coulomb_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
+    @unpack M₋₁ = discretization.cache
+    @unpack U, n = solver
+    @unpack lₕ, Nₕ  = discretization
+    solver.energy_cou = zero(solver.energy_cou)
+    @inbounds for l ∈ 1:lₕ+1   
+        @inbounds for k ∈ 1:Nₕ
+            if !iszero(n[l,k])
+                solver.energy_cou -= solver.model.z * n[l,k] * U[l,:,k]' * M₋₁ * U[l,:,k]
+            end
+        end
+    end
+    nothing
+end
+
+function compute_hartree_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
+    @unpack Rmax, elT = discretization
     @unpack B, C, Cᵨ = discretization.cache
-    @unpack tmp_n, tmp_ϵ = discretization.tmp_cache
-    @tensor energy = tmp_n[l,n] * tmp_ϵ[l,n] 
-    discretization.cache.Energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/(Rmax-Rmin))
+    solver.energy_har = elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax)
     nothing
 end
 
-function compute_kinetic_energy!(discretization::KohnShamRadialDiscretization)
-
+function compute_exchangecorrelation_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
+    @unpack D = solver
+    @unpack Rmax = discretization
+    ρ(x) = compute_density(discretization, D, x)
+    f(x,p) = exc(solver.model.exc, ρ(x)) * x^2
+    prob = IntegralProblem(f, (zero(Rmax),Rmax))
+    solver.energy_exc = 4π * solve(prob, QuadGKJL(); reltol = 1e-10, abstol = 1e-10).u
     nothing
 end
-
 
 #####################################################################
 #                             Density
 #####################################################################
 
-function density_matrix!(discretization::KohnShamRadialDiscretization)
+function density_matrix!(discretization::LDADiscretization)
     @unpack tmp_Dstar, tmp_U, tmp_n = discretization.tmp_cache
     @unpack lₕ, Nₕ  = discretization
     @inbounds for l ∈ 1:lₕ+1   # potentiellement, il faut rajouter un lmin
@@ -286,7 +334,7 @@ function density_matrix!(discretization::KohnShamRadialDiscretization)
     nothing
 end
 
-function compute_density(discretization::KohnShamRadialDiscretization, D, x)
+function compute_density(discretization::LDADiscretization, D, x)
     @unpack basis = discretization
     newT = promote_type(eltype(basis), typeof(x))
     val = zero(newT)

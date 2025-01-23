@@ -10,24 +10,25 @@ struct AtomProblem
     optsmesh    # Options for the Mesh
     typebasis   # Type of the basis
     optsbasis   # Options for the basis
+    typediscre  # Type of discretization
     name        # Name of the problem
     solveropts  # Option for the solvers
 
-    AtomProblem(;T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, name = "", kwargs...) = 
-        new(T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, name, kwargs)
+    AtomProblem(;T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, typediscre, name = "", kwargs...) = 
+        new(T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, typediscre, name, kwargs)
 
     function AtomProblem(prob; 
         T = prob.T, lh = prob.lh, method = prob.method, model = prob.model, Rmax = prob.Rmax, Nmesh = prob.Nmesh,
         typemesh = prob.typemesh, optsmesh = prob.optsmesh, typebasis = prob.typebasis, 
-        optsbasis = prob.optsbasis, name = prob.name, kwargs = prob.solveropts) 
-        new(T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, name, kwargs)
+        optsbasis = prob.optsbasis, typediscre = prob.typediscre, name = prob.name, kwargs = prob.solveropts) 
+        new(T, lh, method, model, Rmax, Nmesh,typemesh, optsmesh, typebasis, optsbasis, typediscre, name, kwargs)
     end
 end
 
 function KohnShamResolution.groundstate(prob::AtomProblem)
     mesh = prob.typemesh(zero(prob.T), prob.Rmax, prob.Nmesh; T = prob.T, prob.optsmesh...)
     basis = prob.typebasis(mesh, prob.T; prob.optsbasis...)
-    discretization = KohnShamRadialDiscretization(prob.lh, basis, mesh)
+    discretization = prob.typediscre(prob.lh, basis, mesh)
     groundstate(prob.model, discretization, prob.method; name = prob.name, prob.solveropts...)
 end
 

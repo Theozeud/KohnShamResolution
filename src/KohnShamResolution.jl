@@ -98,7 +98,8 @@ module KohnShamResolution
     
     # KOHN-SHAM MODEL
     export ExchangeCorrelation,NoExchangeCorrelation, SlaterXα, LSDA
-    export KohnShamExtended, ReducedHartreeFock, SlaterXα
+    export exc, vxc, vxcUP, vxcDOWN
+    export KohnShamExtended, ReducedHartreeFock
     include("models.jl")
     
     # SOLVER &CO
@@ -108,8 +109,11 @@ module KohnShamResolution
     export Solver, SolverOptions
     include("solver.jl")
 
-    export KohnShamRadialDiscretization
-    include("radial_discretization.jl")
+    abstract type KohnShamDiscretization end
+
+    export LDADiscretization, LSDADiscretization
+    include("lda_discretization.jl")
+    include("lsda_discretization.jl")
 
     abstract type SCFMethod end
 
@@ -122,7 +126,7 @@ module KohnShamResolution
     export CDA
     include("methods.jl")
 
-    export KohnShamSolution, eigenvector, density
+    export KohnShamSolution, eigenvector, density, total_charge
     include("solution.jl")
 
     export groundstate

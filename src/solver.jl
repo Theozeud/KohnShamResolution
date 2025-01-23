@@ -23,5 +23,9 @@ mutable struct KhonShamSolver
     n                               # Occupation number at current time 
     energy                          # Total energy at current time
     energy_kin                      # Kinetic energy at current time
+    energy_cou                      # Coulomb energy at current time
+    energy_har                      # Hartree energy at current time
+    energy_exc                      # Exchange-correlation energy at current time
+    energy_kincor                   # Kinetic-correlation energy at current time (exists for the LSDA model)
     logbook                         # LogBook
 end

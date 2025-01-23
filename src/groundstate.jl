@@ -24,13 +24,17 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     init_cache!(discretization, model, hartree)
 
     # Init storage array
-    D           = init_density_matrix(discretization)
-    Dprev       = init_density_matrix(discretization)
-    U           = init_coeffs_discretization(discretization)
-    ϵ           = init_energy(discretization)
-    n           = init_occupation(discretization)
-    energy      = zero(T)
-    energy_kin  = zero(T)
+    D               = init_density_matrix(discretization)
+    Dprev           = init_density_matrix(discretization)
+    U               = init_coeffs_discretization(discretization)
+    ϵ               = init_energy(discretization)
+    n               = init_occupation(discretization)
+    energy          = zero(T)
+    energy_kin      = zero(T)
+    energy_cou      = zero(T)
+    energy_har      = zero(T)
+    energy_exc      = zero(T)
+    energy_kincor   = zero(T)
     
     #  SolverOptions
     opts = SolverOptions(T(scftol), maxiter, quad_method, T(quad_reltol), T(quad_abstol), T(hartree), T(degen_tol))
@@ -40,20 +44,22 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     stopping_criteria = zero(T)
     logbook = LogBook(logconfig, T)
     
-    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, energy, energy_kin, logbook)
+    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, 
+                   energy, energy_kin, energy_cou, energy_har, energy_exc, energy_kincor, logbook)
 end
-
 
 
 function solve!(solver::KhonShamSolver)
     while (solver.stopping_criteria > solver.opts.scftol || iszero(solver.niter)) && solver.niter < solver.opts.maxiter
+        println("Iteration : $(solver.niter)")
+        loopheader!(solver)
         performstep!(solver)
         loopfooter!(solver)
     end
+    compute_energy!(solver.discretization, solver)
 end
 
 function performstep!(solver::KhonShamSolver)
-
     # STEP 1 : Resolution of the generalized eigenvalue problem to find atomic orbitals and corresonding energies
     find_orbital!(solver.discretization, solver)
 
@@ -70,13 +76,16 @@ function performstep!(solver::KhonShamSolver)
     # STEP 5 : Compute new density
     update_density!(solver.method, solver)
 
-    # STEP 6 : Compute the energies
-    compute_energy!(solver.discretization)
-
-    # STEP 7 : Update Solver
+    # STEP 6 : Update Solver
     update_solver!(solver)
 end
 
+function loopheader!(solver::KhonShamSolver)
+    @unpack tmp_D, tmp_Dstar, tmp_n = solver.discretization.tmp_cache
+    tmp_D       .= zero(tmp_D)
+    tmp_Dstar   .= zero(tmp_Dstar)
+    tmp_n       .= zero(tmp_n)                                          
+end 
 
 function loopfooter!(solver::KhonShamSolver)
     solver.stopping_criteria = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA 
@@ -95,23 +104,30 @@ function makesolution(solver::KhonShamSolver, name::String)
 end
 
 function update_solver!(solver::KhonShamSolver)
-    @unpack tmp_D, tmp_Dstar, tmp_U, tmp_ϵ, tmp_n = solver.discretization.tmp_cache
+    @unpack tmp_D, tmp_U, tmp_ϵ, tmp_n = solver.discretization.tmp_cache
     solver.D .= tmp_D
     solver.U .= tmp_U
     solver.ϵ .= tmp_ϵ
-    solver.n .= tmp_n 
-    solver.energy       = solver.discretization.cache.Energy
-    solver.energy_kin   = solver.discretization.cache.Energy_kin
-    tmp_D       .= zero(tmp_D)
-    tmp_Dstar   .= zero(tmp_Dstar)
+    solver.n .= tmp_n
     nothing
 end
 
 function update_log!(solver::KhonShamSolver)
     @unpack logbook = solver
     @unpack occupation_number, orbitals_energy, stopping_criteria, energy, density = logbook.config
-    stopping_criteria ? push!(solver.logbook.stopping_criteria_log, solver.stopping_criteria)  : nothing     # STORE THE STOPPING CRITERIA 
-    orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ[1,:]))         : nothing     # STORE THE ORBITALS ENERGY
-    energy ?            push!(solver.logbook.energy_log, solver.discretization.cache.Energy)   : nothing     # STORE THE TOTAL ENERGY
-    nothing
+
+    # STORE THE STOPPING CRITERIA 
+    stopping_criteria ? push!(solver.logbook.stopping_criteria_log, solver.stopping_criteria)  : nothing     
+    
+    # STORE THE ORBITALS ENERGY
+    orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ))              : nothing     
+    
+    # STORE THE TOTAL ENERGY
+    if energy
+        if isthereExchangeCorrelation(solver.model)
+            compute_exchangecorrelation_energy!(solver.discretization, solver)
+        end
+        compute_total_energy!(solver.discretization, solver)
+        push!(solver.logbook.energy_log, solver.energy)                           
+    end
 end
