@@ -40,7 +40,7 @@ struct KohnShamSolution
 
         new(problem, success, solver.opts, solver.niter, solver.stopping_criteria, 
             solver.energy,solver.energy_kin, solver.energy_cou, solver.energy_har, solver.energy_exc, solver.energy_kincor,
-            occupation_number, solver.ϵ, solver.U, solver.D, solver.logbook, name)
+            occupation_number, solver.ϵ, solver.U, solver.D,solver.logbook, name)
     end
 end
 
@@ -119,6 +119,18 @@ end
 
 
 # Compute density
-function density(sol::KohnShamSolution, x)
+function density(sol::KohnShamSolution, x::Real)
     compute_density(sol.problem.discretization, sol.density_coeffs, x)
+end
+
+function density(sol::KohnShamSolution, X::AbstractVector)
+    [compute_density(sol.problem.discretization, sol.density_coeffs, x) for x ∈ X]
+end
+
+# Check integral of density
+function total_charge(sol::KohnShamSolution)
+    @unpack Rmax = sol.problem.discretization
+    f(x,p) = density(sol, x) * x^2
+    prob = IntegralProblem(f, (zero(Rmax),Rmax))
+    return 4π * solve(prob, QuadGKJL(); reltol = 1e-3, abstol = 1e-3).u
 end
