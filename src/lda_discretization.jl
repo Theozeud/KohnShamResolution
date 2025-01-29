@@ -10,7 +10,9 @@ mutable struct LDACache
     F               # Tensor of 1/x QᵢQⱼQₖ
     B               # Matrix of 4πρQᵢ
     C               # Matrix for V(ρ) - solution of the Gauss Electrostatic law
+    Cprev           # Matrix for V(ρ) - solution of the Gauss Electrostatic law at previous time
     Cᵨ              # Number equal to total charge
+    Cᵨprev          # Number equal to total charge at previous time
     Kin             # Matrix VF of Kinetic 
     Coulomb         # Matrix VF of Coulomb
     Hfix            # Part of Hamilotnian not needing to be recomputed (Kinetic + Colombial)         
@@ -20,16 +22,11 @@ end
 
 mutable struct LDA_tmp_Cache
     tmp_H           # Store Hₗ
-    tmp_D           # Store ρ
-    tmp_Dstar       # Store ρ*
-    tmp_U           # Store the eigenvector
-    tmp_ϵ           # Store the eigenvalue
-    tmp_n           # Store the occupation number
     tmp_MV          # Store the contraction F:C  
     tmp_index_sort
 end
 
-function create_cache_lda(lₕ, Nₕ, T, lmin)
+function create_cache_lda(lₕ, Nₕ, T)
     A           = zeros(T, Nₕ, Nₕ) 
     M₀          = zeros(T, Nₕ, Nₕ)
     M₋₁         = zeros(T, Nₕ, Nₕ)
@@ -37,24 +34,21 @@ function create_cache_lda(lₕ, Nₕ, T, lmin)
     F           = zeros(T, Nₕ, Nₕ, Nₕ)
     B           = zeros(T, Nₕ)
     C           = zeros(T, Nₕ)
+    Cprev       = zeros(T, Nₕ)
     Cᵨ          = zero(T)
-    Kin         = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
-    Coulomb     = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
-    Hfix        = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
+    Cᵨprev      = zero(T)
+    Kin         = zeros(T, lₕ+1, Nₕ, Nₕ)
+    Coulomb     = zeros(T, lₕ+1, Nₕ, Nₕ)
+    Hfix        = zeros(T, lₕ+1, Nₕ, Nₕ)
     Hartree     = zeros(T, Nₕ, Nₕ)
     Vxc         = zeros(T, Nₕ, Nₕ)
 
     # Initialization of array for temporary stockage of computations
-    tmp_H           = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
-    tmp_D           = zeros(T, Nₕ, Nₕ) 
-    tmp_Dstar       = zeros(T, Nₕ, Nₕ) 
-    tmp_U           = zeros(T, lₕ+1 - lmin, Nₕ, Nₕ)
-    tmp_MV          = zeros(T, Nₕ, Nₕ)
-    tmp_ϵ           = zeros(T, lₕ+1 - lmin, Nₕ)
-    tmp_n           = zeros(T, lₕ+1 - lmin, Nₕ)   
-    tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1 - lmin))
-    LDACache(A, M₀, M₋₁, M₋₂, F, B, C, Cᵨ, Kin, Coulomb, Hfix, Hartree, Vxc),  
-    LDA_tmp_Cache(tmp_H, tmp_D, tmp_Dstar, tmp_U,  tmp_ϵ, tmp_n, tmp_MV, tmp_index_sort)
+    tmp_H           = zeros(T, lₕ+1, Nₕ, Nₕ) 
+    tmp_MV          = zeros(T, Nₕ, Nₕ)  
+    tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
+    LDACache(A, M₀, M₋₁, M₋₂, F, B, C, Cprev, Cᵨ, Cᵨprev, Kin, Coulomb, Hfix, Hartree, Vxc),  
+    LDA_tmp_Cache(tmp_H, tmp_MV, tmp_index_sort)
 end
 
 
@@ -64,7 +58,6 @@ end
 
 
 struct LDADiscretization{T} <: KohnShamDiscretization
-    lmin::Int
     lₕ::Int
     Nₕ::Int
     basis::Basis
@@ -74,15 +67,14 @@ struct LDADiscretization{T} <: KohnShamDiscretization
     elT::Type
     cache::LDACache
     tmp_cache::LDA_tmp_Cache
-    function LDADiscretization(lₕ::Int, basis::Basis, mesh::Mesh; lmin = 0)
+    function LDADiscretization(lₕ::Int, basis::Basis, mesh::Mesh)
         elT = try
              bottom_type(basis)
         catch
             eltype(basis)
         end
         Nₕ = length(basis)
-        @assert lmin ≤ lₕ
-        new{eltype(mesh)}(lmin, lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache_lda(lₕ, Nₕ, elT, lmin)...)
+        new{eltype(mesh)}(lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache_lda(lₕ, Nₕ, elT)...)
     end
 end
 
@@ -132,10 +124,10 @@ init_occupation(kd::LDADiscretization)            = zeros(kd.elT, kd.lₕ+1, kd.
 
 function find_orbital!(discretization::LDADiscretization, solver::KhonShamSolver)
 
-    @unpack lmin, lₕ = discretization
+    @unpack lₕ = discretization
     @unpack M₀, Hfix, Hartree, Vxc = discretization.cache
-    @unpack tmp_H, tmp_U, tmp_ϵ = discretization.tmp_cache
-    @unpack Dprev = solver
+    @unpack tmp_H = discretization.tmp_cache
+    @unpack Dprev, U, ϵ = solver
     @unpack hartree = solver.opts
 
     # STEP 1 : Compute Hartree term 
@@ -150,11 +142,11 @@ function find_orbital!(discretization::LDADiscretization, solver::KhonShamSolver
     end
 
     # STEP 3 : Solve the generalized eigenvalue problem for each section l
-    @threads for l ∈ lmin:lₕ
+    @threads for l ∈ 0:lₕ
         # building the hamiltonian of the lᵗʰ section
-        @. tmp_H[l+1-lmin,:,:] = Hfix[l+1-lmin,:,:] + Vxc + Hartree
+        @. tmp_H[l+1,:,:] = Hfix[l+1,:,:] + Vxc + Hartree
         # solving
-        tmp_ϵ[l+1-lmin,:], tmp_U[l+1-lmin,:,:] = solve_generalized_eigenvalue_problem(tmp_H[l+1-lmin,:,:], M₀)
+        ϵ[l+1,:], U[l+1,:,:] = solve_generalized_eigenvalue_problem(tmp_H[l+1,:,:], M₀)
         # normalization of eigenvector
         
     end
@@ -164,15 +156,15 @@ end
 #               Normamisation of eigenvector
 #####################################################################
 
-function normalization!(discretization::LDADiscretization)
+function normalization!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack M₀ = discretization.cache
-    @unpack tmp_U, tmp_n = discretization.tmp_cache
+    @unpack U, n = solver
     @unpack lₕ, Nₕ  = discretization
     @inbounds for l ∈ 1:lₕ+1   
         @inbounds for k ∈ 1:Nₕ
-            if !iszero(tmp_n[l,k])
-                normalization = sqrt(sum([tmp_U[l,i,k] * tmp_U[l,j,k] * M₀[i,j] for i∈1:Nₕ for j∈1:Nₕ]))
-                tmp_U[l,:,k] .= tmp_U[l,:,k] .* 1/normalization
+            if !iszero(n[l,k])
+                normalization = sqrt(sum([U[l,i,k] * U[l,j,k] * M₀[i,j] for i∈1:Nₕ for j∈1:Nₕ]))
+                U[l,:,k] .= U[l,:,k] .* 1/normalization
             end
         end
     end
@@ -185,8 +177,8 @@ end
 
 function kinetic_matrix!(discretization::LDADiscretization)
     @unpack A, M₋₂, Kin = discretization.cache
-    for l ∈ discretization.lmin:discretization.lₕ
-        @. Kin[l+1-discretization.lmin,:,:] =  1/2 * (A + l*(l+1)*M₋₂)
+    for l ∈ 0:discretization.lₕ
+        @. Kin[l+1,:,:] =  1/2 * (A + l*(l+1)*M₋₂)
     end 
     nothing
 end
@@ -197,8 +189,8 @@ end
 
 function coulomb_matrix!(discretization::LDADiscretization, model)
     @unpack M₋₁, Coulomb = discretization.cache
-    for l ∈ discretization.lmin:discretization.lₕ
-        Coulomb[l+1-discretization.lmin,:,:] .= - model.z .* M₋₁
+    for l ∈ 0:discretization.lₕ
+        Coulomb[l+1,:,:] .= - model.z .* M₋₁
     end 
     nothing
 end
@@ -297,6 +289,12 @@ function compute_hartree_energy!(discretization::LDADiscretization, solver::Khon
     nothing
 end
 
+function compute_hartree_mix_energy(discretization::LDADiscretization, solver::KhonShamSolver)
+    @unpack Rmax, elT = discretization
+    @unpack B, Cᵨ, Cᵨprev, Cprev = discretization.cache
+    return elT(0.5) * (dot(B,Cprev) + Cᵨ*Cᵨprev/Rmax)
+end
+
 function compute_exchangecorrelation_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack D = solver
     @unpack Rmax = discretization
@@ -311,16 +309,16 @@ end
 #                             Density
 #####################################################################
 
-function density_matrix!(discretization::LDADiscretization)
-    @unpack tmp_Dstar, tmp_U, tmp_n = discretization.tmp_cache
+function density_matrix!(discretization::LDADiscretization, solver::KhonShamSolver)
+    @unpack U, n, D = solver
     @unpack lₕ, Nₕ  = discretization
-    @inbounds for l ∈ 1:lₕ+1   # potentiellement, il faut rajouter un lmin
+    @inbounds for l ∈ 1:lₕ+1   
         @inbounds for k ∈ 1 :Nₕ
-            if !iszero(tmp_n[l,k])
+            if !iszero(n[l,k])
                 @inbounds for i ∈ 1:Nₕ
-                    val = tmp_n[l,k] * tmp_U[l,i,k] 
+                    val = n[l,k] * U[l,i,k] 
                     @inbounds @simd for j ∈ 1:i
-                        tmp_Dstar[i,j] += val * tmp_U[l,j,k]
+                        D[i,j] += val * U[l,j,k]
                     end
                 end
             end
@@ -328,7 +326,7 @@ function density_matrix!(discretization::LDADiscretization)
     end
     @inbounds for i in 1:Nₕ
         @inbounds @simd for j in 1:i-1
-            tmp_Dstar[j,i] = tmp_Dstar[i,j]
+            D[j,i] = D[i,j]
         end
     end
     nothing

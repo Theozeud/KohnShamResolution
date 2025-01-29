@@ -123,7 +123,7 @@ module KohnShamResolution
     export aufbau!
     include("aufbau.jl")
 
-    export CDA
+    export CDA, ODA
     include("methods.jl")
 
     export KohnShamSolution, eigenvector, density, total_charge

@@ -7,9 +7,9 @@ logconfig = LogConfig()
 problem = AtomProblem(;
                 T               = Float64, 
                 lh              = 0, 
-                method          = CDA(0.5), 
-                model           = SlaterXα(1, 1), 
-                Rmax            = 50, 
+                method          = CDA(0.7), 
+                model           = ReducedHartreeFock(1, 1), 
+                Rmax            = 100, 
                 Nmesh           = 70,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 

@@ -33,6 +33,9 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     energy_kin      = zero(T)
     energy_cou      = zero(T)
     energy_har      = zero(T)
+    energy_kin_prev = zero(T)
+    energy_cou_prev = zero(T)
+    energy_har_prev = zero(T)
     energy_exc      = zero(T)
     energy_kincor   = zero(T)
     
@@ -45,7 +48,9 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     logbook = LogBook(logconfig, T)
     
     KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, 
-                   energy, energy_kin, energy_cou, energy_har, energy_exc, energy_kincor, logbook)
+                   energy, energy_kin, energy_cou, energy_har, 
+                   energy_kin_prev, energy_cou_prev, energy_har_prev,
+                   energy_exc, energy_kincor, logbook)
 end
 
 
@@ -68,28 +73,32 @@ function performstep!(solver::KhonShamSolver)
 
     # STEP 3 : Normaization of eigenvectors
     # This is done after aufbau to normalize only eigenvectors we need
-    normalization!(solver.discretization)
+    normalization!(solver.discretization, solver)
 
     # STEP 4 : Compute density star
-    density_matrix!(solver.discretization)
+    density_matrix!(solver.discretization, solver)
 
-    # STEP 5 : Compute new density
+    # STEP 5 : Compute energy
+    compute_energy!(solver.discretization, solver)
+
+    # STEP 6 : Compute new density
     update_density!(solver.method, solver)
 
-    # STEP 6 : Update Solver
+    # STEP 7 : Update Solver
     update_solver!(solver)
 end
 
 function loopheader!(solver::KhonShamSolver)
-    @unpack tmp_D, tmp_Dstar, tmp_n = solver.discretization.tmp_cache
-    tmp_D       .= zero(tmp_D)
-    tmp_Dstar   .= zero(tmp_Dstar)
-    tmp_n       .= zero(tmp_n)                                          
+    solver.Dprev            .= solver.D
+    solver.D                .= zero(solver.D)
+    solver.n                .= zero(solver.n)
+    solver.energy_kin_prev   = solver.energy_kin
+    solver.energy_cou_prev   = solver.energy_cou
+    solver.energy_har_prev   = solver.energy_har                                          
 end 
 
 function loopfooter!(solver::KhonShamSolver)
-    solver.stopping_criteria = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA 
-    solver.Dprev  .= solver.D                                       # UPDATE THE CURRENT DENSITY
+    solver.stopping_criteria = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA                                 
     solver.niter += 1                                               # INCREASE THE NUMBER OF ITERATIONS DONE
     update_log!(solver)                                             # UPDATE THE LOG
 end 
@@ -104,11 +113,9 @@ function makesolution(solver::KhonShamSolver, name::String)
 end
 
 function update_solver!(solver::KhonShamSolver)
-    @unpack tmp_D, tmp_U, tmp_ϵ, tmp_n = solver.discretization.tmp_cache
-    solver.D .= tmp_D
-    solver.U .= tmp_U
-    solver.ϵ .= tmp_ϵ
-    solver.n .= tmp_n
+    @unpack Cprev, C, Cᵨ, Cᵨprev = solver.discretization.cache
+    solver.discretization.cache.Cprev = solver.discretization.cache.C
+    solver.discretization.cache.Cᵨprev = Cᵨ
     nothing
 end
 
