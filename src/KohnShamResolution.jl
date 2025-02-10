@@ -103,19 +103,18 @@ module KohnShamResolution
     include("models.jl")
     
     # SOLVER &CO
+    abstract type KohnShamDiscretization end
+    abstract type SCFMethod end
+
     export LogConfig, LogBook
     include("log.jl")
 
     export Solver, SolverOptions
     include("solver.jl")
 
-    abstract type KohnShamDiscretization end
-
     export LDADiscretization, LSDADiscretization
     include("lda_discretization.jl")
     include("lsda_discretization.jl")
-
-    abstract type SCFMethod end
 
     export DFTProblem
     include("problem.jl")

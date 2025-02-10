@@ -1,5 +1,5 @@
 
-function groundstate(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::SCFMethod; name = "", kwargs...)
+function groundstate(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::SCFMethod; name::String = "", kwargs...)
     solver = init(model, discretization, method; kwargs...)
     solve!(solver)
     makesolution(solver, name)
@@ -98,14 +98,14 @@ function loopheader!(solver::KhonShamSolver)
 end 
 
 function loopfooter!(solver::KhonShamSolver)
-    solver.stopping_criteria = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA                                 
+    stopping_criteria!(solver)                                      # COMPUTE THE NEW STOPPING CRITERIA                                 
     solver.niter += 1                                               # INCREASE THE NUMBER OF ITERATIONS DONE
     update_log!(solver)                                             # UPDATE THE LOG
 end 
 
 
-function stopping_criteria(solver::KhonShamSolver)
-    norm(solver.D - solver.Dprev)
+function stopping_criteria!(solver::KhonShamSolver)
+    solver.stopping_criteria = norm(solver.D - solver.Dprev)
 end
     
 function makesolution(solver::KhonShamSolver, name::String)

@@ -9,26 +9,73 @@ struct SolverOptions{T}
     degen_tol::T    
 end
 
-mutable struct KhonShamSolver
-    niter                           # Number of iterations
-    stopping_criteria               # Current stopping criteria
-    discretization                  # Discretization parameters
-    model                           # Model
-    method                          # Iterative method
-    opts                            # Solver options
-    D                               # Density Matrix at current time
-    Dprev                           # Density Matrix at previous time
-    U                               # Coefficient of orbitals at current time
-    ϵ                               # Orbitals energy at current time
-    n                               # Occupation number at current time 
-    energy                          # Total energy at current time
-    energy_kin                      # Kinetic energy at current time
-    energy_cou                      # Coulomb energy at current time
-    energy_har                      # Hartree energy at current time
-    energy_kin_prev                 # Kinetic energy at previoustime
-    energy_cou_prev                 # Coulomb energy at previous time
-    energy_har_prev                 # Hartree energy at previous time
-    energy_exc                      # Exchange-correlation energy at current time
-    energy_kincor                   # Kinetic-correlation energy at current time (exists for the LSDA model)
-    logbook                         # LogBook
+
+mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
+                                modelType <: AbstractDFTModel,
+                                methodType <: SCFMethod,
+                                optsType <: SolverOptions,
+                                logbookType <: LogBook,
+                                dataType <: Real,
+                                densityType <: AbstractArray,
+                                orbitalsType <: AbstractArray,
+                                orbitalsenergyType <: AbstractArray,
+                                occupationType <: AbstractArray}
+                            
+    niter::Int                                  # Number of iterations
+    stopping_criteria::dataType                 # Current stopping criteria
+    discretization::discretizationType          # Discretization parameters
+    model::modelType                            # Model
+    method::methodType                          # Iterative method
+    opts::optsType                              # Solver options
+    D::densityType                              # Density Matrix at current time
+    Dprev::densityType                          # Density Matrix at previous time
+    U::orbitalsType                             # Coefficient of orbitals at current time
+    ϵ::orbitalsenergyType                       # Orbitals energy at current time
+    n::occupationType                           # Occupation number at current time 
+    energy::dataType                            # Total energy at current time
+    energy_kin::dataType                        # Kinetic energy at current time
+    energy_cou::dataType                        # Coulomb energy at current time
+    energy_har::dataType                        # Hartree energy at current time
+    energy_kin_prev::dataType                   # Kinetic energy at previoustime
+    energy_cou_prev::dataType                   # Coulomb energy at previous time
+    energy_har_prev::dataType                   # Hartree energy at previous time
+    energy_exc::dataType                        # Exchange-correlation energy at current time
+    energy_kincor::dataType                     # Kinetic-correlation energy at current time (exists for the LSDA model)
+    logbook::logbookType                        # LogBook
+
+    function KhonShamSolver(niter::Int, 
+                            stopping_criteria::Real, 
+                            discretization::KohnShamDiscretization, 
+                            model::AbstractDFTModel, 
+                            method::SCFMethod, 
+                            opts::SolverOptions, 
+                            D::AbstractArray, 
+                            Dprev::AbstractArray, 
+                            U::AbstractArray, 
+                            ϵ::AbstractArray, 
+                            n::AbstractArray, 
+                            energy::Real, 
+                            energy_kin::Real, 
+                            energy_cou::Real, 
+                            energy_har::Real, 
+                            energy_kin_prev::Real, 
+                            energy_cou_prev::Real, 
+                            energy_har_prev::Real,
+                            energy_exc::Real, 
+                            energy_kincor::Real, 
+                            logbook::LogBook)
+        new{typeof(discretization),
+            typeof(model),
+            typeof(method),
+            typeof(opts),
+            typeof(logbook),
+            typeof(energy),
+            typeof(D),
+            typeof(U),
+            typeof(ϵ),
+            typeof(n)}(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, 
+            energy, energy_kin, energy_cou, energy_har, 
+            energy_kin_prev, energy_cou_prev, energy_har_prev,
+            energy_exc, energy_kincor, logbook)
+    end
 end
