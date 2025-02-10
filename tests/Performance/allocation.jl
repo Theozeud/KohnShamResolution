@@ -14,7 +14,7 @@ N = 1
 KM = KohnShamExtended(z = z, N = N)
 
 # Choice of the method
-M = CDA(0.0)
+M = CDA(0.3)
 
 # Discretization 
 lₕ = 0
@@ -28,7 +28,7 @@ Rmax = 60
 
 @timeit to "init Discretization" D = LDADiscretization(lₕ, basis, m)
 
-@timeit to "Init Solver" solver = KohnShamResolution.init(KM, D, M; scftol = 1e-3, hartree = false)
+@timeit to "Init Solver" solver = KohnShamResolution.init(KM, D, M; scftol = 1e-3, hartree = false, logconfig = LogConfig(orbitals_energy = true))
 
 
 
