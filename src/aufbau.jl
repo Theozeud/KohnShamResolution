@@ -25,7 +25,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
         # FINF ALL THE ORBITALS WITH THE SAME ENERGY
         indices_degen = [tmp_index_sort[idx]]  
         idx += 1
-        while idx ≤ length(tmp_index_sort) && abs(ϵ[tmp_index_sort[idx]] - ϵ[first(indices_degen)]) < degen_tol && length(indices_degen) ≤ 1
+        while idx ≤ length(tmp_index_sort) && abs(ϵ[tmp_index_sort[idx]] - ϵ[first(indices_degen)]) < degen_tol
             push!(indices_degen, tmp_index_sort[idx])
             idx += 1
         end
@@ -41,6 +41,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
             end
             remain -= total_degen
         else
+            println(indices_degen)
             # IN THIS CASE WE NEED TO FILL THE LAYERS WITH THE OPTIMAL REPARTITION
             if length(indices_degen) == 1
                 # NO DEGENERACY
@@ -54,6 +55,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
                 degen_first = degeneracy(indices_degen[1])
                 if degen_first ≥ remain
                     n[indices_degen[1]] = remain
+                    n[indices_degen[2]] = zero(remain)
                     n1_0 = remain
                     n2_0 = zero(remain)
                 else
@@ -72,6 +74,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
                 # COMPUTE THE OTHER EXTREMA
                 degen_second = degeneracy(indices_degen[2])
                 if degen_second ≥ remain
+                    n[indices_degen[1]] = zero(remain)
                     n[indices_degen[2]] = remain
                     n1_1 = zero(remain)
                     n2_1 = remain
