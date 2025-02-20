@@ -22,7 +22,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
     idx = 1
     while remain > 0 && idx ≤ length(tmp_index_sort)
 
-        # FINF ALL THE ORBITALS WITH THE SAME ENERGY
+        # FIND ALL THE ORBITALS WITH THE SAME ENERGY
         indices_degen = [tmp_index_sort[idx]]  
         idx += 1
         while idx ≤ length(tmp_index_sort) && abs(ϵ[tmp_index_sort[idx]] - ϵ[first(indices_degen)]) < degen_tol
