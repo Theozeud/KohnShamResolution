@@ -4,6 +4,9 @@ abstract type ExchangeCorrelation end
 
 struct NoExchangeCorrelation <: ExchangeCorrelation end
 
+exc(::NoExchangeCorrelation, rho) = zero(rho)
+vxc(::NoExchangeCorrelation, rho) = zero(rho)
+
 isthereExchangeCorrelation(::ExchangeCorrelation) = true
 isthereExchangeCorrelation(::NoExchangeCorrelation) = false
 

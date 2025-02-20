@@ -26,6 +26,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     # Init storage array
     D               = init_density_matrix(discretization)
     Dprev           = init_density_matrix(discretization)
+    tmpD            = init_density_matrix(discretization)
     U               = init_coeffs_discretization(discretization)
     ϵ               = init_energy(discretization)
     n               = init_occupation(discretization)
@@ -47,7 +48,7 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     stopping_criteria = zero(T)
     logbook = LogBook(logconfig, T)
     
-    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, 
+    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, tmpD, U, ϵ, n, 
                    energy, energy_kin, energy_cou, energy_har, 
                    energy_kin_prev, energy_cou_prev, energy_har_prev,
                    energy_exc, energy_kincor, logbook)
@@ -69,7 +70,7 @@ function performstep!(solver::KhonShamSolver)
     find_orbital!(solver.discretization, solver)
 
     # STEP 2 : Build the n matrix using the Aufbau principle
-    aufbau!(solver)
+    aufbau!(solver.discretization, solver)
 
     # STEP 3 : Normaization of eigenvectors
     # This is done after aufbau to normalize only eigenvectors we need
@@ -90,17 +91,17 @@ end
 
 function loopheader!(solver::KhonShamSolver)
     solver.Dprev            .= solver.D
-    solver.D                .= zero(solver.D)
-    solver.n                .= zero(solver.n)
     solver.energy_kin_prev   = solver.energy_kin
     solver.energy_cou_prev   = solver.energy_cou
-    solver.energy_har_prev   = solver.energy_har                                          
+    solver.energy_har_prev   = solver.energy_har 
+    nothing                                         
 end 
 
 function loopfooter!(solver::KhonShamSolver)
     stopping_criteria!(solver)                                      # COMPUTE THE NEW STOPPING CRITERIA                                 
     solver.niter += 1                                               # INCREASE THE NUMBER OF ITERATIONS DONE
     update_log!(solver)                                             # UPDATE THE LOG
+    nothing                                            
 end 
 
 
@@ -129,6 +130,9 @@ function update_log!(solver::KhonShamSolver)
     # STORE THE ORBITALS ENERGY
     orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ))              : nothing     
     
+    # STORE THE OCCUPATION NUMBERS
+    occupation_number ?   push!(solver.logbook.occupation_number_log, copy(solver.n))          : nothing    
+
     # STORE THE TOTAL ENERGY
     if energy
         if isthereExchangeCorrelation(solver.model)

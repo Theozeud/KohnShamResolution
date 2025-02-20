@@ -9,22 +9,22 @@ makesolution, performstep!,  loopheader!
 to = TimerOutput()
 
 # Creation of the model
-z = 1
-N = 1
+z = 21
+N = 21
 KM = KohnShamExtended(z = z, N = N)
 
 # Choice of the method
 M = CDA(0.3)
 
 # Discretization 
-lₕ = 0
-Nₕ = 100
+lₕ = 2
+Nₕ = 80
 Rmin = 0
-Rmax = 60
+Rmax = 80
 
 @timeit to "Create mesh" m = linmesh(Rmin, Rmax, Nₕ)
 
-@timeit to "Create basis" basis = ShortP1IntLegendreBasis(m; left = false, right = false, ordermin = 2, ordermax = 3)
+@timeit to "Create basis" basis = P1IntLegendreGenerator(m; ordermax = 5)
 
 @timeit to "init Discretization" D = LDADiscretization(lₕ, basis, m)
 
@@ -41,7 +41,7 @@ Rmax = 60
     @timeit to "Find orbital" find_orbital!(solver.discretization, solver)
 
     # STEP 2 : Build the n matrix using the Aufbau principle
-    @timeit to "aufbau" aufbau!(solver)
+    @timeit to "aufbau" aufbau!(solver.discretization, solver)
     
     # STEP 3 : Normaization of eigenvectors
     @timeit to "normalization" normalization!(solver.discretization, solver)

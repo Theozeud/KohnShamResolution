@@ -29,6 +29,7 @@ mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
     opts::optsType                              # Solver options
     D::densityType                              # Density Matrix at current time
     Dprev::densityType                          # Density Matrix at previous time
+    tmpD::densityType                           # Storage for extra Density Matrix (usefull for degeneracy)
     U::orbitalsType                             # Coefficient of orbitals at current time
     ϵ::orbitalsenergyType                       # Orbitals energy at current time
     n::occupationType                           # Occupation number at current time 
@@ -50,7 +51,8 @@ mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
                             method::SCFMethod, 
                             opts::SolverOptions, 
                             D::AbstractArray, 
-                            Dprev::AbstractArray, 
+                            Dprev::AbstractArray,
+                            tmpD::AbstractArray,
                             U::AbstractArray, 
                             ϵ::AbstractArray, 
                             n::AbstractArray, 
@@ -73,7 +75,7 @@ mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
             typeof(D),
             typeof(U),
             typeof(ϵ),
-            typeof(n)}(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, 
+            typeof(n)}(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, tmpD, U, ϵ, n, 
             energy, energy_kin, energy_cou, energy_har, 
             energy_kin_prev, energy_cou_prev, energy_har_prev,
             energy_exc, energy_kincor, logbook)

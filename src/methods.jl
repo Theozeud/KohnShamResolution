@@ -14,14 +14,15 @@ function update_density!(m::CDA, solver::KhonShamSolver)
     nothing
 end
 
-# Optimal Dampling Algotithm
+# OPTIMAL DAMPLING ALGORITHM
 
-mutable struct ODA{T} <: SCFMethod 
+mutable struct ODA{T<:Real} <: SCFMethod 
     t::T
     function ODA(t::Real)
         new{typeof(t)}(t)
     end
 end
+
 
 function update_density!(m::ODA, solver::KhonShamSolver)
     @unpack D, Dprev = solver
