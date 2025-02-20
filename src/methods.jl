@@ -18,47 +18,41 @@ end
 
 mutable struct ODA{T<:Real} <: SCFMethod 
     t::T
-    function ODA(t::Real)
-        new{typeof(t)}(t)
+    iter::Int
+    function ODA(t::Real, iter::Int = 1)
+        new{typeof(t)}(t,iter)
     end
 end
 
 
 function update_density!(m::ODA, solver::KhonShamSolver)
-    @unpack D, Dprev = solver
-    @unpack energy_kin, energy_cou, energy_har,
-    energy_kin_prev, energy_cou_prev, energy_har_prev = solver
-    if iszero(solver.niter)
+    @unpack D, Dprev, discretization, model,
+            energy_kin, energy_cou, energy_har,
+            energy_kin_prev, energy_cou_prev, energy_har_prev = solver
+    @unpack elT = discretization
+
+    if solver.niter < m.iter
         D .= m.t * D + (1 - m.t) * Dprev
         return nothing
     end
-    if !isthereExchangeCorrelation(solver.model)
-        energy_har_mix = compute_hartree_mix_energy(solver.discretization, solver)
-        t2 = energy_har - 2*energy_har_mix + energy_har_prev 
-        t1 = energy_kin - energy_kin_prev - 2 * energy_har_prev
-        t0 = energy_kin_prev + energy_har_prev
-        if t2 > 0
-            _argmin = -t1/(2*t2)
-            m.t = min(max(0.0,_argmin),1.0)
-        elseif t2 < 0
-            if t2*0.1^2 + t1*0.1 > t2 + t1
-                m.t = 1.0
-            else
-                m.t = 0.1
-            end
-        else
-            if t1 > 0
-                m.t = 0.1
-            elseif t1 < 0
-                m.t = 1.0
-            else
-                m.t = 1.0
-            end
-        end
-    else
+    
+    energy_har01 = compute_hartree_mix_energy(discretization, D, Dprev)
 
-    end
+    # FIND THE OPTIMUM OCCUPATION
+    m.t = find_minima_oda(energy_kin, energy_kin_prev, 
+                          energy_cou, energy_cou_prev, 
+                          energy_har, energy_har_prev, energy_har01,
+                          D, Dprev, discretization, model)
     @show m.t
+
+    # UPDATE THE DENSITY
     D .= m.t * D + (1 - m.t) * Dprev
+
+    # UPDATE THE ENERGY
+    solver.energy_kin = m.t * energy_kin + (1-m.t) * energy_kin_prev
+    solver.energy_cou = m.t * energy_cou + (1-m.t) * energy_cou_prev
+    solver.energy_har = elT(0.5)*(m.t^2 * energy_har + (1-m.t)^2*energy_har_prev) 
+                        + m.t*(1-m.t)*energy_har01
+    solver.energy_exc = compute_exchangecorrelation_energy(discretization, model, D)
     nothing
 end

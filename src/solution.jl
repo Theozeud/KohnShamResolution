@@ -132,5 +132,5 @@ function total_charge(sol::KohnShamSolution)
     @unpack Rmax = sol.problem.discretization
     f(x,p) = density(sol, x) * x^2
     prob = IntegralProblem(f, (zero(Rmax),Rmax))
-    return 4π * solve(prob, QuadGKJL(); reltol = 1e-3, abstol = 1e-3).u
+    return 4π * solve(prob, QuadGKJL(); reltol = 1e-10, abstol = 1e-10).u
 end

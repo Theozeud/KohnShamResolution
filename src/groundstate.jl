@@ -81,6 +81,7 @@ function performstep!(solver::KhonShamSolver)
 
     # STEP 5 : Compute energy
     compute_energy!(solver.discretization, solver)
+    println(solver.energy_har)
 
     # STEP 6 : Compute new density
     update_density!(solver.method, solver)
@@ -131,7 +132,7 @@ function update_log!(solver::KhonShamSolver)
     orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ))              : nothing     
     
     # STORE THE OCCUPATION NUMBERS
-    occupation_number ?   push!(solver.logbook.occupation_number_log, copy(solver.n))          : nothing    
+    occupation_number ? push!(solver.logbook.occupation_number_log, copy(solver.n))          : nothing    
 
     # STORE THE TOTAL ENERGY
     if energy
