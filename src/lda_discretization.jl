@@ -22,8 +22,10 @@ end
 
 mutable struct LDA_tmp_Cache{T <: Real}
     tmp_H::Array{T}                 # Store Hₗ
-    tmp_MV::Matrix{T}               # Store the contraction F:C  
-    tmp_index_sort::Vector{Int}
+    tmp_MV::Matrix{T}               # Store the contraction F:C
+    tmp_B::Vector{T}                # Matrix of 4πρQᵢ  
+    tmp_C::Vector{T}                # Matrix for V(ρ) - solution of the Gauss Electrostatic law
+    tmp_index_sort::Vector{Int}     # Indices List for aufbau
 end
 
 function create_cache_lda(lₕ::Int, Nₕ::Int, T)
@@ -46,9 +48,11 @@ function create_cache_lda(lₕ::Int, Nₕ::Int, T)
     # Initialization of array for temporary stockage of computations
     tmp_H           = zeros(T, lₕ+1, Nₕ, Nₕ) 
     tmp_MV          = zeros(T, Nₕ, Nₕ)  
+    tmp_B           = zeros(T, Nₕ)
+    tmp_C           = zeros(T, Nₕ)
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
     LDACache{T}(A, M₀, M₋₁, M₋₂, F, B, C, Cprev, Cᵨ, Cᵨprev, Kin, Coulomb, Hfix, Hartree, Vxc),  
-    LDA_tmp_Cache{T}(tmp_H, tmp_MV, tmp_index_sort)
+    LDA_tmp_Cache{T}(tmp_H, tmp_MV, tmp_B, tmp_C, tmp_index_sort)
 end
 
 
@@ -203,10 +207,10 @@ end
 #                          Hartree Matrix
 #####################################################################
 
-function hartree_matrix!(discretization::LDADiscretization, D)
+function hartree_matrix!(discretization::LDADiscretization, D::AbstractMatrix{<:Real})
+    @unpack Rmin, Rmax = discretization
     @unpack A, M₀, F, B, C, Hartree = discretization.cache
     @unpack tmp_MV = discretization.tmp_cache
-    @unpack basis, Rmin, Rmax = discretization
     @tensor B[m] = D[i,j] * F[i,j,m]
     C .= A\B
     @tensor newCᵨ = D[i,j] * M₀[i,j]
@@ -242,6 +246,10 @@ function compute_energy!(discretization::LDADiscretization, solver::KhonShamSolv
     compute_total_energy!(discretization,solver)
 end
 
+#####################################################################
+#                         TOTAL ENERGY
+#####################################################################
+
 function compute_total_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack Rmax = discretization
     @unpack B, C, Cᵨ, Vxc = discretization.cache
@@ -256,10 +264,14 @@ function compute_total_energy!(discretization::LDADiscretization, solver::KhonSh
     nothing
 end
 
+#####################################################################
+#                        KINETIC ENERGY
+#####################################################################
+
 function compute_kinetic_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack Kin = discretization.cache
     @unpack U, n = solver
-    @unpack lₕ, Nₕ, elT  = discretization
+    @unpack lₕ, Nₕ = discretization
     solver.energy_kin = zero(solver.energy_kin)
     @inbounds for l ∈ 1:lₕ+1 
         @views vKin = Kin[l,:,:]  
@@ -273,10 +285,30 @@ function compute_kinetic_energy!(discretization::LDADiscretization, solver::Khon
     nothing
 end
 
+function compute_kinetic_energy(discretization::LDADiscretization, U::AbstractArray{<:Real}, n::AbstractArray{<:Real})
+    @unpack lₕ, Nₕ, elT  = discretization
+    @unpack Kin = discretization.cache
+    energy_kin = zero(elT)
+    @inbounds for l ∈ 1:lₕ+1 
+        @views vKin = Kin[l,:,:]  
+        @inbounds for k ∈ 1:Nₕ
+            if !iszero(n[l,k])
+                @views Ulk = U[l,:,k]
+                energy_kin += n[l,k] * Ulk' * vKin * Ulk
+            end
+        end
+    end
+    return energy_kin
+end
+
+#####################################################################
+#                        COULOMB ENERGY
+#####################################################################
+
 function compute_coulomb_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
+    @unpack lₕ, Nₕ  = discretization
     @unpack Coulomb = discretization.cache
     @unpack U, n = solver
-    @unpack lₕ, Nₕ  = discretization
     solver.energy_cou = zero(solver.energy_cou)
     @inbounds for l ∈ 1:lₕ+1   
         @inbounds for k ∈ 1:Nₕ
@@ -289,6 +321,25 @@ function compute_coulomb_energy!(discretization::LDADiscretization, solver::Khon
     nothing
 end
 
+function compute_coulomb_energy(discretization::LDADiscretization, U::AbstractArray{<:Real}, n::AbstractArray{<:Real})
+    @unpack lₕ, Nₕ, elT  = discretization
+    @unpack Coulomb = discretization.cache
+    energy_cou = zero(elT)
+    @inbounds for l ∈ 1:lₕ+1   
+        @inbounds for k ∈ 1:Nₕ
+            if !iszero(n[l,k])
+                @views Ulk = U[l,:,k]
+                energy_cou -=  n[l,k] * Ulk' * Coulomb * Ulk
+            end
+        end
+    end
+    return energy_cou
+end
+
+#####################################################################
+#                        HARTREE ENERGY
+#####################################################################
+
 function compute_hartree_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack Rmax, elT = discretization
     @unpack B, C, Cᵨ = discretization.cache
@@ -296,11 +347,31 @@ function compute_hartree_energy!(discretization::LDADiscretization, solver::Khon
     nothing
 end
 
-function compute_hartree_mix_energy(discretization::LDADiscretization, ::KhonShamSolver)
+function compute_hartree_energy(discretization::LDADiscretization, D::AbstractArray{<:Real})
     @unpack Rmax, elT = discretization
-    @unpack B, Cᵨ, Cᵨprev, Cprev = discretization.cache
-    return elT(0.5) * (dot(B,Cprev) + Cᵨ*Cᵨprev/Rmax)
+    @unpack A, F, M₀ = discretization.cache
+    @unpack tmp_B, tmp_C = discretization.tmp_cache
+    @tensor tmp_B[m] = D[i,j] * F[i,j,m]
+    tmp_C .= A\tmp_B
+    @tensor Cᵨ = D[i,j] * M₀[i,j]
+    return elT(0.5) * (dot(tmp_B,tmp_C) + Cᵨ^2/Rmax)
 end
+
+function compute_hartree_mix_energy(discretization::LDADiscretization, D0::AbstractArray{<:Real}, D1::AbstractArray{<:Real})
+    @unpack Rmax, elT = discretization
+    @unpack A, F, M₀ = discretization.cache
+    @unpack tmp_B, tmp_C = discretization.tmp_cache
+    @tensor tmp_B[m] = D0[i,j] * F[i,j,m]
+    tmp_C .= A\tmp_B
+    @tensor tmp_B[m] = D1[i,j] * F[i,j,m]
+    @tensor Cᵨ0 = D0[i,j] * M₀[i,j]
+    @tensor Cᵨ1 = D1[i,j] * M₀[i,j]
+    return elT(0.5) * (dot(tmp_B,tmp_C) + Cᵨ0*Cᵨ1/Rmax)
+end
+
+#####################################################################
+#                  EXCHANGE CORRELATION ENERGY
+#####################################################################
 
 function compute_exchangecorrelation_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack D = solver
@@ -312,6 +383,14 @@ function compute_exchangecorrelation_energy!(discretization::LDADiscretization, 
     nothing
 end
 
+function compute_exchangecorrelation_energy(discretization::LDADiscretization, model::KohnShamExtended, D::AbstractArray{<:Real})
+    @unpack Rmax = discretization
+    ρ(x) = compute_density(discretization, D, x)
+    f(x,p) = exc(model.exc, ρ(x)) * x^2
+    prob = IntegralProblem(f, (zero(Rmax),Rmax))
+    4π * solve(prob, QuadGKJL(); reltol = 1e-10, abstol = 1e-10).u
+end
+
 #####################################################################
 #                             Density
 #####################################################################
@@ -319,6 +398,30 @@ end
 function density_matrix!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack U, n, D = solver
     @unpack lₕ, Nₕ  = discretization
+    D .= zero(D)
+    @inbounds for k ∈ 1 :Nₕ
+        @inbounds for l ∈ 1:lₕ+1   
+            if !iszero(n[l,k])
+                @inbounds for i ∈ 1:Nₕ
+                    val = n[l,k] * U[l,i,k] 
+                    @inbounds @simd for j ∈ 1:i
+                        D[i,j] += val * U[l,j,k]
+                    end
+                end
+            end
+        end
+    end
+    @inbounds for i in 1:Nₕ
+        @inbounds @simd for j in 1:i-1
+            D[j,i] = D[i,j]
+        end
+    end
+    nothing
+end
+
+function density_matrix!(discretization::LDADiscretization, U::AbstractArray{<:Real}, n::AbstractArray{<:Real}, D::AbstractArray{<:Real})
+    @unpack lₕ, Nₕ  = discretization
+    D .= zero(D)
     @inbounds for k ∈ 1 :Nₕ
         @inbounds for l ∈ 1:lₕ+1   
             if !iszero(n[l,k])
