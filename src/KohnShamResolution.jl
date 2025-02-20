@@ -9,6 +9,7 @@ module KohnShamResolution
     using TensorOperations
     using Base.Threads
     using SparseArrays
+    using Optim
 
     # ANNEXE
     include("utils.jl")
@@ -119,7 +120,9 @@ module KohnShamResolution
     export DFTProblem
     include("problem.jl")
 
+
     export aufbau!
+    include("oda_procedure.jl")
     include("aufbau.jl")
 
     export CDA, ODA
