@@ -5,7 +5,9 @@ end
 
 # Solve Generalized Eigenvalue problem
 function solve_generalized_eigenvalue_problem(A,B)
-    return eigen(inv(B) * A)
+    C = sqrt(inv(B))
+    λ, U = eigen(C*A*C)
+    λ, C*U
 end
 
 # Approximate integral

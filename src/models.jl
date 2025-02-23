@@ -4,6 +4,9 @@ abstract type ExchangeCorrelation end
 
 struct NoExchangeCorrelation <: ExchangeCorrelation end
 
+exc(::NoExchangeCorrelation, rho) = zero(rho)
+vxc(::NoExchangeCorrelation, rho) = zero(rho)
+
 isthereExchangeCorrelation(::ExchangeCorrelation) = true
 isthereExchangeCorrelation(::NoExchangeCorrelation) = false
 
@@ -166,7 +169,7 @@ struct KohnShamExtended{TEXCH <: ExchangeCorrelation, TZ <: Real, TN <: Real} <:
     N::TN
     exc::TEXCH
 
-    function KohnShamExtended(;z, N, exc::ExchangeCorrelation = NoExchangeCorrelation())
+    function KohnShamExtended(;z::Real, N::Real, exc::ExchangeCorrelation = NoExchangeCorrelation())
         new{typeof(exc), eltype(z), eltype(N)}(z,N,exc)
     end
 end
@@ -174,6 +177,6 @@ end
 isthereExchangeCorrelation(km::KohnShamExtended) = isthereExchangeCorrelation(km.exc)
 isLSDA(km::KohnShamExtended) = isLSDA(km.exc)
 
-ReducedHartreeFock(z::Real, N) = KohnShamExtended(z = z, N = N)
-SlaterXα(z::Real, N) = KohnShamExtended(z = z, N = N, exc = SlaterXα())
-LSDA(z::Real, N) = KohnShamExtended(z = z, N = N, exc = LSDA())
+ReducedHartreeFock(z::Real, N::Real) = KohnShamExtended(z = z, N = N)
+SlaterXα(z::Real, N::Real) = KohnShamExtended(z = z, N = N, exc = SlaterXα())
+LSDA(z::Real, N::Real) = KohnShamExtended(z = z, N = N, exc = LSDA())

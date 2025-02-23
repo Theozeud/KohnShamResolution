@@ -1,5 +1,5 @@
 
-function groundstate(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::SCFMethod; name = "", kwargs...)
+function groundstate(model::AbstractDFTModel, discretization::KohnShamDiscretization, method::SCFMethod; name::String = "", kwargs...)
     solver = init(model, discretization, method; kwargs...)
     solve!(solver)
     makesolution(solver, name)
@@ -26,13 +26,18 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     # Init storage array
     D               = init_density_matrix(discretization)
     Dprev           = init_density_matrix(discretization)
+    tmpD            = init_density_matrix(discretization)
     U               = init_coeffs_discretization(discretization)
     ϵ               = init_energy(discretization)
     n               = init_occupation(discretization)
     energy          = zero(T)
+    energy_prev     = zero(T)
     energy_kin      = zero(T)
     energy_cou      = zero(T)
     energy_har      = zero(T)
+    energy_kin_prev = zero(T)
+    energy_cou_prev = zero(T)
+    energy_har_prev = zero(T)
     energy_exc      = zero(T)
     energy_kincor   = zero(T)
     
@@ -44,8 +49,10 @@ function init(model::AbstractDFTModel, discretization::KohnShamDiscretization, m
     stopping_criteria = zero(T)
     logbook = LogBook(logconfig, T)
     
-    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, U, ϵ, n, 
-                   energy, energy_kin, energy_cou, energy_har, energy_exc, energy_kincor, logbook)
+    KhonShamSolver(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, tmpD, U, ϵ, n, 
+                   energy, energy_prev, energy_kin, energy_cou, energy_har, 
+                   energy_kin_prev, energy_cou_prev, energy_har_prev,
+                   energy_exc, energy_kincor, logbook, false)
 end
 
 
@@ -64,14 +71,17 @@ function performstep!(solver::KhonShamSolver)
     find_orbital!(solver.discretization, solver)
 
     # STEP 2 : Build the n matrix using the Aufbau principle
-    aufbau!(solver)
+    #          The normalization of eigenvectors is made during this step to only 
+    #          normalize the eigenvectors we need.
+    aufbau!(solver.discretization, solver)
 
-    # STEP 3 : Normaization of eigenvectors
-    # This is done after aufbau to normalize only eigenvectors we need
-    normalization!(solver.discretization)
 
-    # STEP 4 : Compute density star
-    density_matrix!(solver.discretization)
+    if !solver.flag_degen
+        # STEP 3 : Compute density star 
+        density_matrix!(solver.discretization, solver)
+        # STEP 4 : Compute energy
+        compute_energy!(solver.discretization, solver)
+    end
 
     # STEP 5 : Compute new density
     update_density!(solver.method, solver)
@@ -81,22 +91,25 @@ function performstep!(solver::KhonShamSolver)
 end
 
 function loopheader!(solver::KhonShamSolver)
-    @unpack tmp_D, tmp_Dstar, tmp_n = solver.discretization.tmp_cache
-    tmp_D       .= zero(tmp_D)
-    tmp_Dstar   .= zero(tmp_Dstar)
-    tmp_n       .= zero(tmp_n)                                          
+    solver.flag_degen        = false
+    solver.Dprev            .= solver.D
+    solver.energy_kin_prev   = solver.energy_kin
+    solver.energy_cou_prev   = solver.energy_cou
+    solver.energy_har_prev   = solver.energy_har 
+    nothing                                         
 end 
 
 function loopfooter!(solver::KhonShamSolver)
-    solver.stopping_criteria = stopping_criteria(solver)            # COMPUTE THE NEW STOPPING CRITERIA 
-    solver.Dprev  .= solver.D                                       # UPDATE THE CURRENT DENSITY
+    stopping_criteria!(solver)                                      # COMPUTE THE NEW STOPPING CRITERIA                                 
     solver.niter += 1                                               # INCREASE THE NUMBER OF ITERATIONS DONE
     update_log!(solver)                                             # UPDATE THE LOG
+    nothing                                            
 end 
 
 
-function stopping_criteria(solver::KhonShamSolver)
-    norm(solver.D - solver.Dprev)
+function stopping_criteria!(solver::KhonShamSolver)
+    solver.stopping_criteria = norm(solver.D - solver.Dprev) + 
+                                abs(solver.energy - solver.energy_prev)
 end
     
 function makesolution(solver::KhonShamSolver, name::String)
@@ -104,11 +117,10 @@ function makesolution(solver::KhonShamSolver, name::String)
 end
 
 function update_solver!(solver::KhonShamSolver)
-    @unpack tmp_D, tmp_U, tmp_ϵ, tmp_n = solver.discretization.tmp_cache
-    solver.D .= tmp_D
-    solver.U .= tmp_U
-    solver.ϵ .= tmp_ϵ
-    solver.n .= tmp_n
+    @unpack Cprev, C, Cᵨ, Cᵨprev = solver.discretization.cache
+    solver.discretization.cache.Cprev = solver.discretization.cache.C
+    solver.discretization.cache.Cᵨprev = Cᵨ
+    solver.energy_prev = solver.energy
     nothing
 end
 
@@ -122,12 +134,11 @@ function update_log!(solver::KhonShamSolver)
     # STORE THE ORBITALS ENERGY
     orbitals_energy ?   push!(solver.logbook.orbitals_energy_log, copy(solver.ϵ))              : nothing     
     
+    # STORE THE OCCUPATION NUMBERS
+    occupation_number ? push!(solver.logbook.occupation_number_log, copy(solver.n))          : nothing    
+
     # STORE THE TOTAL ENERGY
     if energy
-        if isthereExchangeCorrelation(solver.model)
-            compute_exchangecorrelation_energy!(solver.discretization, solver)
-        end
-        compute_total_energy!(solver.discretization, solver)
         push!(solver.logbook.energy_log, solver.energy)                           
     end
 end
