@@ -180,6 +180,15 @@ function normalization!(discretization::LDADiscretization, solver::KhonShamSolve
     nothing
 end
 
+function normalization!(discretization::LDADiscretization, solver::KhonShamSolver, l::Int, k::Int)
+    @unpack M₀ = discretization.cache
+    @unpack U = solver
+    @views Ulk = U[l+1,:,k]
+    coeff = sqrt(Ulk'*M₀*Ulk)
+    Ulk .= Ulk .* 1.0/coeff
+    nothing
+end
+
 #####################################################################
 #                          Kinetic Matrix
 #####################################################################
@@ -239,7 +248,7 @@ end
 function compute_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
     compute_kinetic_energy!(discretization,solver)
     compute_coulomb_energy!(discretization,solver)
-    compute_hartree_energy!(discretization,solver)
+    solver.energy_har = compute_hartree_energy(discretization, solver.D)
     if isthereExchangeCorrelation(solver.model)
         compute_exchangecorrelation_energy!(discretization,solver)
     end
@@ -252,14 +261,14 @@ end
 
 function compute_total_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack Rmax = discretization
-    @unpack B, C, Cᵨ, Vxc = discretization.cache
+    @unpack Vxc = discretization.cache
     @unpack n, ϵ, D = solver
     @tensor energy = n[l,n] * ϵ[l,n] 
     if isthereExchangeCorrelation(solver.model)
         @tensor energy_correction = Vxc[i,j] * D[i,j]
-        solver.energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax) + solver.energy_exc - energy_correction
+        solver.energy = energy - solver.energy_har + solver.energy_exc - energy_correction
     else
-        solver.energy = energy - discretization.elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax)
+        solver.energy = energy - solver.energy_har
     end
     nothing
 end
@@ -314,7 +323,7 @@ function compute_coulomb_energy!(discretization::LDADiscretization, solver::Khon
         @inbounds for k ∈ 1:Nₕ
             if !iszero(n[l,k])
                 @views Ulk = U[l,:,k]
-                solver.energy_cou -=  n[l,k] * Ulk' * Coulomb * Ulk
+                solver.energy_cou +=  n[l,k] * Ulk' * Coulomb * Ulk
             end
         end
     end
@@ -329,7 +338,7 @@ function compute_coulomb_energy(discretization::LDADiscretization, U::AbstractAr
         @inbounds for k ∈ 1:Nₕ
             if !iszero(n[l,k])
                 @views Ulk = U[l,:,k]
-                energy_cou -=  n[l,k] * Ulk' * Coulomb * Ulk
+                energy_cou +=  n[l,k] * Ulk' * Coulomb * Ulk
             end
         end
     end
@@ -399,7 +408,7 @@ function density_matrix!(discretization::LDADiscretization, solver::KhonShamSolv
     @unpack U, n, D = solver
     @unpack lₕ, Nₕ  = discretization
     D .= zero(D)
-    @inbounds for k ∈ 1 :Nₕ
+    @inbounds for k ∈ 1:Nₕ
         @inbounds for l ∈ 1:lₕ+1   
             if !iszero(n[l,k])
                 @inbounds for i ∈ 1:Nₕ

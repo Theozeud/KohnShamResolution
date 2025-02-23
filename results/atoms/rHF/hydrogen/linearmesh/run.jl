@@ -6,11 +6,11 @@ logconfig = LogConfig(orbitals_energy = true, occupation_number = true, energy =
 
 problem = AtomProblem(;
                 T               = Float64, 
-                lh              = 0, 
-                method          = CDA(0.7), 
-                model           = ReducedHartreeFock(1, 1), 
-                Rmax            = 80, 
-                Nmesh           = 50,
+                lh              = 2, 
+                method          = ODA(0.8), 
+                model           = ReducedHartreeFock(26, 26), 
+                Rmax            = 200, 
+                Nmesh           = 110,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
@@ -18,9 +18,9 @@ problem = AtomProblem(;
                 typediscre      = LDADiscretization,
                 name            = "test", 
                 scftol          = 1e-10,
-                maxiter         = 8,
+                maxiter         = 45,
                 hartree         = true,
-                degen_tol       = 1e-15,
+                degen_tol       = 1e-3,
                 logconfig       = logconfig)
 
 

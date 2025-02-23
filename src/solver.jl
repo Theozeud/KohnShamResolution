@@ -6,7 +6,7 @@ struct SolverOptions{T}
     quad_abstol::T                  # Absolute tolerance for the quadrature of integrals
     hartree::T                      # Coefficient multiply to the Hartree Matrix : 
                                     # 0 -> no hartree term, 1-> full hartree term
-    degen_tol::T    
+    degen_tol::T                    # Tolerance to consider dengenescence of orbitals energy
 end
 
 
@@ -34,6 +34,7 @@ mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
     ϵ::orbitalsenergyType                       # Orbitals energy at current time
     n::occupationType                           # Occupation number at current time 
     energy::dataType                            # Total energy at current time
+    energy_prev::dataType                       # Total energy at previous time
     energy_kin::dataType                        # Kinetic energy at current time
     energy_cou::dataType                        # Coulomb energy at current time
     energy_har::dataType                        # Hartree energy at current time
@@ -43,6 +44,7 @@ mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
     energy_exc::dataType                        # Exchange-correlation energy at current time
     energy_kincor::dataType                     # Kinetic-correlation energy at current time (exists for the LSDA model)
     logbook::logbookType                        # LogBook
+    flag_degen::Bool                            # Flag to know if there is a degeneracy
 
     function KhonShamSolver(niter::Int, 
                             stopping_criteria::Real, 
@@ -57,6 +59,7 @@ mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
                             ϵ::AbstractArray, 
                             n::AbstractArray, 
                             energy::Real, 
+                            energy_prev::Real,
                             energy_kin::Real, 
                             energy_cou::Real, 
                             energy_har::Real, 
@@ -65,7 +68,8 @@ mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
                             energy_har_prev::Real,
                             energy_exc::Real, 
                             energy_kincor::Real, 
-                            logbook::LogBook)
+                            logbook::LogBook,
+                            flag_degen::Bool)
         new{typeof(discretization),
             typeof(model),
             typeof(method),
@@ -76,8 +80,8 @@ mutable struct KhonShamSolver{  discretizationType <: KohnShamDiscretization,
             typeof(U),
             typeof(ϵ),
             typeof(n)}(niter, stopping_criteria, discretization, model, method, opts, D, Dprev, tmpD, U, ϵ, n, 
-            energy, energy_kin, energy_cou, energy_har, 
+            energy, energy_prev, energy_kin, energy_cou, energy_har, 
             energy_kin_prev, energy_cou_prev, energy_har_prev,
-            energy_exc, energy_kincor, logbook)
+            energy_exc, energy_kincor, logbook, flag_degen)
     end
 end
