@@ -14,7 +14,7 @@ N = 21
 KM = KohnShamExtended(z = z, N = N)
 
 # Choice of the method
-M = CDA(0.3)
+M = ODA(0.3)
 
 # Discretization 
 lₕ = 2
