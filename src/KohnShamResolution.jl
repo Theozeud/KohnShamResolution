@@ -114,19 +114,20 @@ module KohnShamResolution
     include("solver.jl")
 
     export LDADiscretization, LSDADiscretization
-    include("lda_discretization.jl")
-    include("lsda_discretization.jl")
+    include("discretization/lda.jl")
+    include("discretization/lsda.jl")
 
     export DFTProblem
     include("problem.jl")
 
 
     export aufbau!
-    include("oda_procedure.jl")
+    include("methods/oda_procedure.jl")
     include("aufbau.jl")
 
     export CDA, ODA
-    include("methods.jl")
+    include("methods/cda.jl")
+    include("methods/oda.jl")
 
     export KohnShamSolution, eigenvector, density, total_charge
     include("solution.jl")
