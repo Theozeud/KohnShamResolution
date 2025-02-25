@@ -1,6 +1,6 @@
 # CONSTANT DAMPLING ALGORITHM
 
-struct CDA{T} <: SCFMethod
+struct CDA{T} <: RCAMethod
     t::T
     function CDA(t::Real)
         @assert 0 ≤ t ≤ 1

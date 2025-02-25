@@ -1,6 +1,6 @@
 # OPTIMAL DAMPLING ALGORITHM
 
-mutable struct ODA{T<:Real} <: SCFMethod 
+mutable struct ODA{T<:Real} <: RCAMethod 
     t::T
     iter::Int
     function ODA(t::Real, iter::Int = 1)

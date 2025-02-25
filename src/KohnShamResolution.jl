@@ -105,7 +105,9 @@ module KohnShamResolution
     
     # SOLVER &CO
     abstract type KohnShamDiscretization end
+    
     abstract type SCFMethod end
+    abstract type RCAMethod <: SCFMethod end
 
     export LogConfig, LogBook
     include("log.jl")
