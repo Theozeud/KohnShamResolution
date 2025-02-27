@@ -10,12 +10,10 @@ mutable struct LDACache{T <: Real}
     F::Array{T}                     # Tensor of 1/x QᵢQⱼQₖ
     B::Vector{T}                    # Matrix of 4πρQᵢ
     C::Vector{T}                    # Matrix for V(ρ) - solution of the Gauss Electrostatic law
-    Cprev::Vector{T}                # Matrix for V(ρ) - solution of the Gauss Electrostatic law at previous time
-    Cᵨ::T                           # Number equal to total charge
-    Cᵨprev::T                       # Number equal to total charge at previous time
-    Kin::Array{T}                  # Matrix VF of Kinetic 
+    Crho::T                         # Number equal to total charge
+    Kin::Array{T}                   # Matrix VF of Kinetic 
     Coulomb::Matrix{T}              # Matrix VF of Coulomb
-    Hfix::Array{T}                 # Part of Hamilotnian not needing to be recomputed (Kinetic + Colombial)         
+    Hfix::Array{T}                  # Part of Hamilotnian not needing to be recomputed (Kinetic + Colombial)         
     Hartree::Matrix{T}              # Matrix VF of hartree 
     Vxc::Matrix{T}                  # Matrix VF of Echange-correlation
 end
@@ -36,9 +34,7 @@ function create_cache_lda(lₕ::Int, Nₕ::Int, T)
     F           = zeros(T, Nₕ, Nₕ, Nₕ)
     B           = zeros(T, Nₕ)
     C           = zeros(T, Nₕ)
-    Cprev       = zeros(T, Nₕ)
-    Cᵨ          = zero(T)
-    Cᵨprev      = zero(T)
+    Crho        = zero(T)
     Kin         = zeros(T, lₕ+1, Nₕ, Nₕ)
     Coulomb     = zeros(T, Nₕ, Nₕ)
     Hfix        = zeros(T, lₕ+1, Nₕ, Nₕ)
@@ -51,7 +47,7 @@ function create_cache_lda(lₕ::Int, Nₕ::Int, T)
     tmp_B           = zeros(T, Nₕ)
     tmp_C           = zeros(T, Nₕ)
     tmp_index_sort  = zeros(Int, Nₕ*(lₕ+1))
-    LDACache{T}(A, M₀, M₋₁, M₋₂, F, B, C, Cprev, Cᵨ, Cᵨprev, Kin, Coulomb, Hfix, Hartree, Vxc),  
+    LDACache{T}(A, M₀, M₋₁, M₋₂, F, B, C, Crho, Kin, Coulomb, Hfix, Hartree, Vxc),  
     LDA_tmp_Cache{T}(tmp_H, tmp_MV, tmp_B, tmp_C, tmp_index_sort)
 end
 
@@ -222,10 +218,10 @@ function hartree_matrix!(discretization::LDADiscretization, D::AbstractMatrix{<:
     @unpack tmp_MV = discretization.tmp_cache
     @tensor B[m] = D[i,j] * F[i,j,m]
     C .= A\B
-    @tensor newCᵨ = D[i,j] * M₀[i,j]
+    @tensor newCrho = D[i,j] * M₀[i,j]
     @tensor tmp_MV[i,j] = C[k] * F[i,j,k]
-    @. Hartree = tmp_MV + newCᵨ/(Rmax-Rmin) * M₀
-    discretization.cache.Cᵨ = newCᵨ
+    @. Hartree = tmp_MV + newCrho/(Rmax-Rmin) * M₀
+    discretization.cache.Crho = newCrho
     nothing
 end
 
@@ -351,8 +347,8 @@ end
 
 function compute_hartree_energy!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack Rmax, elT = discretization
-    @unpack B, C, Cᵨ = discretization.cache
-    solver.energy_har = elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax)
+    @unpack B, C, Crho = discretization.cache
+    solver.energy_har = elT(0.5) * (dot(B,C) + Crho^2/Rmax)
     nothing
 end
 
@@ -362,8 +358,8 @@ function compute_hartree_energy(discretization::LDADiscretization, D::AbstractAr
     @unpack tmp_B, tmp_C = discretization.tmp_cache
     @tensor tmp_B[m] = D[i,j] * F[i,j,m]
     tmp_C .= A\tmp_B
-    @tensor Cᵨ = D[i,j] * M₀[i,j]
-    return elT(0.5) * (dot(tmp_B,tmp_C) + Cᵨ^2/Rmax)
+    @tensor Crho = D[i,j] * M₀[i,j]
+    return elT(0.5) * (dot(tmp_B,tmp_C) + Crho^2/Rmax)
 end
 
 function compute_hartree_mix_energy(discretization::LDADiscretization, D0::AbstractArray{<:Real}, D1::AbstractArray{<:Real})
@@ -373,9 +369,9 @@ function compute_hartree_mix_energy(discretization::LDADiscretization, D0::Abstr
     @tensor tmp_B[m] = D0[i,j] * F[i,j,m]
     tmp_C .= A\tmp_B
     @tensor tmp_B[m] = D1[i,j] * F[i,j,m]
-    @tensor Cᵨ0 = D0[i,j] * M₀[i,j]
-    @tensor Cᵨ1 = D1[i,j] * M₀[i,j]
-    return elT(0.5) * (dot(tmp_B,tmp_C) + Cᵨ0*Cᵨ1/Rmax)
+    @tensor Crho0 = D0[i,j] * M₀[i,j]
+    @tensor Crho1 = D1[i,j] * M₀[i,j]
+    return elT(0.5) * (dot(tmp_B,tmp_C) + Crho0*Crho1/Rmax)
 end
 
 #####################################################################
@@ -404,7 +400,7 @@ end
 #                             Density
 #####################################################################
 
-function density_matrix!(discretization::LDADiscretization, solver::KhonShamSolver)
+function density!(discretization::LDADiscretization, solver::KhonShamSolver)
     @unpack U, n, D = solver
     @unpack lₕ, Nₕ  = discretization
     D .= zero(D)
@@ -428,7 +424,7 @@ function density_matrix!(discretization::LDADiscretization, solver::KhonShamSolv
     nothing
 end
 
-function density_matrix!(discretization::LDADiscretization, U::AbstractArray{<:Real}, n::AbstractArray{<:Real}, D::AbstractArray{<:Real})
+function density!(discretization::LDADiscretization, U::AbstractArray{<:Real}, n::AbstractArray{<:Real}, D::AbstractArray{<:Real})
     @unpack lₕ, Nₕ  = discretization
     D .= zero(D)
     @inbounds for k ∈ 1 :Nₕ
@@ -451,7 +447,7 @@ function density_matrix!(discretization::LDADiscretization, U::AbstractArray{<:R
     nothing
 end
 
-function compute_density(discretization::LDADiscretization, D, x)
+function compute_density(discretization::LDADiscretization, D::AbstractArray{<:Real}, x::Real)
     @unpack basis = discretization
     newT = promote_type(eltype(basis), typeof(x))
     val = zero(newT)
@@ -461,4 +457,34 @@ function compute_density(discretization::LDADiscretization, D, x)
     end
     val = (eval_basis)' * D * eval_basis
     return val* 1/4π * 1/(x^2)
+end
+
+
+#####################################################################
+#                          Density Matrix
+#####################################################################
+
+function density_matrix!(discretization::LDADiscretization, U::AbstractArray{<:Real}, n::AbstractArray{<:Real}, 
+                         Γ::BlockDiagonal{<:Real, <:AbstractMatrix{<:Real}})
+    @unpack lₕ, Nₕ  = discretization
+    @inbounds for l ∈ 1:lₕ+1 
+        @views Γl = block(Γ)[l]
+        Γl .= zero(Γl)
+        @inbounds for k ∈ 1:Nₕ
+            if !iszero(n[l,k])
+                @inbounds for i ∈ 1:Nₕ
+                    val = n[l,k]/(2*l-1) * U[l,i,k] 
+                    @inbounds @simd for j ∈ 1:i
+                        Γl[i,j] += val * U[l,j,k]
+                    end
+                end
+            end
+        end
+        @inbounds for i in 1:Nₕ
+            @inbounds @simd for j in 1:i-1
+                Γl[j,i] = Γl[i,j]
+            end
+        end
+    end
+    nothing
 end
