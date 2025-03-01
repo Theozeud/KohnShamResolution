@@ -20,7 +20,7 @@ function mass_matrix(pb::PolynomialBasis)
     A
 end
 
-function fill_mass_matrix!(pb::PolynomialBasis, A)
+function fill_mass_matrix!(pb::PolynomialBasis, A::AbstractMatrix)
     @unpack generators, mesh = pb
     @threads for I ∈ pb.matrix_fill_indices
         for (i,j) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
@@ -44,7 +44,7 @@ function stiffness_matrix(pb::PolynomialBasis)
     A
 end
 
-function fill_stiffness_matrix!(pb::PolynomialBasis, A)
+function fill_stiffness_matrix!(pb::PolynomialBasis, A::AbstractMatrix)
     @unpack generators, mesh = pb
     @threads for I ∈ pb.matrix_fill_indices
         for (i,j) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
@@ -70,7 +70,7 @@ function weight_mass_matrix(pb::PolynomialBasis, n::Int)
     weight_mass_matrix(pb, Monomial(n))
 end
 
-function fill_weight_mass_matrix!(pb::PolynomialBasis, weight, A)
+function fill_weight_mass_matrix!(pb::PolynomialBasis, weight, A::AbstractMatrix)
     @threads for I ∈ pb.matrix_fill_indices
         for (i,j) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
             P = getgenerator(pb, I[1], i)
@@ -85,6 +85,10 @@ function fill_weight_mass_matrix!(pb::PolynomialBasis, weight, A)
     nothing
 end
 
+function fill_weight_mass_matrix!(pb::PolynomialBasis, n::Int, A::AbstractMatrix)
+    fill_weight_mass_matrix!(pb::PolynomialBasis, Monomial(n), A::AbstractMatrix)
+end
+
 # Weight Mass vector
 function weight_mass_vector(pb::PolynomialBasis, weight)
     T = eltype(pb)
@@ -93,7 +97,7 @@ function weight_mass_vector(pb::PolynomialBasis, weight)
     A
 end
 
-function fill_weight_mass_vector!(pb::PolynomialBasis, weight, A)
+function fill_weight_mass_vector!(pb::PolynomialBasis, weight, A::AbstractMatrix)
     @threads for i ∈ eachindex(pb)
         for j ∈ axes(pb.indices_generators,2)
             P = getgenerator(pb, i, j)
@@ -117,7 +121,7 @@ function weight_mass_3tensor(pb::PolynomialBasis, n::Int)
     weight_mass_3tensor(pb, Monomial(n))
 end
 
-function fill_weight_mass_3tensor!(pb::PolynomialBasis, weight, A)
+function fill_weight_mass_3tensor!(pb::PolynomialBasis, weight, A::AbstractArray)
     @threads for I ∈ pb.tensor_fill_indices
         for (i,j,k) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:], pb.indices_cells[I[3],:])
             P = getgenerator(pb, I[1], i)
@@ -135,4 +139,8 @@ function fill_weight_mass_3tensor!(pb::PolynomialBasis, weight, A)
         @inbounds A[I[1], I[3], I[2]]  = A[I[1], I[2], I[3]]
     end
     nothing
+end
+
+function fill_weight_mass_3tensor!(pb::PolynomialBasis, n::Int, A::AbstractArray)
+    fill_weight_mass_3tensor!(pb, Monomial(n),A)
 end
