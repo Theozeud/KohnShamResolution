@@ -20,11 +20,12 @@ end
 # AUFBAU PRINCIPLE
 function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
 
-    @unpack ϵ, n, D, tmpD, U, model, opts = solver
+    @unpack ϵ, n, Noccup, D, tmpD, U, model, opts = solver
     @unpack tmp_index_sort = discretization.tmp_cache
 
     # INIT OCCUPATION NUMBER 
-    n  .= zero(n)
+    n       .= zero(n)
+    Noccup  .= zero(Noccup)
 
     # COLLECT THE INDICES OF THE SORTED ORBITAL ENERGIES
     tmp_index_sort .= sortperm(vec(ϵ))
@@ -58,9 +59,11 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
                 normalization!(discretization, solver, convert_index(discretization,i)...) 
             end
             remain -= total_degen
+            Noccup[1] += length(indices_degen)
 
         elseif length(indices_degen) == 1
             # IN THIS CASE, WE FILL THE ORBITAL WITH THE REMAIN ELECTRONS
+            Noccup[2] += 1
 
             n[first(indices_degen)] = remain
             normalization!(discretization, solver, convert_index(discretization,first(indices_degen))...)
@@ -70,6 +73,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
             # IN THIS CASE WE NEED TO FILL THE LAYERS WITH THE OPTIMAL REPARTITION
             println("Degen 2")
             solver.flag_degen = true
+            Noccup[2] += 2
 
             # NORMALIZATION OF COEFFICIENTS OF ORBITAL
             for i ∈ indices_degen
@@ -90,7 +94,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
                 n2_0 = remain - degen_first
             end
             
-            density_matrix!(discretization, U, n, D)
+            density!(discretization, U, n, D)
             energy_kin0 = compute_kinetic_energy(discretization, U, n)
             energy_cou0 = compute_coulomb_energy(discretization, U, n)
             energy_har0 = compute_hartree_energy(discretization, D)
@@ -109,7 +113,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
                 n2_1 = degen_second
             end
             
-            density_matrix!(discretization, U, n, tmpD)
+            density!(discretization, U, n, tmpD)
             energy_kin1 = compute_kinetic_energy(discretization, U, n)
             energy_cou1 = compute_coulomb_energy(discretization, U, n)
             energy_har1 = compute_hartree_energy(discretization, tmpD)
@@ -147,6 +151,7 @@ function aufbau!(discretization::LDADiscretization, solver::KhonShamSolver)
         end
 
     end
+    Noccup[3] = length(ϵ) - Noccup[1] - Noccup[2] 
     nothing
 end
 
