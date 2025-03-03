@@ -42,6 +42,32 @@ function _commutator!( A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix, 
     @. A -= tmp
 end
 
+
+function mul_block_by_block!(Γout::BlockDiagonal{<:Number}, M::AbstractMatrix, Γin::BlockDiagonal{<:Number})
+    if nbblock(Γout) ≠ nbblock(Γin)
+        throw(DimensionMismatch(lazy"Γout has $(nbblock(Γout)) blocks but Γin has $(nbblock(Γin))"))
+    end
+    for i ∈ 1:nbblock(Γout)
+        @views Γin_i = blocks(Γin)[i]
+        @views Γout_i = blocks(Γout)[i]
+        mul!(Γout_i, M, Γin_i)
+    end
+    Γout
+end
+
+
+function mul_block_by_block!(Γout::BlockDiagonal{<:Number}, Γin::BlockDiagonal{<:Number}, M::AbstractMatrix,)
+    if nbblock(Γout) ≠ nbblock(Γin)
+        throw(DimensionMismatch(lazy"Γout has $(nbblock(Γout)) blocks but Γin has $(nbblock(Γin))"))
+    end
+    for i ∈ 1:nbblock(Γout)
+        @views Γin_i = blocks(Γin)[i]
+        @views Γout_i = blocks(Γout)[i]
+        mul!(Γout_i, Γin_i, M)
+    end
+    Γout
+end
+
 function _copy_vec_to_mat!( M::AbstractMatrix, ir_dest::AbstractRange{Int}, jr_dest::AbstractRange{Int},
                             V::AbstractVector, ir_src::AbstractRange{Int})        
     if length(ir_dest) * length(jr_dest) != length(ir_src)
