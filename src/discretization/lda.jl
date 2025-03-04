@@ -125,7 +125,7 @@ function init_energies(kd::LDADiscretization, model::KohnShamExtended)
                 :Ekin => zero(elT),                                     # Kinetic energy
                 :Ecou => zero(elT),                                     # Coulomb energy
                 :Ehar => zero(elT))                                     # Hartree energy
-    !isthereExchangeCorrelation(model) ||  d[:Eexc] = zero(elT)         # Exchange-correlation energy
+    !(isthereExchangeCorrelation(model)) ||  (d[:Eexc] = zero(elT))     # Exchange-correlation energy
     d
 end
 
@@ -139,7 +139,7 @@ function prepare_eigenvalue_problem!(   discretization::LDADiscretization,
                                         D::AbstractMatrix{<:Real}, 
                                         hartree::Real = true)
 
-    @unpack Hartree, Vxc = discretization.matrices
+    @unpack H, Hfix, Hartree, Vxc = discretization.matrices
 
     # COMPUTE HARTREE MATRIX
     iszero(hartree) || hartree_matrix!(discretization, D, hartree)
@@ -149,10 +149,10 @@ function prepare_eigenvalue_problem!(   discretization::LDADiscretization,
                     exchange_corr_matrix!(discretization, model, D)
     
     # BUILD THE HAMILTONIAN OF THE lᵗʰ SECTION
-    @threads for l ∈ 0:lₕ
+    @threads for l ∈ 0:discretization.lₕ
         @views vH = H[l+1,:,:]
         @views vHfix = Hfix[l+1,:,:]
-        @. vH = vHfix + Vxc + Hartre
+        @. vH = vHfix + Vxc + Hartree
     end
     nothing
 end
@@ -232,7 +232,7 @@ function hartree_matrix!(discretization::LDADiscretization, D::AbstractMatrix{<:
     @unpack A, M₀, F, Hartree = matrices
     @unpack tmp_MV, tmp_B, tmp_C = cache
     @tensor tmp_B[m] = D[i,j] * F[i,j,m]
-    tmp_C .= A\B
+    tmp_C .= A\tmp_B
     @tensor newCrho = D[i,j] * M₀[i,j]
     @tensor tmp_MV[i,j] = tmp_C[k] * F[i,j,k]
     @. Hartree = tmp_MV + newCrho/Rmax * M₀
@@ -260,7 +260,7 @@ end
 #                         TOTAL ENERGY
 #####################################################################
 
-function compute_total_energy!( discretization::LDADiscretization, 
+function compute_total_energy( discretization::LDADiscretization, 
                                 model::KohnShamExtended,
                                 D::AbstractMatrix{<:Real}, 
                                 n::AbstractMatrix{<:Real},

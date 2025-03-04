@@ -136,7 +136,7 @@ init_occupation(kd::LSDADiscretization)            = zeros(kd.elT, kd.lₕ+1, kd
 #               Find Orbital : Solve the eigen problems
 #####################################################################
 
-function find_orbital!(discretization::LSDADiscretization, solver::KhonShamSolver)
+function find_orbital!(discretization::LSDADiscretization, solver::KohnShamSolver)
 
     @unpack lₕ = discretization
     @unpack M₀, Hfix, Hartree, Vxc = discretization.cache
@@ -269,7 +269,7 @@ end
 #                             Energy
 #####################################################################
 
-function compute_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+function compute_energy!(discretization::LSDADiscretization, solver::KohnShamSolver)
     compute_kinetic_energy!(discretization,solver)
     compute_coulomb_energy!(discretization,solver)
     compute_hartree_energy!(discretization,solver)
@@ -282,7 +282,7 @@ function compute_energy!(discretization::LSDADiscretization, solver::KhonShamSol
     compute_total_energy!(discretization,solver)
 end
 
-function compute_total_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+function compute_total_energy!(discretization::LSDADiscretization, solver::KohnShamSolver)
     @unpack Rmax = discretization
     @unpack B, C, Cᵨ, Vxc = discretization.cache
     @unpack n, ϵ, D = solver
@@ -296,7 +296,7 @@ function compute_total_energy!(discretization::LSDADiscretization, solver::KhonS
     nothing
 end
 
-function compute_kinetic_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+function compute_kinetic_energy!(discretization::LSDADiscretization, solver::KohnShamSolver)
     @unpack A, M₋₂ = discretization.cache
     @unpack U, n = solver
     @unpack lₕ, Nₕ, elT  = discretization
@@ -313,7 +313,7 @@ function compute_kinetic_energy!(discretization::LSDADiscretization, solver::Kho
     nothing
 end
 
-function compute_coulomb_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+function compute_coulomb_energy!(discretization::LSDADiscretization, solver::KohnShamSolver)
     @unpack M₋₁ = discretization.cache
     @unpack U, n = solver
     @unpack lₕ, Nₕ  = discretization
@@ -330,14 +330,14 @@ function compute_coulomb_energy!(discretization::LSDADiscretization, solver::Kho
     nothing
 end
 
-function compute_hartree_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+function compute_hartree_energy!(discretization::LSDADiscretization, solver::KohnShamSolver)
     @unpack Rmax, elT = discretization
     @unpack B, C, Cᵨ = discretization.cache
     solver.energy_har = elT(0.5) * (dot(B,C) + Cᵨ^2/Rmax)
     nothing
 end
 
-function compute_exchangecorrelation_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+function compute_exchangecorrelation_energy!(discretization::LSDADiscretization, solver::KohnShamSolver)
     @unpack D = solver
     @unpack Rmax = discretization
     @views DUP = D[:,:,1]   
@@ -350,7 +350,7 @@ function compute_exchangecorrelation_energy!(discretization::LSDADiscretization,
     nothing
 end
 
-function compute_kinetic_correlation_energy!(discretization::LSDADiscretization, solver::KhonShamSolver)
+function compute_kinetic_correlation_energy!(discretization::LSDADiscretization, solver::KohnShamSolver)
     @unpack D = solver
     @unpack Rmax = discretization
     @views DUP = D[:,:,1]   

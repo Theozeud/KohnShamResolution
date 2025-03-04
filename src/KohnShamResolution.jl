@@ -1,19 +1,23 @@
 module KohnShamResolution
 
-    # DEPENDANCES
+    # DEPENDANCIES
     using LinearAlgebra
-    using UnPack
-    using Integrals
-    using Memoize
-    using HypergeometricFunctions
-    using TensorOperations
-    using Base.Threads
     using SparseArrays
+    using FillArrays
+    using BlockDiagonals
+    using LinearOperators
+    using TensorOperations
+    using Krylov
     using Optim
-
+    using Integrals
+    using HypergeometricFunctions
+    using UnPack
+    using Memoize
+    using Base.Threads
+    
     # ANNEXE
     include("utils.jl")
-    include("computational tools.jl")
+    include("maths.jl")
 
     # MESH
     export Mesh, linmesh, geometricmesh
@@ -105,31 +109,48 @@ module KohnShamResolution
     
     # SOLVER &CO
     abstract type KohnShamDiscretization end
-    
+
     abstract type SCFMethod end
-    abstract type RCAMethod <: SCFMethod end
+    abstract type SCFCache end
+    abstract type SCFSolution end
+
+
 
     export LogConfig, LogBook
     include("log.jl")
 
-    export Solver, SolverOptions
+    export KohnShamSolver, SolverOptions
     include("solver.jl")
+
+
+    loopheader!(::SCFCache, ::SCFMethod, ::KohnShamSolver)      = nothing
+    performstep!(::SCFCache, m::SCFMethod, ::KohnShamSolver)    = @warn "No performstep for the method $(typeof(m))"
+    loopfooter!(::SCFCache, ::SCFMethod, ::KohnShamSolver)      = nothing
+    monitor(::SCFCache, ::SCFMethod, ::KohnShamSolver)          = nothing
+    register!(::SCFCache, ::SCFMethod, ::KohnShamSolver)        = nothing
+    create_cache_method(m::SCFMethod, 
+                        ::KohnShamDiscretization)               = @warn "No creation of cache for the method $(typeof(m))"
+    switch!(c2::SCFCache, c1::SCFCache)                         = @warn "No way to init $(typeof(c2)) from of cache for the method ($(typeof(c1))"
+    
 
     export LDADiscretization, LSDADiscretization
     include("discretization/lda.jl")
     include("discretization/lsda.jl")
 
+    ###
+    # TO REMOVE I GUESS ??? Not Sure!
     export DFTProblem
     include("problem.jl")
-
+    ###
+    
+    export CDA, ODA, Quadratic
+    include("methods/rca.jl")
+    include("methods/oda_procedure.jl")
+    #include("methods/quadratic.jl")
+    include("methods/combined.jl")
 
     export aufbau!
-    include("methods/oda_procedure.jl")
     include("aufbau.jl")
-
-    export CDA, ODA
-    include("methods/cda.jl")
-    include("methods/oda.jl")
 
     export KohnShamSolution, eigenvector, density, total_charge
     include("solution.jl")
