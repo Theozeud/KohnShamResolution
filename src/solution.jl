@@ -84,15 +84,20 @@ function Base.show(io::IO, sol::KohnShamSolution)
     else
         printstyled(io, string(sol.success)*"\n"; bold = true, color = :red)
     end
-    #printstyled(io, "Energy = $(sol.Energy) \n"; bold = true, color = :green)
-    printstyled(io, "Occupation number = \n"; bold = true, color = :blue)
-    for i ∈ eachindex(sol.occupation_number)
-        display_occupation_number(io, sol.problem.discretization, sol.occupation_number[i])
-    end
     printstyled(io, "niter = "; bold = true)
     println(io, string(sol.niter))
     printstyled(io, "Stopping criteria = "; bold = true)
     println(io, string(sol.stopping_criteria ))
+    #printstyled(io, "Energy = $(sol.energies[:Etot]) \n"; bold = true, color = :green)
+    printstyled(io, "All Energies :\n"; bold = true, color = :green)
+    for s ∈ keys(sol.energies)
+        printstyled(io, "            $(s) = $(sol.energies[s]) \n"; bold = true, color = :green)
+    end
+    #printstyled(io, "            $(s) = $(sol.energies[s]) \n"; bold = true, color = :green)
+    printstyled(io, "Occupation number = \n"; bold = true, color = :blue)
+    for i ∈ eachindex(sol.occupation_number)
+        display_occupation_number(io, sol.problem.discretization, sol.occupation_number[i])
+    end
 end
 
 function display_occupation_number(io::IO, ::LDADiscretization, occupation_number)
