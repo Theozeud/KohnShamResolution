@@ -75,7 +75,6 @@ function aufbau!(cache::RCACache, solver::KohnShamSolver)
 
         elseif length(indices_degen) == 2
             # IN THIS CASE WE NEED TO FILL THE LAYERS WITH THE OPTIMAL REPARTITION
-            println("Degen 2")
             cache.flag_degen = true
             Noccup[2] += 2
 

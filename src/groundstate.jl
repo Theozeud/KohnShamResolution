@@ -94,16 +94,16 @@ end
 
 # MONITOR : DISPLAY CURRENT STATE OF SOLVER
 function monitor(solver::KohnShamSolver)
-    if solver.verbose > 0
+    if solver.opts.verbose > 0
         println("--------------------------")
         println("Iteration : $(solver.niter)")
     end
-    if verbose > 1
+    if solver.opts.verbose > 1
         println("Selected Method : $(name(solver.method))")
         println("Stopping criteria: $(solver.stopping_criteria)")
         println("Total Energy: $(solver.energies[:Etot])")
     end
-    if verbose > 2
+    if solver.opts.verbose > 2
         monitor(solver.cache, solver.method, solver)
     end
 end
