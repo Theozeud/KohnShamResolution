@@ -119,6 +119,17 @@ init_orbitals_energy(kd::LDADiscretization)         = zeros(kd.elT, kd.lₕ+1, k
 init_occupation_number(kd::LDADiscretization)       = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
 init_density_matrix(kd::LDADiscretization)          = BlockDiagonal([zeros(kd.elT, kd.Nₕ, kd.Nₕ) for i ∈ 1:kd.lₕ+1])
 
+function init_energies(kd::LDADiscretization, model::KohnShamExtended)
+    @unpack elT = kd
+    d = Dict(   :Etot => zero(elT),                                     # Total energy 
+                :Ekin => zero(elT),                                     # Kinetic energy
+                :Ecou => zero(elT),                                     # Coulomb energy
+                :Ehar => zero(elT))                                     # Hartree energy
+    !isthereExchangeCorrelation(model) ||  d[:Eexc] = zero(elT)         # Exchange-correlation energy
+    d
+end
+
+
 #####################################################################
 #               Find Orbital : Solve the eigen problems
 #####################################################################
