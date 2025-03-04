@@ -1,12 +1,21 @@
 struct SolverOptions{T}
     scftol::T                       # SCF tolerance
     maxiter::Int                    # Maximum of iteration done
+
     quad_method                     # Method to use for quadrature of integrals
     quad_reltol::T                  # Relativ tolerance for the quadrature of integrals
     quad_abstol::T                  # Absolute tolerance for the quadrature of integrals
+
     hartree::T                      # Coefficient multiply to the Hartree Matrix : 
                                     # 0 -> no hartree term, 1-> full hartree term
+
     degen_tol::T                    # Tolerance to consider degenescence of orbitals energy
+
+    verbose::UInt8                  # Say how many details are printed at the end 
+                                    # of each iterations :
+                                    # 0 : Zero details
+                                    # 1 : Iterations
+                                    # 2 : Computations                
 end
 
 

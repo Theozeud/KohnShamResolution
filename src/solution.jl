@@ -64,7 +64,7 @@ end
 function Base.getproperty(sol::KohnShamSolution, s::Symbol)
     if s ∈ fieldnames(KohnShamSolution)
         getfield(sol, s)
-    elseif s ∈ propertynames(sol.data)
+    elseif s ∈ propertynames(getfield(sol, :datas))
         getfield(getfield(sol, :datas), s)
     else
         throw(ErrorException("type KohnShamSolution has no field $(s)"))
@@ -84,7 +84,7 @@ function Base.show(io::IO, sol::KohnShamSolution)
     else
         printstyled(io, string(sol.success)*"\n"; bold = true, color = :red)
     end
-    printstyled(io, "Energy = $(sol.Energy) \n"; bold = true, color = :green)
+    #printstyled(io, "Energy = $(sol.Energy) \n"; bold = true, color = :green)
     printstyled(io, "Occupation number = \n"; bold = true, color = :blue)
     for i ∈ eachindex(sol.occupation_number)
         display_occupation_number(io, sol.problem.discretization, sol.occupation_number[i])

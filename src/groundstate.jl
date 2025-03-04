@@ -30,7 +30,8 @@ function init(  model::AbstractDFTModel, discretization::KohnShamDiscretization,
                 quad_abstol::Real   = 1e-3,
                 hartree::Real = 1, 
                 degen_tol::Real = eps(bottom_type(discretization.basis)),
-                logconfig = LogConfig())
+                logconfig = LogConfig(),
+                verbose::Int = 3)
 
     # Set the data type as the one of the discretization basis
     T = discretization.elT
@@ -51,7 +52,8 @@ function init(  model::AbstractDFTModel, discretization::KohnShamDiscretization,
                          T(quad_reltol), 
                          T(quad_abstol), 
                          T(hartree), 
-                         T(degen_tol))
+                         T(degen_tol),
+                         UInt8(verbose))
 
     # Init log parameters
     niter = 0
@@ -92,11 +94,18 @@ end
 
 # MONITOR : DISPLAY CURRENT STATE OF SOLVER
 function monitor(solver::KohnShamSolver)
-    println("--------------------------")
-    println("Iteration : $(solver.niter)")
-    println("Selected Method : $(name(solver.method))")
-    println("Stopping criteria: $(solver.stopping_criteria)")
-    monitor(solver.cache, solver.method, solver)
+    if solver.verbose > 0
+        println("--------------------------")
+        println("Iteration : $(solver.niter)")
+    end
+    if verbose > 1
+        println("Selected Method : $(name(solver.method))")
+        println("Stopping criteria: $(solver.stopping_criteria)")
+        println("Total Energy: $(solver.energies[:Etot])")
+    end
+    if verbose > 2
+        monitor(solver.cache, solver.method, solver)
+    end
 end
 
 

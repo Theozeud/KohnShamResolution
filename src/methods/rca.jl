@@ -72,8 +72,8 @@ struct RCASolution{ densityType <: AbstractArray,
     density_coeffs::densityType                                 # Density Matrix at final time
     orbitals::orbitalsType                                      # Coefficient of orbitals at final time
     orbitals_energy::orbitalsenergyType                         # Orbitals energy at final time
-    n::occupationType
-    Noccup::Vector{Int}                         # Triplet (Nf,Np,Nv)
+    occupation_number::occupationType                           # Occupation number at final time
+    Noccup::Vector{Int}                                         # Triplet (Nf,Np,Nv)
 end
 
 function makesolution(cache::RCACache, ::RCAMethod, solver::KohnShamSolver)
@@ -179,7 +179,7 @@ name(::CDA) = "CDA"
 
 function update_density!(cache::RCACache, ::CDA, solver::KohnShamSolver)
     @unpack t, D, Dprev, energies_prev = cache
-    @unpack energies = solver
+    @unpack energies, discretization, model = solver
 
     if solver. niter > 0
         # UPDATE THE DENSITY
