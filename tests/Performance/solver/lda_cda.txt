@@ -1,0 +1,22 @@
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                Time                    Allocations      
+                                       ───────────────────────   ────────────────────────
+           Tot / % measured:                14.4s /  98.6%           2.02GiB /  99.9%    
+
+Section                        ncalls     time    %tot     avg     alloc    %tot      avg
+─────────────────────────────────────────────────────────────────────────────────────────
+PerformStep                         1    12.8s   90.2%   12.8s   1.46GiB   72.6%  1.46GiB
+  Find orbital                     50    11.3s   79.7%   226ms   1.34GiB   66.7%  27.5MiB
+  compute energy                   50    1.42s   10.0%  28.4ms    120MiB    5.8%  2.41MiB
+  Prepare eigenvalue problem       50   26.7ms    0.2%   535μs    294KiB    0.0%  5.89KiB
+  density computation              50   20.3ms    0.1%   407μs   1.56KiB    0.0%    32.0B
+  aufbau                           50   13.5ms    0.1%   270μs   2.01MiB    0.1%  41.2KiB
+  update density                   50    142μs    0.0%  2.84μs   1.56KiB    0.0%    32.0B
+Init Solver                         1    1.11s    7.8%   1.11s   49.7MiB    2.4%  49.7MiB
+init Discretization                 1    263ms    1.9%   263ms    483MiB   23.4%   483MiB
+Create basis                        1   17.9ms    0.1%  17.9ms   30.8MiB    1.5%  30.8MiB
+Loop footer                         1    181μs    0.0%   181μs   1.18MiB    0.1%  1.18MiB
+Create mesh                         1    105μs    0.0%   105μs   7.38KiB    0.0%  7.38KiB
+Loop header                         1   98.0μs    0.0%  98.0μs      272B    0.0%     272B
+Make Solution                       1   20.8μs    0.0%  20.8μs   1.72KiB    0.0%  1.72KiB
+─────────────────────────────────────────────────────────────────────────────────────────
