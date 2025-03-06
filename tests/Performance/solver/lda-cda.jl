@@ -20,6 +20,7 @@ method = ODA(0.3)
 
 # Discretization 
 lₕ = 1
+nₕ = 2
 Nₕ = 80
 Rmin = 0
 Rmax = 80
@@ -30,7 +31,7 @@ Rmax = 80
 
 @timeit to "Create basis" basis = P1IntLegendreGenerator(m; ordermax = 5)
 
-@timeit to "init Discretization" discretization = LDADiscretization(lₕ, basis, m)
+@timeit to "init Discretization" discretization = LDADiscretization(lₕ, basis, m, nₕ)
 
 @timeit to "Init Solver" solver = KohnShamResolution.init(KM, discretization, method; scftol = 1e-3, hartree = false, logconfig = LogConfig(orbitals_energy = true))
 
@@ -49,7 +50,7 @@ Rmax = 80
         @timeit to "Prepare eigenvalue problem" prepare_eigenvalue_problem!(discretization, model, Dprev, opts.hartree)
 
         # STEP 2 : FIND ORBITALS AND CORRESPONFING ENERGIES
-        @timeit to "Find orbital" find_orbital!(discretization, model, U, ϵ)
+        @timeit to "Find orbital" find_orbital!(discretization, U, ϵ)
 
         # STEP 3 : FILL THE OCCUPATION NUMBER MATRIX ACCORDINGLY WITH THE AUFBAU PRINCIPLE
         @timeit to "aufbau" aufbau!(cache, solver)
@@ -61,11 +62,11 @@ Rmax = 80
 
             # STEP 5 : COMPUTE ALL ENERGIES
             @timeit to "compute energy" begin 
-            energies[:Etot] = compute_total_energy(discretization, model, D, n, ϵ)
-            energies[:Ekin] = compute_kinetic_energy(discretization, U, n)
-            energies[:Ecou] = compute_coulomb_energy(discretization, U, n)
-            energies[:Ehar] = compute_hartree_energy(discretization, D)
-            !isthereExchangeCorrelation(model) || (energies[:Eexc] = compute_exchangecorrelation_energy(discretization, model, D))
+                @timeit to "Etot" energies[:Etot] = compute_total_energy(discretization, model, D, n, ϵ)
+                @timeit to "Ekin" energies[:Ekin] = compute_kinetic_energy(discretization, U, n)
+                @timeit to "Ecou" energies[:Ecou] = compute_coulomb_energy(discretization, U, n)
+                @timeit to "Ehar" energies[:Ehar] = compute_hartree_energy(discretization, D)
+                @timeit to "Eexc" !isthereExchangeCorrelation(model) || (energies[:Eexc] = compute_exchangecorrelation_energy(discretization, model, D))
             end
         end
 

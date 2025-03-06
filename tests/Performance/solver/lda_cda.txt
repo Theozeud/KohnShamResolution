@@ -1,3 +1,4 @@
+# PREVIOUS SPARSE ARRAY
 ─────────────────────────────────────────────────────────────────────────────────────────
                                                 Time                    Allocations      
                                        ───────────────────────   ────────────────────────
@@ -19,4 +20,34 @@ Loop footer                         1    181μs    0.0%   181μs   1.18MiB    0.
 Create mesh                         1    105μs    0.0%   105μs   7.38KiB    0.0%  7.38KiB
 Loop header                         1   98.0μs    0.0%  98.0μs      272B    0.0%     272B
 Make Solution                       1   20.8μs    0.0%  20.8μs   1.72KiB    0.0%  1.72KiB
+
+─────────────────────────────────────────────────────────────────────────────────────────
+
+# WITH SPARSE ARRAY
+─────────────────────────────────────────────────────────────────────────────────────────
+                                                Time                    Allocations      
+                                       ───────────────────────   ────────────────────────
+           Tot / % measured:                2.78s /  89.4%           1.45GiB /  99.6%    
+
+Section                        ncalls     time    %tot     avg     alloc    %tot      avg
+─────────────────────────────────────────────────────────────────────────────────────────
+PerformStep                         1    2.16s   86.7%   2.16s    942MiB   63.5%   942MiB
+  compute energy                   50    1.35s   54.4%  27.0ms    250MiB   16.8%  5.00MiB
+    Etot                           50    725ms   29.2%  14.5ms    124MiB    8.4%  2.49MiB
+    Ehar                           50    623ms   25.1%  12.5ms    124MiB    8.4%  2.49MiB
+    Ekin                           50   1.57ms    0.1%  31.5μs    512KiB    0.0%  10.2KiB
+    Ecou                           50    890μs    0.0%  17.8μs    508KiB    0.0%  10.2KiB
+    Eexc                           50    159μs    0.0%  3.18μs   1.56KiB    0.0%    32.0B
+  Find orbital                     50    777ms   31.2%  15.5ms    690MiB   46.5%  13.8MiB
+  density computation              50   19.0ms    0.8%   379μs   1.56KiB    0.0%    32.0B
+  Prepare eigenvalue problem       50   3.92ms    0.2%  78.4μs    428KiB    0.0%  8.56KiB
+  aufbau                           50   2.12ms    0.1%  42.4μs   1.48MiB    0.1%  30.2KiB
+  update density                   50    139μs    0.0%  2.79μs   1.56KiB    0.0%    32.0B
+init Discretization                 1    280ms   11.2%   280ms    468MiB   31.5%   468MiB
+Init Solver                         1   33.2ms    1.3%  33.2ms   41.7MiB    2.8%  41.7MiB
+Create basis                        1   17.6ms    0.7%  17.6ms   30.8MiB    2.1%  30.8MiB
+Loop footer                         1    531μs    0.0%   531μs   1.18MiB    0.1%  1.18MiB
+Loop header                         1    197μs    0.0%   197μs      272B    0.0%     272B
+Create mesh                         1   62.5μs    0.0%  62.5μs   7.38KiB    0.0%  7.38KiB
+Make Solution                       1   35.7μs    0.0%  35.7μs   1.62KiB    0.0%  1.62KiB
 ─────────────────────────────────────────────────────────────────────────────────────────

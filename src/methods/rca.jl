@@ -47,7 +47,7 @@ function create_cache_method(method::RCAMethod, discretization::KohnShamDiscreti
     n                   = init_occupation_number(discretization)
     Noccup              = zeros(Int,3)
     tdegen              = zero(elT)
-    index_aufbau        = zeros(Int, dim(discretization))
+    index_aufbau        = zeros(Int, (discretization.lₕ+1)*discretization.nₕ)
     energies_prev       = Dict( :Etot => zero(elT),
                                 :Ekin => zero(elT),
                                 :Ecou => zero(elT),

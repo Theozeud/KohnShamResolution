@@ -2,20 +2,22 @@
 #                          LDA Cache
 #####################################################################
 
-mutable struct LDAMatrices{T <: Real}
+mutable struct LDAMatrices{ T<:Real, 
+                            typeMatrix <: AbstractMatrix{<:Real}, 
+                            typeVectorMatrix <: Vector{<:AbstractMatrix{<:Real}}}
     # FEM MATRICES
-    A::Matrix{T}                    # Matrix of Qᵢ'Qⱼ'
-    M₀::Matrix{T}                   # Matrix of QᵢQⱼ
-    M₋₁::Matrix{T}                  # Matrix of 1/x QᵢQⱼ
-    M₋₂::Matrix{T}                  # Matrix of 1/x² QᵢQⱼ
+    A::typeMatrix                   # Matrix of Qᵢ'Qⱼ'
+    M₀::typeMatrix                  # Matrix of QᵢQⱼ
+    M₋₁::typeMatrix                 # Matrix of 1/x QᵢQⱼ
+    M₋₂::typeMatrix                 # Matrix of 1/x² QᵢQⱼ
     F::Array{T,3}                   # Tensor of 1/x QᵢQⱼQₖ
     # MATRICES COMPOSING THE HAMILTONIAN
-    H::Array{T,3}                   # Hamiltonian
-    Kin::Array{T,3}                 # Kinetic Matrix
-    Coulomb::Matrix{T}              # Coulomb Matrix
-    Hfix::Array{T,3}                # (Kinetic + Coulomb) Matrix        
-    Hartree::Matrix{T}              # Hartree Matrix 
-    Vxc::Matrix{T}                  # Echange-correlation Matrix
+    H::typeVectorMatrix             # Hamiltonian
+    Kin::typeVectorMatrix           # Kinetic Matrix
+    Coulomb::typeMatrix             # Coulomb Matrix
+    Hfix::typeVectorMatrix          # (Kinetic + Coulomb) Matrix        
+    Hartree::typeMatrix             # Hartree Matrix 
+    Vxc::typeMatrix                 # Echange-correlation Matrix
 end
 
 mutable struct LDACache{T <: Real}
@@ -27,26 +29,26 @@ end
 
 function create_cache_lda(lₕ::Int, Nₕ::Int, T)
     # FEM MATRICES
-    A           = zeros(T, Nₕ, Nₕ) 
-    M₀          = zeros(T, Nₕ, Nₕ)
-    M₋₁         = zeros(T, Nₕ, Nₕ)
-    M₋₂         = zeros(T, Nₕ, Nₕ)
+    A           = spzeros(T, Nₕ, Nₕ) 
+    M₀          = spzeros(T, Nₕ, Nₕ)
+    M₋₁         = spzeros(T, Nₕ, Nₕ)
+    M₋₂         = spzeros(T, Nₕ, Nₕ)
     F           = zeros(T, Nₕ, Nₕ, Nₕ)
 
     # MATRICES COMPOSING THE HAMILTONIAN
-    H           = zeros(T, lₕ+1, Nₕ, Nₕ)
-    Kin         = zeros(T, lₕ+1, Nₕ, Nₕ)
-    Coulomb     = zeros(T, Nₕ, Nₕ)
-    Hfix        = zeros(T, lₕ+1, Nₕ, Nₕ)
-    Hartree     = zeros(T, Nₕ, Nₕ)
-    Vxc         = zeros(T, Nₕ, Nₕ)
+    H           = _spzeros(T, Nₕ, Nₕ, lₕ+1)
+    Kin         = _spzeros(T, Nₕ, Nₕ, lₕ+1)
+    Coulomb     = spzeros(T, Nₕ, Nₕ)
+    Hfix        = _spzeros(T, Nₕ, Nₕ, lₕ+1)
+    Hartree     = spzeros(T, Nₕ, Nₕ)
+    Vxc         = spzeros(T, Nₕ, Nₕ)
 
     # Initialization of array for temporary stockage of computations 
     tmp_MV          = zeros(T, Nₕ, Nₕ)  
     tmp_B           = zeros(T, Nₕ)
     tmp_C           = zeros(T, Nₕ)
 
-    LDAMatrices{T}(A, M₀, M₋₁, M₋₂, F, H, Kin, Coulomb, Hfix, Hartree, Vxc),  
+    LDAMatrices{T, typeof(A), typeof(H)}(A, M₀, M₋₁, M₋₂, F, H, Kin, Coulomb, Hfix, Hartree, Vxc),  
     LDACache{T}(tmp_MV, tmp_B, tmp_C)
 end
 
@@ -58,6 +60,7 @@ end
 
 struct LDADiscretization{T <: Real, T2 <: Real, typeBasis <: Basis} <: KohnShamDiscretization
     lₕ::Int
+    nₕ::Int
     Nₕ::Int
     basis::typeBasis
     mesh::Mesh{T}
@@ -66,14 +69,14 @@ struct LDADiscretization{T <: Real, T2 <: Real, typeBasis <: Basis} <: KohnShamD
     elT::Type
     matrices::LDAMatrices{T2}
     cache::LDACache{T2}
-    function LDADiscretization(lₕ::Int, basis::Basis, mesh::Mesh)
+    function LDADiscretization(lₕ::Int, basis::Basis, mesh::Mesh, nₕ::Int = length(basis))
         elT = try
              bottom_type(basis)
         catch
             eltype(basis)
         end
         Nₕ = length(basis)
-        new{eltype(mesh), elT, typeof(basis)}(lₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache_lda(lₕ, Nₕ, elT)...)
+        new{eltype(mesh), elT, typeof(basis)}(lₕ, nₕ, Nₕ, basis, mesh, first(mesh), last(mesh), elT, create_cache_lda(lₕ, Nₕ, elT)...)
     end
 end
 
@@ -100,11 +103,10 @@ function init_cache!(discretization::LDADiscretization, model::AbstractDFTModel,
     kinetic_matrix!(discretization)
     coulomb_matrix!(discretization, model)
     for l ∈ 1:lₕ+1
-        @views vHfix = Hfix[l,:,:]
-        @views vKin = Kin[l,:,:]
-        @. vHfix = vKin + Coulomb
+        #@views vHfix = Hfix[l,:,:]
+        #@views vKin = Kin[l,:,:]
+        @. Hfix[l] = Kin[l] + Coulomb
     end
-
     nothing
 end
 
@@ -114,9 +116,9 @@ end
 #####################################################################
 
 init_density(kd::LDADiscretization)                 = zeros(kd.elT, kd.Nₕ, kd.Nₕ)  
-init_orbitals(kd::LDADiscretization)                = zeros(kd.elT, kd.lₕ+1, kd.Nₕ, kd.Nₕ)
-init_orbitals_energy(kd::LDADiscretization)         = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
-init_occupation_number(kd::LDADiscretization)       = zeros(kd.elT, kd.lₕ+1, kd.Nₕ)
+init_orbitals(kd::LDADiscretization)                = zeros(kd.elT, kd.Nₕ, kd.Nₕ, kd.lₕ+1)
+init_orbitals_energy(kd::LDADiscretization)         = zeros(kd.elT, kd.lₕ+1, kd.nₕ)
+init_occupation_number(kd::LDADiscretization)       = zeros(kd.elT, kd.lₕ+1, kd.nₕ)
 init_density_matrix(kd::LDADiscretization)          = BlockDiagonal([zeros(kd.elT, kd.Nₕ, kd.Nₕ) for i ∈ 1:kd.lₕ+1])
 
 function init_energies(kd::LDADiscretization, model::KohnShamExtended)
@@ -150,9 +152,9 @@ function prepare_eigenvalue_problem!(   discretization::LDADiscretization,
     
     # BUILD THE HAMILTONIAN OF THE lᵗʰ SECTION
     @threads for l ∈ 0:discretization.lₕ
-        @views vH = H[l+1,:,:]
-        @views vHfix = Hfix[l+1,:,:]
-        @. vH = vHfix + Vxc + Hartree
+        #@views vH = H[l+1,:,:]
+        #@views vHfix = Hfix[l+1,:,:]
+        @. H[l+1] = Hfix[l+1] + Vxc + Hartree
     end
     nothing
 end
@@ -161,13 +163,13 @@ function find_orbital!( discretization::LDADiscretization,
                         U::AbstractArray{<:Real}, 
                         ϵ::AbstractMatrix{<:Real})
 
-    @unpack lₕ, matrices = discretization
+    @unpack lₕ, nₕ, matrices = discretization
     @unpack M₀, H = matrices
 
     # SOLVE THE GENERALIZED EIGENVALUE PROBLEM FOR EACH SECTION l
-    @threads for l ∈ 0:lₕ
-        @views vH = H[l+1,:,:]
-        ϵ[l+1,:], U[l+1,:,:] = solve_generalized_eigenvalue_problem(vH, M₀)        
+    for l ∈ 0:lₕ
+        #@views vH = H[l+1,:,:]
+        ϵ[l+1,:], U[l+1,:,:] = solve_generalized_eigenvalue_problem(H[l+1], M₀, nₕ)        
     end
 end
 
@@ -179,11 +181,11 @@ function normalization!(discretization::LDADiscretization,
                         U::AbstractArray{<:Real}, 
                         n::AbstractMatrix{<:Real})
     @unpack M₀ = discretization.matrices
-    @unpack lₕ, Nₕ  = discretization
-    @inbounds for k ∈ 1:Nₕ
+    @unpack lₕ, nₕ = discretization
+    @inbounds for k ∈ 1:nₕ
         @inbounds for l ∈ 1:lₕ+1   
             if !iszero(n[l,k])
-                @views Ulk = U[l,:,k]
+                @views Ulk = U[:,k,l]
                 coeff = sqrt(Ulk'*M₀*Ulk)
                 Ulk .= Ulk .* 1.0/coeff
             end
@@ -194,7 +196,7 @@ end
 
 function normalization!(discretization::LDADiscretization, U::AbstractArray{<:Real}, l::Int, k::Int)
     @unpack M₀ = discretization.matrices
-    @views Ulk = U[l+1,:,k]
+    @views Ulk = U[:,k,l+1]
     coeff = sqrt(Ulk'*M₀*Ulk)
     Ulk .= Ulk .* 1.0/coeff
     nothing
@@ -207,8 +209,8 @@ end
 function kinetic_matrix!(discretization::LDADiscretization)
     @unpack A, M₋₂, Kin = discretization.matrices
     for l ∈ 0:discretization.lₕ
-        @views vkin = Kin[l+1,:,:]
-        @. vkin =  1/2 * (A + l*(l+1)*M₋₂)
+        #@views vkin = Kin[l+1,:,:]
+        @. Kin[l+1] =  1/2 * (A + l*(l+1)*M₋₂)
     end 
     nothing
 end
@@ -287,15 +289,15 @@ end
 function compute_kinetic_energy(discretization::LDADiscretization, 
                                 U::AbstractArray{<:Real}, 
                                 n::AbstractArray{<:Real})
-    @unpack lₕ, Nₕ, elT  = discretization
+    @unpack lₕ, nₕ, elT  = discretization
     @unpack Kin = discretization.matrices
     energy_kin = zero(elT)
     @inbounds for l ∈ 1:lₕ+1 
-        @views vKin = Kin[l,:,:]  
-        @inbounds for k ∈ 1:Nₕ
+        #@views vKin = Kin[l,:,:]  
+        @inbounds for k ∈ 1:nₕ
             if !iszero(n[l,k])
-                @views Ulk = U[l,:,k]
-                energy_kin += n[l,k] * Ulk' * vKin * Ulk
+                @views Ulk = U[:,k,l]
+                energy_kin += n[l,k] * Ulk' * Kin[l] * Ulk
             end
         end
     end
@@ -307,13 +309,13 @@ end
 #####################################################################
 
 function compute_coulomb_energy(discretization::LDADiscretization, U::AbstractArray{<:Real}, n::AbstractArray{<:Real})
-    @unpack lₕ, Nₕ, elT  = discretization
+    @unpack lₕ, nₕ, elT  = discretization
     @unpack Coulomb = discretization.matrices
     energy_cou = zero(elT)
     @inbounds for l ∈ 1:lₕ+1   
-        @inbounds for k ∈ 1:Nₕ
+        @inbounds for k ∈ 1:nₕ
             if !iszero(n[l,k])
-                @views Ulk = U[l,:,k]
+                @views Ulk = U[:,k,l]
                 energy_cou +=  n[l,k] * Ulk' * Coulomb * Ulk
             end
         end
@@ -371,15 +373,15 @@ function density!(  discretization::LDADiscretization,
                     U::AbstractArray{<:Real}, 
                     n::AbstractMatrix{<:Real}, 
                     D::AbstractMatrix{<:Real})
-    @unpack lₕ, Nₕ, elT  = discretization
+    @unpack lₕ, nₕ, Nₕ, elT  = discretization
     fill!(D, zero(elT))
-    @inbounds for k ∈ 1 :Nₕ
+    @inbounds for k ∈ 1:nₕ
         @inbounds for l ∈ 1:lₕ+1   
             if !iszero(n[l,k])
                 @inbounds for i ∈ 1:Nₕ
-                    val = n[l,k] * U[l,i,k] 
+                    val = n[l,k] * U[i,k,l] 
                     @inbounds @simd for j ∈ 1:i
-                        D[i,j] += val * U[l,j,k]
+                        D[i,j] += val * U[j,k,l]
                     end
                 end
             end
@@ -435,11 +437,11 @@ function density_matrix!(   discretization::LDADiscretization,
                             U::AbstractArray{<:Real}, 
                             n::AbstractMatrix{<:Real}, 
                             Γ::BlockDiagonal{<:Real, <:AbstractMatrix{<:Real}})
-    @unpack lₕ, Nₕ, elT  = discretization
+    @unpack lₕ, nₕ, Nₕ, elT  = discretization
     @inbounds for l ∈ 1:lₕ+1 
         @views Γl = blocks(Γ)[l]
         fill!(Γl, zero(elT))
-        @inbounds for k ∈ 1:Nₕ
+        @inbounds for k ∈ 1:nₕ
             if !iszero(n[l,k])
                 @inbounds for i ∈ 1:Nₕ
                     val = n[l,k]/(2*l-1) * U[l,i,k] 
