@@ -8,10 +8,15 @@ function solve_linear_problem(A::AbstractMatrix, b::AbstractVector)
 end
 
 # Solve Generalized Eigenvalue problem
-function solve_generalized_eigenvalue_problem(A,B)
-    C = sqrt(inv(B))
-    λ, U = eigen(C*A*C)
-    λ, C*U
+function solve_generalized_eigenvalue_problem(A::AbstractMatrix, B::AbstractMatrix, n::Int)
+    #C = sqrt(inv(B))
+    λ, U = real.(eigs(A,B; which = :SR, nev = n))
+    λ, U
+    
+    #C = sqrt(inv(B))
+    #λ, U = eigen(C*A*C)
+    #λ, C*U
+ 
 end
 
 # Approximate integral
@@ -111,4 +116,17 @@ function remove_trace!(A::AbstractMatrix, B::AbstractMatrix)
         @inbounds A[i,i] -= trace
     end
     nothing
+end
+
+
+#########################################################################################
+#                             SPARSE TENSOR TOOLS
+#########################################################################################
+
+function _spzeros(T::Type, n::Int, m::Int, p::Int)
+    A = Vector{SparseMatrixCSC{T, Int}}(undef, p)
+    for i in 1:p
+        A[i] = spzeros(T, n, m)
+    end
+    A
 end
