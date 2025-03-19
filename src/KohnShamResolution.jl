@@ -8,6 +8,7 @@ module KohnShamResolution
     using LinearOperators
     using TensorOperations
     using Krylov
+    using Arpack
     using Optim
     using Integrals
     using HypergeometricFunctions
@@ -52,7 +53,10 @@ module KohnShamResolution
     abstract type AbstractLaurentPolynomialBasis <: Basis end 
 
     export LaurentPolynomialBasis
-    export mass_matrix, stiffness_matrix, weight_mass_matrix, weight_mass_vector, vector_mass_matrix, vectorweight_mass_matrix,
+    export mass_matrix, sparse_mass_matrix, 
+           stiffness_matrix, sparse_stiffness_matrix,
+           weight_mass_matrix, sparse_weight_mass_matrix,
+           weight_mass_vector, sparse_weight_mass_vector,
            weight_mass_3tensor
 
     # SHORT BASIS
