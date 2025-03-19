@@ -7,12 +7,12 @@ mutable struct LDAMatrices{ T<:Real,
                             typeVectorMatrix <: Vector{<:AbstractMatrix{<:Real}}}
     # FEM MATRICES
     A::typeMatrix                   # Matrix of Qᵢ'Qⱼ'
-    M₀::typeMatrix                  # Matrix of QᵢQⱼ
+    M₀::Matrix{T}                   # Matrix of QᵢQⱼ
     M₋₁::typeMatrix                 # Matrix of 1/x QᵢQⱼ
     M₋₂::typeMatrix                 # Matrix of 1/x² QᵢQⱼ
-    F::Array{T,3}                   # Tensor of 1/x QᵢQⱼQₖ
+    F::Dict{Tuple{Int,Int,Int},T}   # Tensor of 1/x QᵢQⱼQₖ            
     # MATRICES COMPOSING THE HAMILTONIAN
-    H::typeVectorMatrix             # Hamiltonian
+    H::Array{T,3}                   # Hamiltonian
     Kin::typeVectorMatrix           # Kinetic Matrix
     Coulomb::typeMatrix             # Coulomb Matrix
     Hfix::typeVectorMatrix          # (Kinetic + Coulomb) Matrix        
@@ -30,13 +30,12 @@ end
 function create_cache_lda(lₕ::Int, Nₕ::Int, T)
     # FEM MATRICES
     A           = spzeros(T, Nₕ, Nₕ) 
-    M₀          = spzeros(T, Nₕ, Nₕ)
+    M₀          = zeros(T, Nₕ, Nₕ)
     M₋₁         = spzeros(T, Nₕ, Nₕ)
     M₋₂         = spzeros(T, Nₕ, Nₕ)
-    F           = zeros(T, Nₕ, Nₕ, Nₕ)
-
+    F           = Dict{Tuple{Int,Int,Int},T}()   #zeros(T, Nₕ, Nₕ, Nₕ)
     # MATRICES COMPOSING THE HAMILTONIAN
-    H           = _spzeros(T, Nₕ, Nₕ, lₕ+1)
+    H           = zeros(T, Nₕ, Nₕ, lₕ+1)    #_sp
     Kin         = _spzeros(T, Nₕ, Nₕ, lₕ+1)
     Coulomb     = spzeros(T, Nₕ, Nₕ)
     Hfix        = _spzeros(T, Nₕ, Nₕ, lₕ+1)
@@ -48,7 +47,7 @@ function create_cache_lda(lₕ::Int, Nₕ::Int, T)
     tmp_B           = zeros(T, Nₕ)
     tmp_C           = zeros(T, Nₕ)
 
-    LDAMatrices{T, typeof(A), typeof(H)}(A, M₀, M₋₁, M₋₂, F, H, Kin, Coulomb, Hfix, Hartree, Vxc),  
+    LDAMatrices{T, typeof(A), typeof(Hfix)}(A, M₀, M₋₁, M₋₂, F, H, Kin, Coulomb, Hfix, Hartree, Vxc),  
     LDACache{T}(tmp_MV, tmp_B, tmp_C)
 end
 
@@ -116,7 +115,7 @@ end
 #####################################################################
 
 init_density(kd::LDADiscretization)                 = zeros(kd.elT, kd.Nₕ, kd.Nₕ)  
-init_orbitals(kd::LDADiscretization)                = zeros(kd.elT, kd.Nₕ, kd.Nₕ, kd.lₕ+1)
+init_orbitals(kd::LDADiscretization)                = zeros(kd.elT, kd.Nₕ, kd.nₕ, kd.lₕ+1)
 init_orbitals_energy(kd::LDADiscretization)         = zeros(kd.elT, kd.lₕ+1, kd.nₕ)
 init_occupation_number(kd::LDADiscretization)       = zeros(kd.elT, kd.lₕ+1, kd.nₕ)
 init_density_matrix(kd::LDADiscretization)          = BlockDiagonal([zeros(kd.elT, kd.Nₕ, kd.Nₕ) for i ∈ 1:kd.lₕ+1])
@@ -152,9 +151,9 @@ function prepare_eigenvalue_problem!(   discretization::LDADiscretization,
     
     # BUILD THE HAMILTONIAN OF THE lᵗʰ SECTION
     @threads for l ∈ 0:discretization.lₕ
-        #@views vH = H[l+1,:,:]
+        @views vH = H[:,:,l+1]
         #@views vHfix = Hfix[l+1,:,:]
-        @. H[l+1] = Hfix[l+1] + Vxc + Hartree
+        @. vH = Hfix[l+1] + Vxc + Hartree
     end
     nothing
 end
@@ -168,8 +167,8 @@ function find_orbital!( discretization::LDADiscretization,
 
     # SOLVE THE GENERALIZED EIGENVALUE PROBLEM FOR EACH SECTION l
     for l ∈ 0:lₕ
-        #@views vH = H[l+1,:,:]
-        ϵ[l+1,:], U[l+1,:,:] = solve_generalized_eigenvalue_problem(H[l+1], M₀, nₕ)        
+        @views vH = H[:,:,l+1]
+        ϵ[l+1,:], U[:,:,l+1] = solve_generalized_eigenvalue_problem(vH, M₀, nₕ)        
     end
 end
 
@@ -229,14 +228,32 @@ end
 #                          Hartree Matrix
 #####################################################################
 
+function tensor_matrix_dict!(B::AbstractVector{<:Real}, D::AbstractMatrix{<:Real}, F::Dict{Tuple{Int,Int,Int},<:Real})
+    fill!(B, zero(eltype(B)))
+    @inbounds for ((i, j, m), F_ijm) ∈ F
+        B[m] += D[i, j] * F_ijm
+    end
+    nothing
+end
+
+function tensor_vector_dict!(B::AbstractMatrix{<:Real}, D::AbstractVector{<:Real}, F::Dict{Tuple{Int,Int,Int},<:Real})
+    fill!(B, zero(eltype(B)))
+    @inbounds for ((i, j, m), F_ijm) ∈ F
+        B[i,j] += D[m] * F_ijm
+    end
+    nothing
+end
+
 function hartree_matrix!(discretization::LDADiscretization, D::AbstractMatrix{<:Real}, coeff::Real = true)
     @unpack Rmax, matrices, cache = discretization
     @unpack A, M₀, F, Hartree = matrices
     @unpack tmp_MV, tmp_B, tmp_C = cache
-    @tensor tmp_B[m] = D[i,j] * F[i,j,m]
+    #@tensor tmp_B[m] = D[i,j] * F[i,j,m]
+    tensor_matrix_dict!(tmp_B, D, F)
     tmp_C .= A\tmp_B
     @tensor newCrho = D[i,j] * M₀[i,j]
-    @tensor tmp_MV[i,j] = tmp_C[k] * F[i,j,k]
+    #@tensor tmp_MV[i,j] = tmp_C[k] * F[i,j,k]
+    tensor_vector_dict!(tmp_MV, tmp_C, F)
     @. Hartree = tmp_MV + newCrho/Rmax * M₀
     @. Hartree .*= coeff
     nothing
@@ -331,7 +348,8 @@ function compute_hartree_energy(discretization::LDADiscretization, D::AbstractMa
     @unpack Rmax, elT, matrices, cache = discretization
     @unpack A, F, M₀ = matrices
     @unpack tmp_B, tmp_C = cache
-    @tensor tmp_B[m] = D[i,j] * F[i,j,m]
+    #@tensor tmp_B[m] = D[i,j] * F[i,j,m]
+    tensor_matrix_dict!(tmp_B, D, F)
     tmp_C .= A\tmp_B
     @tensor Crho = D[i,j] * M₀[i,j]
     return elT(0.5) * (dot(tmp_B,tmp_C) + Crho^2/Rmax)
@@ -343,9 +361,11 @@ function compute_hartree_mix_energy(discretization::LDADiscretization,
     @unpack Rmax, elT, matrices, cache = discretization
     @unpack A, F, M₀ = matrices
     @unpack tmp_B, tmp_C = cache
-    @tensor tmp_B[m] = D0[i,j] * F[i,j,m]
+    #@tensor tmp_B[m] = D0[i,j] * F[i,j,m]
+    tensor_matrix_dict!(tmp_B, D0, F)
     tmp_C .= A\tmp_B
-    @tensor tmp_B[m] = D1[i,j] * F[i,j,m]
+    #@tensor tmp_B[m] = D1[i,j] * F[i,j,m]
+    tensor_matrix_dict!(tmp_B, D1, F)
     @tensor Crho0 = D0[i,j] * M₀[i,j]
     @tensor Crho1 = D1[i,j] * M₀[i,j]
     return elT(0.5) * (dot(tmp_B,tmp_C) + Crho0*Crho1/Rmax)

@@ -1,10 +1,13 @@
 using KohnShamResolution
 using TimerOutputs
 using UnPack
+using TensorOperations
+using LinearAlgebra
 
 using KohnShamResolution:   init, loopheader!, loopfooter!, makesolution,
                             prepare_eigenvalue_problem!, find_orbital!, aufbau!, density!, update_density!,
-                            compute_total_energy, compute_kinetic_energy, compute_coulomb_energy, compute_hartree_energy, isthereExchangeCorrelation, compute_exchangecorrelation_energy 
+                            compute_total_energy, compute_kinetic_energy, compute_coulomb_energy, compute_hartree_energy, isthereExchangeCorrelation, compute_exchangecorrelation_energy,
+                            tensor_matrix_dict! 
 
 
 
@@ -16,7 +19,7 @@ N = 10
 KM = KohnShamExtended(z = z, N = N)
 
 # Choice of the method
-method = ODA(0.3)
+method = CDA(0.3)
 
 # Discretization 
 lₕ = 1
@@ -36,13 +39,13 @@ Rmax = 80
 @timeit to "Init Solver" solver = KohnShamResolution.init(KM, discretization, method; scftol = 1e-3, hartree = false, logconfig = LogConfig(orbitals_energy = true))
 
 # SOLVE FUNCTION
+for i ∈ 1:50
 
-@timeit to "Loop header" loopheader!(solver)
+    @timeit to "Loop header" loopheader!(solver)
 
 
-@timeit to "PerformStep" begin
+    @timeit to "PerformStep" begin
 
-    for i ∈ 1:50
         @unpack model, opts, energies, cache = solver
         @unpack D, Dprev, U, ϵ, n = cache
     
@@ -65,7 +68,16 @@ Rmax = 80
                 @timeit to "Etot" energies[:Etot] = compute_total_energy(discretization, model, D, n, ϵ)
                 @timeit to "Ekin" energies[:Ekin] = compute_kinetic_energy(discretization, U, n)
                 @timeit to "Ecou" energies[:Ecou] = compute_coulomb_energy(discretization, U, n)
-                @timeit to "Ehar" energies[:Ehar] = compute_hartree_energy(discretization, D)
+                @timeit to "Ehar" begin
+                    @unpack elT, matrices = discretization
+                    @unpack A, F, M₀ = matrices
+                    @unpack tmp_B, tmp_C = discretization.cache
+                    @timeit to "tmpB" tensor_matrix_dict!(tmp_B,D,F)
+                    @timeit to "tmpC" tmp_C .= A\tmp_B
+                    @timeit to "Crho" @tensor Crho = D[i,j] * M₀[i,j]
+                    @timeit to "hartree" elT(0.5) * (dot(tmp_B,tmp_C) + Crho^2/Rmax)
+                    #energies[:Ehar] = compute_hartree_energy(discretization, D)
+                end
                 @timeit to "Eexc" !isthereExchangeCorrelation(model) || (energies[:Eexc] = compute_exchangecorrelation_energy(discretization, model, D))
             end
         end
@@ -73,9 +85,11 @@ Rmax = 80
       # STEP  6 : COMPUTE THE NEW DENSITY
       @timeit to "update density" update_density!(cache, method, solver)  
     end
+
+    @timeit to "Loop footer" loopfooter!(solver)
 end
 
-@timeit to "Loop footer" loopfooter!(solver)
+
 
 @timeit to "Make Solution" makesolution(solver, "")
 

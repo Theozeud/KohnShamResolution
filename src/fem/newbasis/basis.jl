@@ -42,7 +42,8 @@ struct PolynomialBasis{T, TB <: AbstractGenerator} <: Basis
             matrix_fill_indices = CartesianIndex{2}[]
             @inbounds for i in 1:size
                 @inbounds for j in i:size
-                    if !isdisjoint(indices_cells[i,:], indices_cells[j,:])
+                    S = intersect(indices_cells[i,:], indices_cells[j,:])
+                    if !isempty(S) && !(S==[0])
                         push!(matrix_fill_indices, CartesianIndex(i, j))
                     else
                         break
@@ -60,7 +61,8 @@ struct PolynomialBasis{T, TB <: AbstractGenerator} <: Basis
                 j = I[2]
                 S = intersect(indices_cells[i,:], indices_cells[j,:])
                 @inbounds for k ∈ j:size
-                    if !isdisjoint(S, indices_cells[k,:])
+                    S2 = intersect(S, indices_cells[k,:])
+                    if !isempty(S2) && !(S2==[0])
                         push!(tensor_fill_indices, CartesianIndex(i, j, k))
                     end
                 end
