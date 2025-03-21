@@ -1,12 +1,10 @@
 mutable struct LaurentPolynomial{T} <:AbstractPolynomial{T}
     coeffs::Vector{T}
     degmin::Int
-    haslog::Bool
-    coeff_log::T
 end
 
-Monomial(deg::Int, coeff = 1) = LaurentPolynomial([coeff], deg, false, oftype(coeff, 0))
-Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin, false, eltype(coeff)(0))
+Monomial(deg::Int, coeff = 1) = LaurentPolynomial([coeff], deg)
+Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin)
 RootsPolynomial(roots::AbstractVector) = length(roots) == 1 ?  Monomial(1) - first(roots) : (Monomial(1) - first(roots)) * RootsPolynomial(roots[2:end])
 
 RandMonomial(deg::Int) = Monomial(deg)
@@ -14,7 +12,7 @@ RandMonomial(T::Type, deg::Int) = Monomial(deg, rand(T))
 RandPolynomial(degmax::Int, degmin::Int = 0) = Polynomial(rand(degmax - degmin +1), degmin)
 RandPolynomial(T::Type, degmax::Int, degmin::Int = 0) = Polynomial(rand(T, degmax - degmin +1), degmin)
 
-@inline _convert(::Type{T}, p::LaurentPolynomial) where T = LaurentPolynomial(T.(p.coeffs), p.degmin, p.haslog, T(p.coeff_log))
+@inline _convert(::Type{T}, p::LaurentPolynomial) where T = LaurentPolynomial(T.(p.coeffs), p.degmin)
 
 @inline Base.eachindex(p::LaurentPolynomial) = degmin(p):degmax(p)
 @inline Base.getindex(p::LaurentPolynomial, i::Int) =  i ∈ eachindex(p) ? p.coeffs[i-degmin(p)+1] : 0
@@ -26,21 +24,20 @@ RandPolynomial(T::Type, degmax::Int, degmin::Int = 0) = Polynomial(rand(T, degma
 @inline deg(p::LaurentPolynomial) = (p.degmin, p.degmin + length(p.coeffs) - 1)
 @inline degmax(p::LaurentPolynomial) = p.degmin + length(p.coeffs) - 1
 @inline degmin(p::LaurentPolynomial) = p.degmin
-@inline haslog(p::LaurentPolynomial) = p.haslog
-@inline ismonomial(p::LaurentPolynomial) = degmin(p) == degmax(p) && !haslog(p)
+@inline ismonomial(p::LaurentPolynomial) = degmin(p) == degmax(p)
 
-@inline Base.zero(p::LaurentPolynomial{T}) where T = LaurentPolynomial(zero(p.coeffs), p.degmin, false, T(0))
+@inline Base.zero(p::LaurentPolynomial{T}) where T = LaurentPolynomial(zero(p.coeffs), p.degmin)
 @inline Base.zero(::Type{LaurentPolynomial{T}}, args...) where T = Laurent_zero(T, 0, 0)
 function Laurent_zero(T::Type, degmin::Int, degmax::Int)
     @assert degmax ≥ degmin
-    LaurentPolynomial(zeros(T, degmax-degmin+1), degmin, false, T(0))
+    LaurentPolynomial(zeros(T, degmax-degmin+1), degmin)
 end
 function Base.iszero(p::LaurentPolynomial)
     elag!(p)
-    p.coeffs == [0] && p.degmin == 0 && !haslog(p)
+    p.coeffs == [0] && iszero(p.degmin)
 end
 
-Base.round(p::LaurentPolynomial; digits = 14) = LaurentPolynomial(round.(p.coeffs; digits = digits), degmin(p), haslog(p), p.coeff_log)
+Base.round(p::LaurentPolynomial; digits = 14) = LaurentPolynomial(round.(p.coeffs; digits = digits), degmin(p))
 
 function elag!(p::LaurentPolynomial)
     (dn,dp) = deg(p)
@@ -58,9 +55,6 @@ function elag!(p::LaurentPolynomial)
     end
     x = p[dn]
     p.coeffs = p.coeffs[dn-degmin(p)+1:dp-degmin(p)+1]
-    if p.haslog && iszero(p.coeff_log) 
-        p.haslog = false
-    end
     if dn == dp && iszero(x)
         p.degmin = 0
     else
@@ -109,12 +103,6 @@ function Base.show(io::IO, p::LaurentPolynomial)
         end
     end
 
-    if haslog(p)
-        str *= string(p.coeff_log)*" log(X)"
-    else
-        str = str[1:length(str)-3]
-    end
-
     if str == "" 
         str *= "0"
     end
@@ -137,11 +125,7 @@ function (p::LaurentPolynomial)(x)
             z = (z + p[i]) * invx
         end
     end
-    if haslog(p)
-        z+y+p.coeff_log * log(x)
-    else
-        z+y
-    end
+    z+y
 end
 
 function shift!(p::LaurentPolynomial, n::Int)
@@ -149,7 +133,7 @@ function shift!(p::LaurentPolynomial, n::Int)
 end
 
 function shift(p::LaurentPolynomial, n::Int)
-    LaurentPolynomial(p.coeffs, p.degmin + n, haslog(p), p.coeff_log)
+    LaurentPolynomial(p.coeffs, p.degmin + n)
 end
 
 ##################################################################################
@@ -158,20 +142,18 @@ end
 
 function Base.:-( p::LaurentPolynomial)
     coeffs = - p.coeffs
-    coeff_log = - p.coeff_log
-    LaurentPolynomial(coeffs, p.degmin, haslog(p), coeff_log)
+    LaurentPolynomial(coeffs, p.degmin)
 end
 
 function Base.:*(r::T, p::LaurentPolynomial{TP}) where {T, TP}
     NewT = promote_type(T, TP)
     if iszero(r)
-        return LaurentPolynomial(NewT[0], 0, false, NewT(0))
+        return LaurentPolynomial(NewT[0], 0)
     elseif r == 1
         return _convert(NewT,p)
     else
         coeffs = NewT.(p.coeffs) .* NewT(r)
-        coeff_log = NewT(p.coeff_log) * NewT(r)
-        return LaurentPolynomial(coeffs, p.degmin, haslog(p), coeff_log)
+        return LaurentPolynomial(coeffs, p.degmin, )
     end
 end
 
@@ -199,8 +181,6 @@ function Base.:+(p::LaurentPolynomial{TP}, x::T) where {TP, T}
             r[i] = NewT(p[i])
         end
     end
-    r.coeff_log = NewT(p.coeff_log)
-    r.haslog = haslog(p)
     elag!(r)
     return r
 end
@@ -230,17 +210,12 @@ function Base.:+(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, 
     @inbounds for i ∈ eachindex(r)
         r[i] = NewT(p[i]) + NewT(q[i])
     end
-    r.coeff_log = NewT(p.coeff_log + q.coeff_log)
-    r.haslog = p.haslog || q.haslog
     elag!(r)
     return r
 end
 
 
 function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
-    if haslog(p) || haslog(q)
-        @error "We can't multiply two laurent polynomial if at least one of them have a log term."
-    end
     NewT = promote_type(TP,TQ)
     r = Laurent_zero(NewT, degmin(p) + degmin(q), degmax(p)+ degmax(q))
     for i ∈ eachindex(r)
@@ -252,11 +227,8 @@ function Base.:*(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, T
 end
 
 function Base.:^(p::LaurentPolynomial{T}, n::Int) where T
-    if haslog(p)
-        throw(ArgumentError("Cannot power Laurent polynomials with logarithmic terms."))
-    end
     if n == 0
-        return LaurentPolynomial([T(1)], 0, false, T(0))
+        return LaurentPolynomial([T(1)], 0)
     elseif n == 1
         return p
     else
@@ -270,7 +242,6 @@ function Base.:^(p::LaurentPolynomial{T}, n::Int) where T
 end
 
 function diveucl(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where{TP, TQ}
-    @assert !haslog(p) && !haslog(q)
     @assert degmin(p) ≥ 0 && degmin(q) ≥ 0
     @assert !iszero(q)
     NewT = promote_type(TP,TQ)
@@ -294,13 +265,10 @@ end
 ##################################################################################
 
 function integrate(p::LaurentPolynomial{T}) where T
-    if haslog(p)
-        @error "We can't integrate a laurent polynomial with already a log term."
-    end
     _haslog = p[-1] != 0 ? true : false
     coeff_log = p[-1]
     new_coeffs = p.coeffs .* [i == -1 ? 0//1 : 1//(1+i) for i in eachindex(p)]
-    LaurentPolynomial(new_coeffs, p.degmin+1, _haslog, eltype(new_coeffs)(coeff_log))
+    LaurentPolynomial(new_coeffs, p.degmin+1)
 end
 
 
@@ -311,10 +279,7 @@ end
 
 function deriv(p::LaurentPolynomial{T}) where T
     new_coeffs = p.coeffs .* [i for i in eachindex(p)]
-    if haslog(p)
-        new_coeffs[-degmin(p)+1] = p.coeff_log
-    end
-    LaurentPolynomial(new_coeffs, p.degmin-1, false, T(0))
+    LaurentPolynomial(new_coeffs, p.degmin-1)
 end
 
 
