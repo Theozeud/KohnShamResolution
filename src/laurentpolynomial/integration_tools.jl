@@ -1,11 +1,11 @@
 # Integrate (AX+B)/C between a and b
-function _integrate_partial10(A, B, C, a, b)
+function _integrate_partial10(A::Real, B::Real, C::Real, a::Real, b::Real)
     @assert !iszero(C)
     (b-a)/C * (A*(b+a)/2 + B)
 end
 
 # Integrate A/(BX + C) between a and b
-function _integrate_partial01(A, B, C, a, b)
+function _integrate_partial01(A::Real, B::Real, C::Real, a::Real, b::Real)
     @assert !iszero(B) || !iszero(C)
     NewT = promote_type(typeof(A), typeof(B), typeof(C), typeof(a), typeof(b)) 
     if iszero(A)
@@ -22,7 +22,7 @@ function _integrate_partial01(A, B, C, a, b)
 end
 
 # Integrate (AX + B)/(CX + D) between a and b
-function _integrate_partial11(A, B, C, D, a, b)
+function _integrate_partial11(A::Real, B::Real, C::Real, D::Real, a::Real, b::Real)
     @assert !iszero(C) || !iszero(D)
     if iszero(A)
         return _integrate_partial01(B, C, D, a, b)
@@ -34,7 +34,7 @@ function _integrate_partial11(A, B, C, D, a, b)
 end
 
 # Integrate A/(BX²+CX + D) between a and b
-function _integrate_partial02(A, B, C, D, a, b)
+function _integrate_partial02(A::Real, B::Real, C::Real, D::Real, a::Real, b::Real)
     @assert !iszero(C) || !iszero(D)
     NewT = promote_type(typeof(A), typeof(B), typeof(C), typeof(D), typeof(a), typeof(b)) 
     if iszero(A)
@@ -47,7 +47,7 @@ function _integrate_partial02(A, B, C, D, a, b)
 end
 
 # Integrate (AX+B)/(CX² + DX + E) between a and b
-function _integrate_partial12(A, B, C, D, E, a, b; enforceNullDelta = false )
+function _integrate_partial12(A::Real, B::Real, C::Real, D::Real, E::Real, a::Real, b::Real; enforceNullDelta::Bool = false )
     @assert !iszero(C) || !iszero(D) || !iszero(E)
     NewT = promote_type(typeof(A), typeof(B), typeof(C), typeof(D), typeof(E), typeof(a), typeof(b)) 
     if iszero(A) && iszero(B)
@@ -82,7 +82,7 @@ function _integrate_partial12(A, B, C, D, E, a, b; enforceNullDelta = false )
 end
 
 # Integrate X^k/(AX + B) between a and b for k≥0 
-@inline function _integration_monome_over_deg1(k, A, B, a, b)
+@inline function _integration_monome_over_deg1(k::Int, A::Real, B::Real, a::Real, b::Real)
     @assert !iszero(A) || !iszero(B)
     @assert k ≥ 0
     if iszero(B)
@@ -102,7 +102,7 @@ end
 end
 
 # Integrate X^k/(AX² + BX + C) between a and b for k≥0 
-@inline function _integration_monome_over_deg2(k, A, B, C, a, b; enforceNullDelta = false)
+@inline function _integration_monome_over_deg2(k::Int, A::Real, B::Real, C::Real, a::Real, b::Real; enforceNullDelta::Bool = false)
     @assert !iszero(A) || !iszero(B) || !iszero(C)
     @assert k ≥ 0
     if iszero(A)
