@@ -24,9 +24,12 @@ module KohnShamResolution
     export Mesh, linmesh, geometricmesh
     include("mesh.jl")
 
-    # LAURENT POLYNOMIAL
+    ############        LAURENT POLYNOMIAL        ############
     export AbstractPolynomial
-    include("laurentpolynomial/abstract polynomial.jl")
+
+    abstract type AbstractPolynomial{T} end
+    @inline Base.eltype(::AbstractPolynomial{T}) where T = T
+
 
     export LaurentPolynomial
     export Polynomial, Monomial, RandMonomial, RandPolynomial, RootsPolynomial
@@ -48,63 +51,31 @@ module KohnShamResolution
     include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
     
-    # FEM
-    abstract type Basis end
-    abstract type AbstractLaurentPolynomialBasis <: Basis end 
+    ############        FINITE ELEMENT METHOD        ############
 
-    export LaurentPolynomialBasis
+    abstract type Basis end
+    export PolynomialBasis
+
+    export IntLegendreGenerator, P1IntLegendreGenerator
+
     export mass_matrix, sparse_mass_matrix, 
            stiffness_matrix, sparse_stiffness_matrix,
            weight_mass_matrix, sparse_weight_mass_matrix,
            weight_mass_vector, sparse_weight_mass_vector,
            weight_mass_3tensor
 
-    # SHORT BASIS
-    include("fem/shortbasis/utils_computations.jl")
-
-    #### OLD
-    export AbstractShortElements
-    export getpolynomial, getderivpolynomial
-    include("fem/shortbasis/abstractshortelement.jl")
-
-    #### NEW
     abstract type AbstractGenerator{T} end
     @inline Base.eltype(::AbstractGenerator{T}) where T = T
     @inline Base.length(gen::AbstractGenerator) = gen.size
     @inline getpolynomial(gen::AbstractGenerator, n::Int) = gen[n]
     @inline getderivpolynomial(gen::AbstractGenerator, n::Int) = getderivpolynomial(gen)[n]
 
-    #### OLD
-    export InfoElement
-    export ShortPolynomialBasis
-    export bottom_type
-    include("fem/shortbasis/shortbasis.jl")
-
-    #### NEW
-    export PolynomialBasis
-    include("fem/newbasis/basis.jl")
-    include("fem/newbasis/matrices.jl")
+    include("fem/generators.jl")
+    include("fem/basis.jl")
+    include("fem/matrices.jl")
+    include("fem/utils_computations.jl")
 
 
-    #### OLD
-    export P1Elements, ShortP1Basis, IntLegendreElements, ShortIntLegendreBasis, DiffLegendreElements, ShortDiffLegendreBasis
-    include("fem/shortbasis/elements.jl")
-
-    #### NEW
-    export IntLegendreGenerator, P1IntLegendreGenerator
-    include("fem/newbasis/generators.jl")
-
-    #### OLD
-
-    include("fem/shortbasis/fill_mass_matrix.jl")
-
-    export InfoBlock, CombineShortPolynomialBasis
-    include("fem/shortbasis/combineshortbasis.jl")
-
-    export ShortP1IntLegendreBasis
-    include("fem/shortbasis/combined elements.jl")
-
-    
     # KOHN-SHAM MODEL
     export ExchangeCorrelation,NoExchangeCorrelation, SlaterXα, LSDA
     export exc, vxc, vxcUP, vxcDOWN
@@ -136,17 +107,16 @@ module KohnShamResolution
                         ::KohnShamDiscretization)               = @warn "No creation of cache for the method $(typeof(m))"
     switch!(c2::SCFCache, c1::SCFCache)                         = @warn "No way to init $(typeof(c2)) from of cache for the method ($(typeof(c1))"
     
-
+    # DISCRETIZATION
     export LDADiscretization, LSDADiscretization
     include("discretization/lda.jl")
     include("discretization/lsda.jl")
 
-    ###
-    # TO REMOVE I GUESS ??? Not Sure!
+
     export DFTProblem
     include("problem.jl")
-    ###
-    
+
+    ## SCF METHODS
     export CDA, ODA, Quadratic
     include("methods/rca.jl")
     include("methods/oda_procedure.jl")
