@@ -4,14 +4,10 @@ struct RationalFraction{T} <: AbstractPolynomial{T}
     function RationalFraction(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, TQ}
         @assert !iszero(q)
         NewT = promote_type(TP,TQ)
-        if haslog(p) || haslog(q)
-            return new{NewT}(p, q)
-        else
-            degm = min(degmin(p), degmin(q))
-            num = _convert(NewT, shift(p , -degm))
-            denom = _convert(NewT, shift(q , -degm))
-            return new{NewT}(num, denom)
-        end
+        degm = min(degmin(p), degmin(q))
+        num = _convert(NewT, shift(p , -degm))
+        denom = _convert(NewT, shift(q , -degm))
+        return new{NewT}(num, denom)
     end
 end
 
@@ -22,7 +18,7 @@ function (rf::RationalFraction)(x)
 end
 
 function Base.:/(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP, TQ}
-    if ismonomial(q) && !haslog(p)
+    if ismonomial(q)
         return shift(p, -degmin(q))/q[begin]
     else
         return RationalFraction(p, q)
@@ -55,7 +51,6 @@ function (srf::SommeRationalFraction)(x)
 end
 
 function inEntpart(rf::RationalFraction)
-    @assert !haslog(rf.num) && !haslog(rf.denom)
     Q,R = diveucl(rf.num, rf.denom)
     newrf = RationalFraction(R, rf.denom)
     SommeRationalFraction(Q, [newrf])
@@ -73,23 +68,6 @@ function fraction_decomp(rf::RationalFraction)
     @error "The partial fraction decomposition has not be coded."
 end
 
-#=
-function Base.:+(rf::RationalFraction, p::LaurentPolynomial)
-    SommeRationalFraction(p, [rf])
-end
-
-function Base.:+(p::LaurentPolynomial, rf::RationalFraction)
-    rf + p
-end
-
-function Base.:*(rf::RationalFraction, p::LaurentPolynomial)
-    (p * rf.num) / rf.denom + rf.ent * p
-end
-
-function Base.:*(p::LaurentPolynomial, rf::RationalFraction)
-    rf * p
-end
-=#
 
 
 ##################################################################################
@@ -97,7 +75,6 @@ end
 ##################################################################################
 
 function integrate(rf::RationalFraction{T}, a::Real, b::Real; geomfun = false, enforceNullDelta = false) where T
-    @assert !haslog(rf.num) && !haslog(rf.denom)
     if iszero(rf.num) || (degmax(rf.num) == 0 && abs(rf.num[0]) < sqrt(eps(typeof(rf.num[0]))))
         NewT = promote_type(T, typeof(a), typeof(b))
         return zero(NewT)
@@ -165,7 +142,6 @@ end
 function Base.:∘(p::LaurentPolynomial{TP}, q::LaurentPolynomial{TQ}) where {TP,TQ}
     elag!(p)
     elag!(q)
-    @assert !haslog(p) && !haslog(q)
     NewT = promote_type(TP,TQ)
     if ismonomial(p)
         if degmin(p) < 0
