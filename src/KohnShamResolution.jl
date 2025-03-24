@@ -21,7 +21,7 @@ module KohnShamResolution
     include("maths.jl")
 
     # MESH
-    export Mesh, linmesh, geometricmesh
+    export Mesh, linmesh, geometricmesh, polynomialmesh, expmesh
     include("mesh.jl")
 
     ############        LAURENT POLYNOMIAL        ############
