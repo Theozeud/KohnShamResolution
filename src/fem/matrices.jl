@@ -128,7 +128,7 @@ function fill_stiffness_matrix!(pb::PolynomialBasis, A::AbstractMatrix{<:Real}; 
                                       pb.generators.binf,
                                       pb.generators.bsup,
                                       method)
-            @inbounds A[I[1], I[2]] += ϕ[1] * swsp(intdata)
+            @inbounds A[I[1], I[2]] += ϕ[1]^2 * swsp(intdata)
         end
         @inbounds A[I[2],I[1]]  = A[I[1],I[2]]
     end
