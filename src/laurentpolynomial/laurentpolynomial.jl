@@ -3,6 +3,8 @@ mutable struct LaurentPolynomial{T} <:AbstractPolynomial{T}
     degmin::Int
 end
 
+@inline Base.length(p::LaurentPolynomial) = length(p.coeffs)
+
 Monomial(deg::Int, coeff = 1) = LaurentPolynomial([coeff], deg)
 Polynomial(coeff, degmin::Int = 0) = LaurentPolynomial(coeff, degmin)
 RootsPolynomial(roots::AbstractVector) = length(roots) == 1 ?  Monomial(1) - first(roots) : (Monomial(1) - first(roots)) * RootsPolynomial(roots[2:end])
@@ -105,7 +107,10 @@ function Base.show(io::IO, p::LaurentPolynomial)
 
     if str == "" 
         str *= "0"
+    else
+        str = str[1:length(str)-3]
     end
+
     print(io, str)
 end
 
@@ -265,8 +270,7 @@ end
 ##################################################################################
 
 function integrate(p::LaurentPolynomial{T}) where T
-    _haslog = p[-1] != 0 ? true : false
-    coeff_log = p[-1]
+    @assert iszero(p[-1]) "Can not integrate X^-1"
     new_coeffs = p.coeffs .* [i == -1 ? 0//1 : 1//(1+i) for i in eachindex(p)]
     LaurentPolynomial(new_coeffs, p.degmin+1)
 end
@@ -277,7 +281,7 @@ function integrate(p::LaurentPolynomial, a::Real, b::Real)
     int_p(b) - int_p(a)
 end
 
-function deriv(p::LaurentPolynomial{T}) where T
+function deriv(p::LaurentPolynomial)
     new_coeffs = p.coeffs .* [i for i in eachindex(p)]
     LaurentPolynomial(new_coeffs, p.degmin-1)
 end
