@@ -160,7 +160,7 @@ function singularity_swsp(::InvX, intdata::IntegrationData)
 
     @assert !isnothing(I) "Singularity in the integrals"
 
-    R = find_polynomial_factor(P[I], 1, ϕ[2])
+    R = find_polynomial_factor(P[I], 1, -ϕ[2])
     newP = Base.setindex(P, R, I)
     newintdata = IntegrationData(intdata; weight = NoWeight(), P = newP)
     ϕ[1]*swsp(method, NoWeight(), newintdata)
@@ -174,8 +174,8 @@ function singularity_swsp(::InvX2, intdata::IntegrationData)
     @assert count(p -> iszero(p(ϕ[2])), P) ≥ 2 "Singularity in the integrals"
 
     I, K = findfirsttwo(p -> iszero(p(ϕ[2])),P)
-    RI = find_polynomial_factor(P[I], 1, ϕ[2])
-    RK = find_polynomial_factor(P[K], 1, ϕ[2])
+    RI = find_polynomial_factor(P[I], 1, -ϕ[2])
+    RK = find_polynomial_factor(P[K], 1, -ϕ[2])
     newP = Base.setindex(Base.setindex(P, RI, I), RK, K)
     newintdata = IntegrationData(intdata; weight = NoWeight(), P = newP)
     ϕ[1]^2*swsp(method, NoWeight(), newintdata)
