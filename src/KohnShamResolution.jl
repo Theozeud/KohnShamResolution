@@ -37,7 +37,7 @@ module KohnShamResolution
     export integrate!, integrate, deriv!, deriv, scalar_product, normL2, elag!, diveucl
     include("laurentpolynomial/laurentpolynomial.jl")
 
-    include("laurentpolynomial/integration_tools.jl")
+    #include("laurentpolynomial/integration_tools.jl")
 
     export RationalFraction, SommeRationalFraction
     export fraction_decomp, inEntpart
@@ -58,6 +58,8 @@ module KohnShamResolution
 
     export IntLegendreGenerator, P1IntLegendreGenerator
 
+    export ExactIntegration
+
     export mass_matrix, sparse_mass_matrix, 
            stiffness_matrix, sparse_stiffness_matrix,
            weight_mass_matrix, sparse_weight_mass_matrix,
@@ -72,9 +74,11 @@ module KohnShamResolution
 
     include("fem/generators.jl")
     include("fem/basis.jl")
+    include("fem/computations.jl")
     include("fem/matrices.jl")
-    include("fem/utils_computations.jl")
+    include("fem/integration_formula.jl")
 
+    #include("fem/utils_computations.jl")
 
     # KOHN-SHAM MODEL
     export ExchangeCorrelation,NoExchangeCorrelation, SlaterXα, LSDA

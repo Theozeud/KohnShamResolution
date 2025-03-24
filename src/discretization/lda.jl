@@ -86,24 +86,22 @@ dim(discretization::LDADiscretization) = discretization.Nₕ * (discretization.l
 #                          Init Cache
 #####################################################################
 
-function init_cache!(discretization::LDADiscretization, model::AbstractDFTModel, hartree::Real)
+function init_cache!(discretization::LDADiscretization, model::AbstractDFTModel, hartree::Real, integration_method::IntegrationMethod)
 
     @unpack lₕ, basis, matrices  = discretization
     @unpack A, M₀, M₋₁, M₋₂, F, Kin, Coulomb, Hfix = matrices
 
     # CREATION OF FEM MATRICES
-    fill_stiffness_matrix!(basis, A)
-    fill_mass_matrix!(basis, M₀)
-    fill_weight_mass_matrix!(basis, -1, M₋₁)
-    lₕ == 0 || fill_weight_mass_matrix!(basis, -2, M₋₂)
-    iszero(hartree) || fill_weight_mass_3tensor!(basis, Monomial(-1), F)
+    fill_stiffness_matrix!(basis, A; method = integration_method)
+    fill_mass_matrix!(basis, M₀; method = integration_method)
+    fill_mass_matrix!(basis, -1, M₋₁; method = integration_method)
+    lₕ == 0 || fill_mass_matrix!(basis, -2, M₋₂; method = integration_method)
+    iszero(hartree) || fill_mass_tensor!(basis, -1, F; method = integration_method)
 
     # CREATION OF THE FIX PART OF THE HAMILTONIAN 
     kinetic_matrix!(discretization)
     coulomb_matrix!(discretization, model)
     for l ∈ 1:lₕ+1
-        #@views vHfix = Hfix[l,:,:]
-        #@views vKin = Kin[l,:,:]
         @. Hfix[l] = Kin[l] + Coulomb
     end
     nothing
@@ -152,7 +150,6 @@ function prepare_eigenvalue_problem!(   discretization::LDADiscretization,
     # BUILD THE HAMILTONIAN OF THE lᵗʰ SECTION
     @threads for l ∈ 0:discretization.lₕ
         @views vH = H[:,:,l+1]
-        #@views vHfix = Hfix[l+1,:,:]
         @. vH = Hfix[l+1] + Vxc + Hartree
     end
     nothing

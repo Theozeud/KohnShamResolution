@@ -17,7 +17,7 @@ The integral calculation is performed differently depending on the values of `A`
 function _integration_monome_over_deg1(k::Int, A::Real, B::Real, a::Real, b::Real)
     @assert !iszero(A) || !iszero(B)
     @assert k ≥ 0
-    @assert !(a ≤ -B/A ≤ b)
+    @assert !(a ≤ -B/A ≤ b) "Can not integrate X^($k)/($A X + $B) over ($a,$b)"
     if iszero(B)
         if k == 0
             return 1/A * log(abs(b/a))

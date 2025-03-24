@@ -7,7 +7,7 @@ logconfig = LogConfig(orbitals_energy = true, occupation_number = true, energy =
 problem = AtomProblem(;
                 T               = Float64, 
                 lh              = 0,
-                nh              = 2, 
+                nh              = 1, 
                 method          = ODA(0.8), 
                 model           = ReducedHartreeFock(1, 1), 
                 Rmax            = 80, 
