@@ -8,8 +8,8 @@ struct PolynomialBasis{T, TB <: AbstractGenerator} <: Basis
     indices_generators::Matrix{Int}                 # Matrix index basis -> indices generators
     cells_to_indices::Matrix{Int}                   # Matrix index cells -> indices basis
     normalisation::Vector{T}                        # Coefficients of normalisation
-    shifts::Vector{LaurentPolynomial{T}}            # Translation to each cells of the mesh
-    invshifts::Vector{LaurentPolynomial{T}}         # Inverse of the translation 
+    shifts::Vector{Tuple{T,T}}                      # Translation to each cells of the mesh
+    invshifts::Vector{Tuple{T,T}}                   # Inverse of the translation 
     matrix_fill_indices::Vector{CartesianIndex{2}}  # Vector of indices filled in fem matrices
     tensor_fill_indices::Vector{CartesianIndex{3}}  # Vector of indices filled in fem tensors
 
@@ -24,8 +24,8 @@ struct PolynomialBasis{T, TB <: AbstractGenerator} <: Basis
         cells_to_indices, normalisation; _matrix_fill_indices = nothing, _tensor_fill_indices = nothing) 
         
         T = eltype(generators)
-        shifts    = Vector{LaurentPolynomial{T}}(undef, length(mesh)-1)
-        invshifts = Vector{LaurentPolynomial{T}}(undef, length(mesh)-1)
+        shifts    = Vector{Tuple{T,T}}(undef, length(mesh)-1)
+        invshifts = Vector{Tuple{T,T}}(undef, length(mesh)-1)
         for i ∈ eachindex(mesh)[1:end-1]
             shifts[i]    = shift(T, mesh[i], mesh[i+1], generators.binf, generators.bsup)
             invshifts[i] = shift(T, generators.binf, generators.bsup, mesh[i], mesh[i+1])
@@ -96,7 +96,7 @@ end
     # Linear function that maps [a,b] to [mᵢ, mᵢ₊₁]
     c1 = (T(mᵢ₊₁) - T(mᵢ))/(T(b) - T(a))
     c0 = -T(a) * T(c1) + T(mᵢ)
-    Polynomial([c0, c1], 0)
+    (c1,c0)
 end
 
 ########################       Evaluation tools       ########################
@@ -110,7 +110,8 @@ function (pb::PolynomialBasis)(i::Int, x)
             if !iszero(j) && pb.indices_cells[i,j] == localisation_x
                 P = getgenerator(pb, i, j)
                 ϕ = getshift(pb, i, j)
-                y += P(ϕ(x))
+                ϕx = ϕ[1]*x + ϕ[2]
+                y += P(ϕx)
             end
         end
         y *= getnormalization(pb, i)
@@ -120,7 +121,6 @@ end
 
 function (pb::PolynomialBasis)(coeffs::AbstractVector, x)
     @assert length(coeffs) == pb.size
-    #localisation_x = KohnShamResolution.findindex(pb.mesh, x)
     T = eltype(pb)
     y = zero(T)
     for i ∈ eachindex(pb)
@@ -137,8 +137,8 @@ function eval_derivative(pb::PolynomialBasis, i::Int, x)
         for j ∈ axes(pb.indices_generators,2)
             if !iszero(j) && pb.indices_cells[i,j] == localisation_x
                 P = getderivgenerator(pb, i, j)
-                ϕ = getshift(pb, i, j)
-                y += P(ϕ(x))
+                ϕx = ϕ[1]*x + ϕ[2]
+                y += P(ϕx)
             end
         end
         y *= getnormalization(pb, i)
