@@ -35,20 +35,20 @@ module KohnShamResolution
     export Polynomial, Monomial, RandMonomial, RandPolynomial, RootsPolynomial
     export deg, degmax, degmin, haslog, ismonomial, iszero
     export integrate!, integrate, deriv!, deriv, scalar_product, normL2, elag!, diveucl
-    include("laurentpolynomial/laurentpolynomial.jl")
+    include("fem/laurentpolynomial.jl")
 
     #include("laurentpolynomial/integration_tools.jl")
 
-    export RationalFraction, SommeRationalFraction
-    export fraction_decomp, inEntpart
-    include("laurentpolynomial/rationalfraction.jl")
+    #export RationalFraction, SommeRationalFraction
+    #export fraction_decomp, inEntpart
+    #include("laurentpolynomial/rationalfraction.jl")
 
     export Legendre, intLegendre
-    include("laurentpolynomial/legendre polynomial.jl")
+    include("fem/legendre polynomial.jl")
 
-    export PiecewiseLaurentPolynomial
-    export get_support
-    include("laurentpolynomial/piecewiselaurentpolynomial.jl")
+    #export PiecewiseLaurentPolynomial
+    #export get_support
+    #include("laurentpolynomial/piecewiselaurentpolynomial.jl")
 
     
     ############        FINITE ELEMENT METHOD        ############
