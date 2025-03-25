@@ -218,7 +218,7 @@ function fill_mass_tensor!( pb::PolynomialBasis,
                                       pb.generators.binf,
                                       pb.generators.bsup,
                                       method)
-            @inbounds A[I[1], I[2]] += swsp(intdata)
+            @inbounds A[I[1], I[2], I[3]] += swsp(intdata)
         end
         @inbounds A[I[3], I[1], I[2]]  = A[I[1], I[2], I[3]]
         @inbounds A[I[2], I[3], I[1]]  = A[I[1], I[2], I[3]]
