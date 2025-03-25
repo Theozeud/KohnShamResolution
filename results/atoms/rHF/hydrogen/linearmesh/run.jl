@@ -6,11 +6,11 @@ logconfig = LogConfig(orbitals_energy = true, occupation_number = true, energy =
 
 problem = AtomProblem(;
                 T               = Float64, 
-                lh              = 2, 
+                lh              = 1, 
                 method          = ODA(0.8), 
-                model           = ReducedHartreeFock(26, 26), 
-                Rmax            = 150, 
-                Nmesh           = 90,
+                model           = ReducedHartreeFock(15, 15), 
+                Rmax            = 80, 
+                Nmesh           = 80,
                 typemesh        = geometricmesh, 
                 optsmesh        = (s = 0.9,), 
                 typebasis       = P1IntLegendreGenerator, 
