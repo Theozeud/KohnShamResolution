@@ -1,0 +1,35 @@
+IntLeg2, Nmesh = 50
+basis
+  0.002275 seconds (139.98 k allocations: 9.128 MiB)
+A
+  0.000590 seconds (10.77 k allocations: 445.125 KiB)
+M0
+  0.000574 seconds (10.19 k allocations: 436.609 KiB)
+M₋₁
+  0.034361 seconds (11.11 k allocations: 570.547 KiB, 97.63% gc time)
+M₋₂
+  0.000637 seconds (11.21 k allocations: 675.062 KiB)
+=====================================
+IntLeg5, Nmesh = 50
+basis
+  0.026810 seconds (1.43 M allocations: 92.763 MiB)
+A
+  0.001957 seconds (41.17 k allocations: 1.692 MiB)
+M0
+  0.001859 seconds (39.13 k allocations: 1.662 MiB)
+M₋₁
+  0.002501 seconds (42.64 k allocations: 2.314 MiB)
+M₋₂
+  0.002511 seconds (43.13 k allocations: 2.834 MiB)
+=====================================
+IntLeg10, Nmesh = 50
+basis
+  6.321202 seconds (355.76 M allocations: 22.508 GiB, 15.70% gc time)
+A
+  0.036919 seconds (847.40 k allocations: 34.157 MiB)
+M0
+  0.032583 seconds (807.97 k allocations: 33.557 MiB)
+M₋₁
+  0.051180 seconds (869.01 k allocations: 39.775 MiB)
+M₋₂
+  0.052054 seconds (870.86 k allocations: 41.787 MiB)
