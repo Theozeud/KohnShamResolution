@@ -65,10 +65,8 @@ end
 
 # LOOPHEADER
 function loopheader!(solver::KohnShamSolver)
-
     # LOOPHEADER SPECIFIC FOR THE METHOD 
     loopheader!(solver.cache, solver.method, solver)
-
     nothing                                         
 end 
 

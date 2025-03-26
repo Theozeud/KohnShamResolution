@@ -151,7 +151,20 @@ end
 
 singularity_swsp(::NoWeight, intdata::IntegrationData) = swsp(intdata)
 
-
+#=
+    --> Check singularity
+    si oui -> on transforme l'intégration
+     ∫ₐᵇ 1/x (Qi Qj)∘ϕ(x) dx 
+     singularité = 0 dans [a,b]
+    peut on la résoudre :
+    oui si Qi∘ϕ(0)= 0
+    Dans ce cas, on a ϕ(x) = dϕ*x + ϕ(0)
+    Or on peut écrie Qi(x) = (x - ϕ(0)) * Pi(x)
+    et donc Qi∘ϕ(x)/x = (dϕ*x + ϕ(0) - ϕ(0))/x * P(ϕ(x)) = dϕ * Pi(ϕ(x))
+    ∫ₐᵇ 1/x (Qi Qj)∘ϕ(x) dx  = dϕ * ∫ₐᵇ (Pi Qj)∘ϕ(x) dx 
+    Pour trouver Pi, on doit résoudre un problème linéaire cQ = A * cP
+    où A est une matrice de taille deg(Q)*deg(Q), donc temps négligeable
+=#
 function singularity_swsp(::InvX, intdata::IntegrationData)
 
     @unpack P, ϕ, method = intdata
