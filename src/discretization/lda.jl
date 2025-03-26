@@ -253,6 +253,7 @@ function hartree_matrix!(discretization::LDADiscretization, D::AbstractMatrix{<:
     tensor_vector_dict!(tmp_MV, tmp_C, F)
     @. Hartree = tmp_MV + newCrho/Rmax * M₀
     @. Hartree .*= coeff
+    Hartree .= (Hartree .+ Hartree') ./2
     nothing
 end
 
