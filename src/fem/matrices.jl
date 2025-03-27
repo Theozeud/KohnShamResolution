@@ -14,7 +14,7 @@ end
 #                          OVERLAP MATRIX
 #####################################################################
 
-function mass_matrix(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = ExactIntegration())
+function mass_matrix(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = default_method(weight))
     @unpack generators, mesh, size = pb
     T = eltype(pb)
     A = zeros(T, size, size)
@@ -22,7 +22,7 @@ function mass_matrix(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), m
     A
 end
 
-function sparse_mass_matrix(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = ExactIntegration())
+function sparse_mass_matrix(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = default_method(weight))
     @unpack generators, mesh, size = pb
     T = eltype(pb)
     A = spzeros(T, size, size)
@@ -30,7 +30,7 @@ function sparse_mass_matrix(pb::PolynomialBasis; weight::AbstractWeight = NoWeig
     A
 end
 
-function mass_matrix(pb::PolynomialBasis, n::Int; method::IntegrationMethod = ExactIntegration())
+function mass_matrix(pb::PolynomialBasis, n::Int; method::IntegrationMethod = default_method(weight))
     @assert n == -1 || n == -2 "n must be -1 or -2"
     if n == -1
         mass_matrix(pb; weight = InvX(), method = method)
@@ -39,7 +39,7 @@ function mass_matrix(pb::PolynomialBasis, n::Int; method::IntegrationMethod = Ex
     end
 end
 
-function sparse_mass_matrix(pb::PolynomialBasis, n::Int; method::IntegrationMethod = ExactIntegration())
+function sparse_mass_matrix(pb::PolynomialBasis, n::Int; method::IntegrationMethod = default_method(weight))
     @assert n == -1 || n == -2 "n must be -1 or -2"
     if n == -1
         sparse_mass_matrix(pb; weight = InvX(), method = method)
@@ -52,7 +52,7 @@ end
 function fill_mass_matrix!( pb::PolynomialBasis, 
                             A::AbstractMatrix{<:Real};
                             weight::AbstractWeight = NoWeight(),
-                            method::IntegrationMethod = ExactIntegration())
+                            method::IntegrationMethod = default_method(weight))
     @unpack generators, mesh = pb
     for I ∈ pb.matrix_fill_indices
         for (i,j) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:])
@@ -79,7 +79,7 @@ function fill_mass_matrix!( pb::PolynomialBasis,
 end
 
 
-function fill_mass_matrix!(pb::PolynomialBasis, n::Int, A::AbstractArray{<:Real}; method::IntegrationMethod = ExactIntegration())
+function fill_mass_matrix!(pb::PolynomialBasis, n::Int, A::AbstractArray{<:Real}; method::IntegrationMethod = default_method(weight))
     @assert n == -1 || n == -2 "n must be -1 or -2"
     if n == -1
         fill_mass_matrix!(pb, A; weight = InvX(), method = method)
@@ -138,21 +138,21 @@ end
 #                             MASS VECTOR
 #####################################################################
 
-function mass_vector(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = ExactIntegration())
+function mass_vector(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = default_method(weight))
     T = eltype(pb)
     A = zeros(T, pb.size)
     fill_mass_vector!(pb, A; weight = weight, method = method)
     A
 end
 
-function sparse_mass_vector(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = ExactIntegration())
+function sparse_mass_vector(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = default_method(weight))
     T = eltype(pb)
     A = spzeros(T, pb.size)
     fill_mass_vector!(pb, A; weight = weight, method = method)
     A
 end
 
-function fill_mass_vector!(pb::PolynomialBasis, A::AbstractMatrix{<:Real}; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = ExactIntegration())
+function fill_mass_vector!(pb::PolynomialBasis, A::AbstractMatrix{<:Real}; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = default_method(weight))
     @unpack mesh = pb
     for i ∈ eachindex(pb)
         for j ∈ axes(pb.indices_generators,2)
@@ -179,14 +179,14 @@ end
 #                          MASS TENSOR
 #####################################################################
 
-function mass_tensor(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = ExactIntegration())
+function mass_tensor(pb::PolynomialBasis; weight::AbstractWeight = NoWeight(), method::IntegrationMethod = default_method(weight))
     T = eltype(pb)
     A = zeros(T, pb.size, pb.size, pb.size)
     fill_mass_tensor!(pb, A; weight = weight, method = method)
     A
 end
 
-function mass_tensor(pb::PolynomialBasis, n::Int; method::IntegrationMethod = ExactIntegration())
+function mass_tensor(pb::PolynomialBasis, n::Int; method::IntegrationMethod = default_method(weight))
     @assert n == -1 || n == -2 "n must be -1 or -2"
     if n == -1
         mass_tensor(pb; weight = InvX(), method = method)
@@ -198,7 +198,7 @@ end
 function fill_mass_tensor!( pb::PolynomialBasis, 
                             A::AbstractArray{<:Real};
                             weight::AbstractWeight = NoWeight(),
-                            method::IntegrationMethod = ExactIntegration())
+                            method::IntegrationMethod = default_method(weight))
     @unpack mesh = pb
     for I ∈ pb.tensor_fill_indices
         for (i,j,k) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:], pb.indices_cells[I[3],:])
@@ -232,7 +232,7 @@ end
 function fill_mass_tensor!(pb::PolynomialBasis, 
                            n::Int, 
                            A::Union{AbstractArray{<:Real},Dict{Tuple{Int64, Int64, Int64}, <:Real}};
-                           method::IntegrationMethod = ExactIntegration())
+                           method::IntegrationMethod = default_method(weight))
     @assert n == -1 || n == -2 "n must be -1 or -2"
     if n == -1
         fill_mass_tensor!(pb, A; weight = InvX(), method = method)
@@ -245,7 +245,7 @@ end
 function fill_mass_tensor!( pb::PolynomialBasis,
                             A::Dict{Tuple{Int64, Int64, Int64}, <:Real};
                             weight::AbstractWeight = NoWeight(),
-                            method::IntegrationMethod = ExactIntegration())
+                            method::IntegrationMethod = default_method(weight))
     @unpack mesh = pb
     for I ∈ pb.tensor_fill_indices
         for (i,j,k) ∈ find_intersection_indices(pb.indices_cells[I[1],:], pb.indices_cells[I[2],:], pb.indices_cells[I[3],:])

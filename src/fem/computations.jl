@@ -17,6 +17,13 @@ struct NoWeight <: AbstractWeight end   # w(x) = 1
 struct InvX <: AbstractWeight end       # w(x) = 1/x
 struct InvX2 <: AbstractWeight end      # w(x) = 1/x^2  
 
+
+default_method(::AbstractWeight) = ExactIntegration()
+default_method(::functionalWeight) = QuadratureIntegration()
+
+
+
+
 has_singularity(::NoWeight, domain::Tuple{T,T}) where T <: Real = false
 has_singularity(::InvX,  domain::Tuple{T,T}) where T <: Real    = domain[1] ≤ 0 ≤ domain[2]
 has_singularity(::InvX2, domain::Tuple{T,T}) where T <: Real    = domain[1] ≤ 0 ≤ domain[2]
