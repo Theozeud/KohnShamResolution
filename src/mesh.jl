@@ -49,7 +49,7 @@ linmesh(a, b, n; T = Float64) = Mesh(T.(LinRange(a,b,n)))
 function geometricrange(a,b,n; T = Float64, s)
     R = zeros(T,n)
     R[1] = a
-    hn = (one(T)-T(s))/(one(T) - T(s)^n)*(b-a)
+    hn = (one(T)-T(s))/(one(T) - T(s)^(n-1))*(b-a)
     H = zeros(T,n-1)
     H[end] = hn
     for i ∈ n-1:-1:2
